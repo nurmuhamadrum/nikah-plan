@@ -171,7 +171,7 @@ export function AllocateVendorDialog({
               </p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            <div className="-mx-1 space-y-2 max-h-60 overflow-y-auto px-1 py-0.5">
               {unpaidPayments.map(({ payment, item }) => {
                 const checked = selectedPaymentIds.includes(payment.id);
                 return (

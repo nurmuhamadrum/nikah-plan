@@ -1,7 +1,30 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Profile } from "@/types/database";
+import { createClient } from "@/lib/supabase/server";
 import { fetchWorkspaceBundle, type WorkspaceBundle } from "@/lib/workspace-data";
 import { ensurePaidUserWorkspace } from "@/lib/workspace-provisioning";
+
+/**
+ * Per-request deduplicated auth & profile lookup menggunakan React.cache().
+ * Mencegah query ganda saat (app)/layout.tsx dan page.tsx berjalan pada request yang sama.
+ */
+export const getCachedAuthProfile = cache(async (): Promise<Profile | null> => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return profile ?? null;
+});
 
 /**
  * Server-only helper untuk memuat profil & workspace bundle,
@@ -14,19 +37,7 @@ export async function getAuthenticatedProfileAndWorkspace(
   profile: Profile | null;
   bundle: WorkspaceBundle | null;
 }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { profile: null, bundle: null };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = await getCachedAuthProfile();
 
   if (!profile || !profile.has_paid) {
     return { profile: profile ?? null, bundle: null };

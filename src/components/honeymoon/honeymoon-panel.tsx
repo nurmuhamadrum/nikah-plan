@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface HoneymoonPanelProps {
   bundle: WorkspaceBundle;
@@ -538,15 +539,19 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
         </div>
 
         {filteredItems.length === 0 ? (
-          <Card className="rounded-2xl border-dashed border-sage/20 bg-white/80">
-            <CardContent className="p-5 text-center text-xs text-sage-600">
-              Belum ada pengeluaran honeymoon tercatat. Klik tombol{" "}
-              <strong>Tambah Pengeluaran</strong> di bawah untuk mencatat biaya
-              tiket, hotel, atau belanja harian dalam{" "}
-              <strong>{workspace.honeymoon_currency}</strong> /{" "}
-              <strong>IDR</strong>.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plane}
+            compact
+            title="Belum ada pengeluaran honeymoon"
+            description={
+              <>
+                Klik tombol <strong>Tambah Pengeluaran</strong> untuk mencatat
+                biaya tiket, hotel, atau belanja harian dalam{" "}
+                <strong>{workspace.honeymoon_currency}</strong> /{" "}
+                <strong>IDR</strong>.
+              </>
+            }
+          />
         ) : (
           <div className="space-y-2">
             {filteredItems.map((item) => {

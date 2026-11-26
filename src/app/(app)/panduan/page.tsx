@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-server";
-import { AppShell } from "@/components/layout/app-shell";
 import { PanduanClient } from "./panduan-client";
 
 export const metadata: Metadata = {
@@ -20,9 +19,5 @@ export default async function PanduanPage() {
   if (!profile.has_paid) redirect("/checkout");
   if (!bundle) redirect("/onboarding");
 
-  return (
-    <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
-      <PanduanClient initialBundle={bundle} />
-    </AppShell>
-  );
+  return <PanduanClient initialBundle={bundle} />;
 }

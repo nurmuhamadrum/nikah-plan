@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-server";
-import { AppShell } from "@/components/layout/app-shell";
 import { VendorsClient } from "./vendors-client";
 
 export const metadata: Metadata = {
@@ -34,12 +33,10 @@ export default async function VendorsPage({
   }
 
   return (
-    <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
-      <VendorsClient
-        initialBundle={bundle}
-        initialCategoryId={params.category}
-        openNewVendorOnMount={params.new === "1"}
-      />
-    </AppShell>
+    <VendorsClient
+      initialBundle={bundle}
+      initialCategoryId={params.category}
+      openNewVendorOnMount={params.new === "1"}
+    />
   );
 }

@@ -176,7 +176,7 @@ export function TemplatePickerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto pr-1 py-1">
+        <div className="-mx-1 space-y-4 overflow-y-auto px-1 py-1">
           {errorMsg && (
             <div className="rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2 text-xs text-terracotta-800">
               {errorMsg}

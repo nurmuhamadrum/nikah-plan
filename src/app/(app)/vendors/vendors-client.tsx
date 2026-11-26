@@ -47,6 +47,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface VendorsClientProps {
   initialBundle: WorkspaceBundle;
@@ -448,34 +449,38 @@ export function VendorsClient({
 
       {/* Vendor Items List */}
       {filteredItems.length === 0 ? (
-        <Card className="rounded-3xl border-dashed border-sage/25 bg-white/85">
-          <CardContent className="p-8 text-center space-y-3">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cream-200 text-sage">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-sage-900">
-                Belum ada vendor di tampilan ini
-              </p>
-              <p className="text-xs text-sage-600 max-w-sm mx-auto">
-                Tambahkan vendor pertama Anda untuk membandingkan estimasi awal
-                vs harga deal serta mencatat termin DP &amp; bukti bayar.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              disabled={weddingCategories.length === 0}
-              onClick={() => {
-                setEditingVendor(null);
-                setVendorDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Tambah Vendor Sekarang
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Sparkles}
+          tone="terracotta"
+          title="Belum ada vendor di tampilan ini"
+          description="Tambahkan vendor pertama Anda untuk membandingkan estimasi awal vs harga deal serta mencatat termin DP & bukti bayar."
+          action={
+            <>
+              <Button
+                type="button"
+                size="sm"
+                disabled={weddingCategories.length === 0}
+                onClick={() => {
+                  setEditingVendor(null);
+                  setVendorDialogOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Vendor Sekarang
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={weddingCategories.length === 0}
+                onClick={() => setTemplateDialogOpen(true)}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-terracotta" />
+                Muat Template 51 Item
+              </Button>
+            </>
+          }
+        />
       ) : (
         <div className="space-y-3.5">
           {filteredItems.map((item) => {

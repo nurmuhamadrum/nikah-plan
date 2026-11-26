@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface AngpaoClientProps {
   initialBundle: WorkspaceBundle;
@@ -438,21 +439,12 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
 
       {/* Gift List */}
       {filteredGifts.length === 0 ? (
-        <Card className="rounded-3xl border-dashed border-sage/25 bg-white/85">
-          <CardContent className="p-8 text-center space-y-3">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cream-200 text-sage">
-              <Gift className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-sage-900">
-                Belum ada catatan angpao atau kado
-              </p>
-              <p className="text-xs text-sage-600 max-w-sm mx-auto">
-                Catat pemasukan amplop &amp; kado bersama pasangan secara
-                real-time, lalu alokasikan ke pelunasan vendor atau Dompet
-                Honeymoon.
-              </p>
-            </div>
+        <EmptyState
+          icon={Gift}
+          tone="amber"
+          title="Belum ada catatan angpao atau kado"
+          description="Catat pemasukan amplop & kado bersama pasangan secara real-time, lalu alokasikan ke pelunasan vendor atau Dompet Honeymoon."
+          action={
             <Button
               type="button"
               size="sm"
@@ -464,8 +456,8 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
               <Plus className="h-4 w-4" />
               Catat Angpao Pertama
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div className="space-y-2.5">
           {filteredGifts.map((gift) => {

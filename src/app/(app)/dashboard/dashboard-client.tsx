@@ -34,6 +34,7 @@ import { HoneymoonPanel } from "@/components/honeymoon/honeymoon-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface DashboardClientProps {
   profile: Profile;
@@ -514,16 +515,22 @@ export function DashboardClient({
             </div>
 
             {categorySummaries.length === 0 ? (
-              <Card className="rounded-2xl border-dashed border-sage/25 bg-white/80">
-                <CardContent className="p-6 text-center space-y-3">
-                  <p className="text-sm font-medium text-sage-700">
-                    Belum ada kategori anggaran pernikahan.
-                  </p>
-                  <Button asChild size="sm" variant="sage">
-                    <Link href="/vendors">Buat Kategori Pertama</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={Plus}
+                compact
+                title="Belum ada kategori anggaran pernikahan"
+                description="Mulai dengan membuat kategori pertama atau terapkan skenario 30/50/80 Juta di menu Panduan."
+                action={
+                  <>
+                    <Button asChild size="sm" variant="sage">
+                      <Link href="/vendors">Buat Kategori Pertama</Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/panduan">Pilih Skenario</Link>
+                    </Button>
+                  </>
+                }
+              />
             ) : (
               <RevealStagger className="space-y-2.5" stagger={0.05} inView={false}>
                 {categorySummaries.map(

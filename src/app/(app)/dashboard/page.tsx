@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-server";
-import { AppShell } from "@/components/layout/app-shell";
 import { DashboardClient } from "./dashboard-client";
 
 export const metadata: Metadata = {
@@ -32,9 +31,5 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  return (
-    <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
-      <DashboardClient profile={profile} initialBundle={bundle} />
-    </AppShell>
-  );
+  return <DashboardClient profile={profile} initialBundle={bundle} />;
 }

@@ -8,7 +8,6 @@ import {
   getDynamicPricingPlans,
 } from "@/lib/dynamic-config";
 import { getAppUrl } from "@/lib/utils";
-import { AppShell } from "@/components/layout/app-shell";
 import { SettingsClient } from "./settings-client";
 
 export const metadata: Metadata = {
@@ -26,12 +25,18 @@ export default async function SettingsPage() {
   if (!profile.has_paid) redirect("/checkout");
   if (!bundle) redirect("/onboarding");
 
-  const { data: memberRows } = await supabase
-    .from("workspace_members")
-    .select("user_id, role")
-    .eq("workspace_id", bundle.workspace.id);
+  // Jalankan query pendukung secara paralel untuk memangkas latency perpindahan tab
+  const [membersRes, adminFlag, plans] = await Promise.all([
+    supabase
+      .from("workspace_members")
+      .select("user_id, role")
+      .eq("workspace_id", bundle.workspace.id),
+    isUserAdmin(profile.id, profile.email),
+    getDynamicPricingPlans(),
+  ]);
 
-  const memberIds = (memberRows ?? []).map((m) => m.user_id);
+  const memberRows = membersRes.data ?? [];
+  const memberIds = memberRows.map((m) => m.user_id);
   const { data: memberProfiles } =
     memberIds.length > 0
       ? await supabase
@@ -44,7 +49,7 @@ export default async function SettingsPage() {
     (memberProfiles ?? []).map((p) => [p.id, p])
   );
 
-  const members = (memberRows ?? []).map((m) => {
+  const members = memberRows.map((m) => {
     const p = profileMap.get(m.user_id);
     return {
       full_name: p?.full_name || "Anggota",
@@ -54,22 +59,16 @@ export default async function SettingsPage() {
   });
 
   const inviteUrl = `${getAppUrl()}/join/${bundle.workspace.invite_code}`;
-  const [adminFlag, plans] = await Promise.all([
-    isUserAdmin(profile.id, profile.email),
-    getDynamicPricingPlans(),
-  ]);
   const upgradePrice = calculateUpgradePrice(plans);
 
   return (
-    <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
-      <SettingsClient
-        profile={profile}
-        initialBundle={bundle}
-        members={members}
-        inviteUrl={inviteUrl}
-        isAdmin={adminFlag}
-        upgradePrice={upgradePrice}
-      />
-    </AppShell>
+    <SettingsClient
+      profile={profile}
+      initialBundle={bundle}
+      members={members}
+      inviteUrl={inviteUrl}
+      isAdmin={adminFlag}
+      upgradePrice={upgradePrice}
+    />
   );
 }
