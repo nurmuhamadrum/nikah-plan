@@ -52,8 +52,23 @@ export async function updateSessionAndGuard(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
 
-  // 1. Webhook dan callback auth tidak perlu dialihkan middleware
-  if (pathname.startsWith("/api/webhooks") || pathname.startsWith("/auth/")) {
+  // 1. Webhook, cron, dan callback auth tidak perlu dialihkan middleware
+  if (
+    pathname.startsWith("/api/webhooks") ||
+    pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/auth/")
+  ) {
+    return supabaseResponse;
+  }
+
+  // 1b. Halaman Admin memerlukan autentikasi (verifikasi role is_admin dilakukan di server /admin)
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("next", `${pathname}${search}`);
+      return NextResponse.redirect(loginUrl);
+    }
     return supabaseResponse;
   }
 
@@ -66,7 +81,9 @@ export async function updateSessionAndGuard(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Jika user sudah membayar, arahkan langsung ke /onboarding atau /dashboard
+    const isUpgradeFlow = request.nextUrl.searchParams.get("upgrade") === "1";
+
+    // Jika user sudah membayar dan bukan alur upgrade, arahkan ke /onboarding atau /dashboard
     const { data: profile } = await supabase
       .from("profiles")
       .select("has_paid, active_workspace_id")
@@ -74,6 +91,17 @@ export async function updateSessionAndGuard(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.has_paid) {
+      if (isUpgradeFlow && profile.active_workspace_id) {
+        const { data: ws } = await supabase
+          .from("workspaces")
+          .select("plan")
+          .eq("id", profile.active_workspace_id)
+          .maybeSingle();
+        if (ws?.plan === "WEDDING_ONLY") {
+          return supabaseResponse;
+        }
+      }
+
       let targetPath = "/onboarding";
       if (profile.active_workspace_id) {
         const { data: ws } = await supabase

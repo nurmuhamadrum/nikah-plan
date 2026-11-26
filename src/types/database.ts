@@ -5,6 +5,7 @@ export type FundingSource = "JOINT" | "GROOM_FAMILY" | "BRIDE_FAMILY" | "ANGPAO"
 export type BudgetPhase = "WEDDING" | "HONEYMOON_PRE" | "HONEYMOON_ONTRIP";
 export type GiftType = "CASH" | "TRANSFER" | "PHYSICAL";
 export type GiftAllocation = "UNALLOCATED" | "WEDDING_COVER" | "HONEYMOON_FUND";
+export type PromoDiscountType = "PERCENT" | "FIXED";
 
 export type Profile = {
   id: string;
@@ -12,6 +13,7 @@ export type Profile = {
   email: string;
   avatar_url: string | null;
   has_paid: boolean;
+  is_admin: boolean;
   active_workspace_id: string | null;
   created_at: string;
   updated_at: string;
@@ -125,6 +127,54 @@ export type HoneymoonChecklist = {
   created_at: string;
 };
 
+export type PricingPlanFeature = {
+  label: string;
+  included: boolean;
+};
+
+export type PricingPlanRow = {
+  id: PlanType;
+  name: string;
+  tagline: string;
+  price: number;
+  original_price: number;
+  badge: string | null;
+  recommended: boolean;
+  features: PricingPlanFeature[];
+  is_active: boolean;
+  updated_at: string;
+};
+
+export type PromoCodeRow = {
+  id: string;
+  code: string;
+  discount_type: PromoDiscountType;
+  discount_value: number;
+  description: string;
+  is_active: boolean;
+  max_uses: number | null;
+  used_count: number;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SiteContentRow = {
+  key: string;
+  value: Record<string, unknown>;
+  updated_at: string;
+};
+
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  workspace_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -188,6 +238,36 @@ export type Database = {
         Insert: Partial<HoneymoonChecklist> &
           Pick<HoneymoonChecklist, "workspace_id" | "title">;
         Update: Partial<HoneymoonChecklist>;
+        Relationships: [];
+      };
+      pricing_plans: {
+        Row: PricingPlanRow;
+        Insert: Partial<PricingPlanRow> &
+          Pick<PricingPlanRow, "id" | "name" | "tagline" | "price" | "original_price">;
+        Update: Partial<PricingPlanRow>;
+        Relationships: [];
+      };
+      promo_codes: {
+        Row: PromoCodeRow;
+        Insert: Partial<PromoCodeRow> &
+          Pick<PromoCodeRow, "code" | "discount_type" | "discount_value">;
+        Update: Partial<PromoCodeRow>;
+        Relationships: [];
+      };
+      site_contents: {
+        Row: SiteContentRow;
+        Insert: Partial<SiteContentRow> & Pick<SiteContentRow, "key" | "value">;
+        Update: Partial<SiteContentRow>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Partial<PushSubscriptionRow> &
+          Pick<
+            PushSubscriptionRow,
+            "user_id" | "workspace_id" | "endpoint" | "p256dh" | "auth"
+          >;
+        Update: Partial<PushSubscriptionRow>;
         Relationships: [];
       };
     };

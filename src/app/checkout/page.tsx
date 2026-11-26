@@ -2,19 +2,23 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MIDTRANS_SNAP_JS_URL } from "@/lib/midtrans";
+import {
+  calculateUpgradePrice,
+  getDynamicPricingPlans,
+} from "@/lib/dynamic-config";
 import type { PlanType } from "@/types/database";
 import { CheckoutClient } from "./checkout-client";
 
 export const metadata: Metadata = {
-  title: "Aktivasi Couple Pass",
+  title: "Aktivasi & Upgrade Couple Pass",
   description:
-    "Pilih paket NikahPlan dan selesaikan pembayaran aman via Midtrans Snap.",
+    "Pilih atau upgrade paket NikahPlan dan selesaikan pembayaran aman via Midtrans Snap.",
 };
 
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; order_id?: string }>;
+  searchParams: Promise<{ plan?: string; order_id?: string; upgrade?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
@@ -32,18 +36,39 @@ export default async function CheckoutPage({
     .eq("id", user.id)
     .maybeSingle();
 
+  const isUpgradeRequested = params.upgrade === "1";
+
   if (profile?.has_paid) {
-    redirect("/onboarding");
+    if (isUpgradeRequested && profile.active_workspace_id) {
+      const { data: ws } = await supabase
+        .from("workspaces")
+        .select("plan")
+        .eq("id", profile.active_workspace_id)
+        .maybeSingle();
+
+      if (ws?.plan !== "WEDDING_ONLY") {
+        redirect("/dashboard");
+      }
+    } else {
+      redirect("/onboarding");
+    }
   }
 
+  const plans = await getDynamicPricingPlans();
+  const upgradePrice = calculateUpgradePrice(plans);
   const initialPlan: PlanType =
-    params.plan === "WEDDING_ONLY" ? "WEDDING_ONLY" : "COMPLETE_PASS";
+    !isUpgradeRequested && params.plan === "WEDDING_ONLY"
+      ? "WEDDING_ONLY"
+      : "COMPLETE_PASS";
 
   return (
     <CheckoutClient
       userEmail={profile?.email || user.email || ""}
       userName={profile?.full_name || user.email?.split("@")[0] || "Pengguna"}
       initialPlan={initialPlan}
+      plans={plans}
+      isUpgrade={isUpgradeRequested && Boolean(profile?.has_paid)}
+      upgradePrice={upgradePrice}
       snapJsUrl={MIDTRANS_SNAP_JS_URL}
       midtransClientKey={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
       callbackOrderId={params.order_id}

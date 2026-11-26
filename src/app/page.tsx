@@ -9,7 +9,13 @@ import {
   Wallet,
   ArrowRight,
   Sparkles,
+  Tag,
 } from "lucide-react";
+import {
+  getDynamicPricingPlans,
+  getDynamicSiteContents,
+} from "@/lib/dynamic-config";
+import { formatIDR } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { InteractiveBudgetPreview } from "@/components/landing/interactive-budget-preview";
@@ -17,6 +23,8 @@ import { PricingSection } from "@/components/landing/pricing-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+
+export const revalidate = 60;
 
 const FEATURES = [
   {
@@ -57,9 +65,32 @@ const FEATURES = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const [plans, contents] = await Promise.all([
+    getDynamicPricingPlans(),
+    getDynamicSiteContents(),
+  ]);
+
+  const { hero, announcement } = contents;
+  const lowestPrice = Math.min(plans.WEDDING_ONLY.price, plans.COMPLETE_PASS.price);
+
   return (
     <div className="min-h-screen bg-cream text-foreground overflow-x-hidden">
+      {/* Dynamic Announcement Promo Banner (managed from /admin) */}
+      {announcement.enabled && announcement.text && (
+        <div className="bg-sage text-cream-50 px-4 py-2 text-center text-xs font-medium">
+          <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-center gap-2">
+            <Tag className="h-3.5 w-3.5 text-terracotta-200 shrink-0" />
+            <span>{announcement.text}</span>
+            {announcement.promoCode && (
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 font-mono text-[11px] font-bold tracking-wider">
+                {announcement.promoCode}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Sticky Header */}
       <header className="sticky top-0 z-40 border-b border-sage/10 bg-cream/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -101,25 +132,23 @@ export default function LandingPage() {
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
             <Badge variant="softSage" className="mx-auto lg:mx-0">
               <Sparkles className="h-3.5 w-3.5 text-terracotta" />
-              From &ldquo;I Do&rdquo; to Honeymoon &bull; PWA Offline-First
+              {hero.badge}
             </Badge>
 
             <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.35rem] font-bold leading-[1.12] tracking-tight text-sage-900">
-              Atur Budget Nikah &amp; Bulan Madu{" "}
-              <span className="text-terracotta">Tanpa Drama</span> Bersama
-              Pasangan
+              {hero.headline}{" "}
+              <span className="text-terracotta">{hero.headlineAccent}</span>{" "}
+              {hero.headlineSuffix}
             </h1>
 
             <p className="text-base sm:text-lg text-sage-700/90 leading-relaxed max-w-xl mx-auto lg:mx-0">
-              Lacak estimasi vs harga deal vendor, jadwalkan termin DP, pisahkan
-              porsi dana keluarga, hingga ubah saldo angpao menjadi dompet
-              honeymoon — semuanya tersinkronisasi rapi di HP Anda berdua.
+              {hero.subheadline}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/login?next=/checkout">
-                  Aktifkan Couple Pass
+                  {hero.primaryCta}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -129,7 +158,9 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto"
               >
-                <a href="#harga">Lihat Paket Mulai Rp99rb</a>
+                <a href="#harga">
+                  {hero.secondaryCta} ({formatIDR(lowestPrice)})
+                </a>
               </Button>
             </div>
 
@@ -199,8 +230,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <PricingSection />
+      {/* Dynamic Pricing Section */}
+      <PricingSection plans={plans} />
 
       {/* Footer */}
       <footer className="border-t border-sage/10 bg-cream-200/50 py-10 px-4">

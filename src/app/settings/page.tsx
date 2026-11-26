@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-data";
+import { isUserAdmin } from "@/lib/admin-auth";
+import {
+  calculateUpgradePrice,
+  getDynamicPricingPlans,
+} from "@/lib/dynamic-config";
 import { getAppUrl } from "@/lib/utils";
 import { AppShell } from "@/components/layout/app-shell";
 import { SettingsClient } from "./settings-client";
@@ -49,6 +54,11 @@ export default async function SettingsPage() {
   });
 
   const inviteUrl = `${getAppUrl()}/join/${bundle.workspace.invite_code}`;
+  const [adminFlag, plans] = await Promise.all([
+    isUserAdmin(profile.id, profile.email),
+    getDynamicPricingPlans(),
+  ]);
+  const upgradePrice = calculateUpgradePrice(plans);
 
   return (
     <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
@@ -57,6 +67,8 @@ export default async function SettingsPage() {
         initialBundle={bundle}
         members={members}
         inviteUrl={inviteUrl}
+        isAdmin={adminFlag}
+        upgradePrice={upgradePrice}
       />
     </AppShell>
   );

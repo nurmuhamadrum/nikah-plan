@@ -3,13 +3,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PLANS, validatePromoCode } from "@/lib/plans";
+import {
+  calculateUpgradePrice,
+  getDynamicPricingPlans,
+  validateDynamicPromoCode,
+} from "@/lib/dynamic-config";
 import { createMidtransSnapTransaction } from "@/lib/midtrans";
 import { getAppUrl } from "@/lib/utils";
 
 const checkoutSchema = z.object({
   plan: z.enum(["WEDDING_ONLY", "COMPLETE_PASS"]),
   promoCode: z.string().trim().max(32).optional().nullable(),
+  isUpgrade: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -35,50 +40,86 @@ export async function POST(request: Request) {
       );
     }
 
-    const planDef = PLANS[parsed.data.plan];
-    const promoResult = validatePromoCode(parsed.data.promoCode, planDef.price);
-    const finalAmount = promoResult.finalAmount;
-
     const admin = createAdminClient();
-
-    // Ambil profil user
     const { data: profile } = await admin
       .from("profiles")
-      .select("id, full_name, email, has_paid")
+      .select("id, full_name, email, has_paid, active_workspace_id")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profile?.has_paid) {
+    const plans = await getDynamicPricingPlans();
+    const isUpgrade = Boolean(parsed.data.isUpgrade);
+
+    let targetPlan = parsed.data.plan;
+    let basePrice = plans[targetPlan].price;
+    let planLabel = plans[targetPlan].name;
+
+    if (isUpgrade) {
+      if (!profile?.has_paid || !profile.active_workspace_id) {
+        return NextResponse.json(
+          { error: "Akun belum memiliki paket aktif untuk di-upgrade." },
+          { status: 400 }
+        );
+      }
+
+      const { data: ws } = await admin
+        .from("workspaces")
+        .select("plan")
+        .eq("id", profile.active_workspace_id)
+        .maybeSingle();
+
+      if (ws?.plan === "COMPLETE_PASS") {
+        return NextResponse.json(
+          {
+            error: "Workspace Anda sudah menggunakan Complete Couple Pass.",
+            alreadyPaid: true,
+          },
+          { status: 409 }
+        );
+      }
+
+      targetPlan = "COMPLETE_PASS";
+      basePrice = calculateUpgradePrice(plans);
+      planLabel = `Upgrade ke ${plans.COMPLETE_PASS.name}`;
+    } else if (profile?.has_paid) {
       return NextResponse.json(
         { error: "Akun Anda sudah memiliki akses aktif.", alreadyPaid: true },
         { status: 409 }
       );
     }
 
+    const promoResult = await validateDynamicPromoCode(
+      parsed.data.promoCode,
+      basePrice
+    );
+    const finalAmount = promoResult.finalAmount;
+
     const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-    const orderId = `NP-${Date.now()}-${randomSuffix}`;
+    const orderId = `${isUpgrade ? "NPUPG" : "NP"}-${Date.now()}-${randomSuffix}`;
     const appUrl = getAppUrl();
 
-    // Panggil Midtrans Snap API untuk mendapatkan snap_token
+    const finishUrl = isUpgrade
+      ? `${appUrl}/checkout?upgrade=1&order_id=${encodeURIComponent(orderId)}&status=finish`
+      : `${appUrl}/checkout?order_id=${encodeURIComponent(orderId)}&status=finish`;
+
     const snap = await createMidtransSnapTransaction({
       orderId,
       amount: finalAmount,
-      planName: planDef.name,
-      planId: planDef.id,
+      planName: planLabel,
+      planId: targetPlan,
       customer: {
         firstName: profile?.full_name || user.email?.split("@")[0] || "Pengguna",
         email: profile?.email || user.email || "",
       },
-      finishUrl: `${appUrl}/checkout?order_id=${encodeURIComponent(orderId)}&status=finish`,
+      finishUrl,
     });
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    // Simpan transaksi ke tabel subscriptions dengan status PENDING
     const { error: insertError } = await admin.from("subscriptions").insert({
       user_id: user.id,
       order_id: orderId,
-      plan: planDef.id,
+      plan: targetPlan,
       amount: finalAmount,
       promo_code: promoResult.valid ? promoResult.code : null,
       status: "PENDING",

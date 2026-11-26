@@ -1,13 +1,25 @@
 import Link from "next/link";
 import { Check, X, Sparkles, ShieldCheck } from "lucide-react";
-import { PLANS } from "@/lib/plans";
+import { PLANS, type PlanDefinition } from "@/lib/plans";
+import type { PlanType } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export function PricingSection() {
-  const planList = [PLANS.WEDDING_ONLY, PLANS.COMPLETE_PASS];
+export function PricingSection({
+  plans = PLANS,
+}: {
+  plans?: Record<PlanType, PlanDefinition>;
+}) {
+  const planList = [plans.WEDDING_ONLY, plans.COMPLETE_PASS];
 
   return (
     <section id="harga" className="py-16 sm:py-24 px-4">
@@ -57,9 +69,11 @@ export function PricingSection() {
                     <span className="text-3xl sm:text-4xl font-bold tracking-tight text-sage-900">
                       {formatIDR(plan.price)}
                     </span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatIDR(plan.originalPrice)}
-                    </span>
+                    {plan.originalPrice > plan.price && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        {formatIDR(plan.originalPrice)}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-medium text-sage-600">
                     One-time payment &bull; Berlaku untuk 2 akun pasangan
@@ -102,7 +116,9 @@ export function PricingSection() {
                   variant={plan.recommended ? "default" : "sage"}
                   className="w-full"
                 >
-                  <Link href={`/login?next=${encodeURIComponent(`/checkout?plan=${plan.id}`)}`}>
+                  <Link
+                    href={`/login?next=${encodeURIComponent(`/checkout?plan=${plan.id}`)}`}
+                  >
                     Pilih {plan.name}
                   </Link>
                 </Button>

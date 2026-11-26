@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Script from "next/script";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Check,
   Tag,
   ShieldCheck,
@@ -14,7 +16,7 @@ import {
   CheckCircle2,
   ExternalLink,
 } from "lucide-react";
-import { PLANS, validatePromoCode } from "@/lib/plans";
+import type { PlanDefinition } from "@/lib/plans";
 import { formatIDR } from "@/lib/utils";
 import type { PlanType } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
@@ -22,7 +24,13 @@ import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 declare global {
@@ -45,6 +53,9 @@ interface CheckoutClientProps {
   userEmail: string;
   userName: string;
   initialPlan: PlanType;
+  plans: Record<PlanType, PlanDefinition>;
+  isUpgrade?: boolean;
+  upgradePrice?: number;
   snapJsUrl: string;
   midtransClientKey: string;
   callbackOrderId?: string;
@@ -54,14 +65,24 @@ export function CheckoutClient({
   userEmail,
   userName,
   initialPlan,
+  plans,
+  isUpgrade = false,
+  upgradePrice = 50000,
   snapJsUrl,
   midtransClientKey,
   callbackOrderId,
 }: CheckoutClientProps) {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>(initialPlan);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>(
+    isUpgrade ? "COMPLETE_PASS" : initialPlan
+  );
   const [promoInput, setPromoInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [checkingPromo, setCheckingPromo] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discountAmount: number;
+    description?: string;
+  } | null>(null);
   const [promoFeedback, setPromoFeedback] = useState<{
     type: "success" | "error";
     text: string;
@@ -76,8 +97,51 @@ export function CheckoutClient({
     redirectUrl?: string;
   } | null>(callbackOrderId ? { orderId: callbackOrderId } : null);
 
-  const planDef = PLANS[selectedPlan];
-  const pricing = validatePromoCode(appliedPromo, planDef.price);
+  const planDef = plans[selectedPlan];
+  const basePrice = isUpgrade ? upgradePrice : planDef.price;
+  const discountAmount = appliedPromo?.discountAmount ?? 0;
+  const finalAmount = Math.max(10000, basePrice - discountAmount);
+
+  // Reset promo discount calculation when plan changes
+  const revalidateAppliedPromo = useCallback(
+    async (code: string, plan: PlanType) => {
+      try {
+        const res = await fetch("/api/promo/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, plan, isUpgrade }),
+        });
+        const data = await res.json();
+        if (data.valid && data.code) {
+          setAppliedPromo({
+            code: data.code,
+            discountAmount: data.discountAmount,
+            description: data.description,
+          });
+          setPromoFeedback({
+            type: "success",
+            text: `${data.description || data.code} (-${formatIDR(data.discountAmount)})`,
+          });
+        } else {
+          setAppliedPromo(null);
+          setPromoFeedback({
+            type: "error",
+            text: data.reason || "Kode promo tidak valid.",
+          });
+        }
+      } catch {
+        setAppliedPromo(null);
+      }
+    },
+    [isUpgrade]
+  );
+
+  const handlePlanChange = (nextPlan: PlanType) => {
+    setSelectedPlan(nextPlan);
+    if (appliedPromo?.code) {
+      revalidateAppliedPromo(appliedPromo.code, nextPlan);
+    }
+  };
 
   const verifyOrderStatus = useCallback(
     async (orderId: string) => {
@@ -91,7 +155,7 @@ export function CheckoutClient({
         });
         const data = await res.json();
         if (res.ok && data.status === "PAID") {
-          router.push(data.redirectTo || "/onboarding");
+          router.push(isUpgrade ? "/dashboard" : data.redirectTo || "/onboarding");
           router.refresh();
           return;
         }
@@ -117,35 +181,27 @@ export function CheckoutClient({
         setVerifying(false);
       }
     },
-    [router]
+    [router, isUpgrade]
   );
 
-  // Jika user kembali dari halaman redirect Midtrans (?order_id=...), verifikasi otomatis
   useEffect(() => {
     if (callbackOrderId) {
       verifyOrderStatus(callbackOrderId);
     }
   }, [callbackOrderId, verifyOrderStatus]);
 
-  const handleApplyPromo = () => {
+  const handleApplyPromo = async () => {
     if (!promoInput.trim()) {
       setAppliedPromo(null);
       setPromoFeedback(null);
       return;
     }
-    const result = validatePromoCode(promoInput, planDef.price);
-    if (result.valid && result.code) {
-      setAppliedPromo(result.code);
-      setPromoFeedback({
-        type: "success",
-        text: `${result.description} (-${formatIDR(result.discountAmount)})`,
-      });
-    } else {
-      setAppliedPromo(null);
-      setPromoFeedback({
-        type: "error",
-        text: "Kode promo tidak ditemukan. Coba kode NIKAH2026 atau COUPLE20.",
-      });
+    setCheckingPromo(true);
+    setPromoFeedback(null);
+    try {
+      await revalidateAppliedPromo(promoInput.trim(), selectedPlan);
+    } finally {
+      setCheckingPromo(false);
     }
   };
 
@@ -159,7 +215,8 @@ export function CheckoutClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: selectedPlan,
-          promoCode: appliedPromo,
+          promoCode: appliedPromo?.code ?? null,
+          isUpgrade,
         }),
       });
 
@@ -167,7 +224,7 @@ export function CheckoutClient({
 
       if (!response.ok) {
         if (data.alreadyPaid) {
-          router.push("/onboarding");
+          router.push(isUpgrade ? "/dashboard" : "/onboarding");
           router.refresh();
           return;
         }
@@ -184,7 +241,6 @@ export function CheckoutClient({
 
       setPendingOrder({ orderId, redirectUrl });
 
-      // Buka Midtrans Snap embedded modal di dalam web jika script sudah siap
       if (typeof window !== "undefined" && window.snap && snapToken) {
         setSubmitting(false);
         window.snap.pay(snapToken, {
@@ -200,7 +256,6 @@ export function CheckoutClient({
             setErrorMsg("Pembayaran gagal diproses. Silakan coba metode lain.");
           },
           onClose: () => {
-            // Cek status siapa tahu user sudah transfer sebelum menutup modal
             verifyOrderStatus(orderId);
           },
         });
@@ -236,7 +291,17 @@ export function CheckoutClient({
         <div className="relative z-10 mx-auto max-w-4xl">
           {/* Top Bar */}
           <div className="flex items-center justify-between mb-8">
-            <NikahPlanLogo size="md" />
+            <div className="flex items-center gap-3">
+              {isUpgrade && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/dashboard">
+                    <ArrowLeft className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              )}
+              <NikahPlanLogo size="md" />
+            </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
                 <p className="text-xs font-semibold text-sage-900">{userName}</p>
@@ -254,29 +319,38 @@ export function CheckoutClient({
           <div className="text-center max-w-xl mx-auto mb-8 space-y-2">
             <Badge variant="softTerracotta">
               <Sparkles className="h-3.5 w-3.5" />
-              Langkah Aktivasi Akses Couple Pass
+              {isUpgrade
+                ? "Upgrade ke Complete Couple Pass"
+                : "Langkah Aktivasi Akses Couple Pass"}
             </Badge>
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-sage-900">
-              Aktifkan Workspace Pernikahanmu
+              {isUpgrade
+                ? "Buka Modul Honeymoon Planner"
+                : "Aktifkan Workspace Pernikahanmu"}
             </h1>
             <p className="text-sm text-sage-700/85">
-              Sekali bayar untuk seumur hidup. Setelah pembayaran terverifikasi,
-              workspace bersama langsung aktif dan Anda bisa mengundang pasangan
-              secara gratis.
+              {isUpgrade
+                ? "Cukup bayar selisih paket untuk langsung membuka Dompet Honeymoon, kalkulator uang jajan harian, multi-mata uang, dan Angpao Bridge."
+                : "Sekali bayar untuk seumur hidup. Setelah pembayaran terverifikasi, workspace bersama langsung aktif dan Anda bisa mengundang pasangan secara gratis."}
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Plan Selector */}
             <div className="lg:col-span-7 space-y-4">
-              {(["COMPLETE_PASS", "WEDDING_ONLY"] as PlanType[]).map((key) => {
-                const item = PLANS[key];
+              {(isUpgrade
+                ? (["COMPLETE_PASS"] as PlanType[])
+                : (["COMPLETE_PASS", "WEDDING_ONLY"] as PlanType[])
+              ).map((key) => {
+                const item = plans[key];
                 const isSelected = selectedPlan === key;
+                const displayPrice = isUpgrade ? upgradePrice : item.price;
+
                 return (
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setSelectedPlan(key)}
+                    onClick={() => handlePlanChange(key)}
                     className={`w-full text-left rounded-2xl border-2 p-5 transition-all bg-white ${
                       isSelected
                         ? "border-sage shadow-soft ring-2 ring-sage/10"
@@ -287,7 +361,7 @@ export function CheckoutClient({
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-display text-xl font-bold text-sage-900">
-                            {item.name}
+                            {isUpgrade ? `Upgrade ke ${item.name}` : item.name}
                           </span>
                           {item.badge && (
                             <Badge variant="terracotta" className="text-[11px]">
@@ -302,18 +376,25 @@ export function CheckoutClient({
 
                       <div className="text-right shrink-0">
                         <p className="text-xl font-bold text-sage-900">
-                          {formatIDR(item.price)}
+                          {formatIDR(displayPrice)}
                         </p>
-                        <p className="text-xs text-muted-foreground line-through">
-                          {formatIDR(item.originalPrice)}
-                        </p>
+                        {!isUpgrade && item.originalPrice > item.price && (
+                          <p className="text-xs text-muted-foreground line-through">
+                            {formatIDR(item.originalPrice)}
+                          </p>
+                        )}
+                        {isUpgrade && (
+                          <p className="text-[11px] text-sage-600">
+                            Selisih paket
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                       {item.features
                         .filter((f) => f.included)
-                        .slice(0, 4)
+                        .slice(0, 6)
                         .map((feat) => (
                           <div
                             key={feat.label}
@@ -328,17 +409,20 @@ export function CheckoutClient({
                 );
               })}
 
-              <div className="rounded-2xl border border-sage/15 bg-sage-50/70 p-4 text-xs text-sage-800 leading-relaxed">
-                <p className="font-semibold text-sage-900 mb-1">
-                  Pasanganmu sudah membeli paket NikahPlan?
-                </p>
-                <p>
-                  Anda tidak perlu membayar ulang! Minta pasangan Anda mengirimkan
-                  tautan undangan (<span className="font-mono">/join/KODE</span>)
-                  dari halaman Onboarding atau Profil, lalu klik tautan tersebut
-                  untuk langsung bergabung gratis.
-                </p>
-              </div>
+              {!isUpgrade && (
+                <div className="rounded-2xl border border-sage/15 bg-sage-50/70 p-4 text-xs text-sage-800 leading-relaxed">
+                  <p className="font-semibold text-sage-900 mb-1">
+                    Pasanganmu sudah membeli paket NikahPlan?
+                  </p>
+                  <p>
+                    Anda tidak perlu membayar ulang! Minta pasangan Anda
+                    mengirimkan tautan undangan (
+                    <span className="font-mono">/join/KODE</span>) dari halaman
+                    Onboarding atau Profil, lalu klik tautan tersebut untuk
+                    langsung bergabung gratis.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Order Summary & Midtrans Pay Button */}
@@ -367,7 +451,9 @@ export function CheckoutClient({
                       id="promo-code"
                       placeholder="Contoh: NIKAH2026"
                       value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        setPromoInput(e.target.value.toUpperCase())
+                      }
                       className="uppercase font-mono text-xs h-10"
                     />
                     <Button
@@ -375,9 +461,14 @@ export function CheckoutClient({
                       variant="outline"
                       size="sm"
                       className="h-10 px-4 shrink-0"
+                      disabled={checkingPromo}
                       onClick={handleApplyPromo}
                     >
-                      Pakai
+                      {checkingPromo ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "Pakai"
+                      )}
                     </Button>
                   </div>
                   {promoFeedback && (
@@ -398,14 +489,16 @@ export function CheckoutClient({
                 {/* Price Breakdown */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-sage-700">
-                    <span>{planDef.name}</span>
-                    <span className="font-medium">{formatIDR(planDef.price)}</span>
+                    <span>
+                      {isUpgrade ? "Selisih Upgrade Complete" : planDef.name}
+                    </span>
+                    <span className="font-medium">{formatIDR(basePrice)}</span>
                   </div>
-                  {pricing.discountAmount > 0 && (
+                  {discountAmount > 0 && appliedPromo && (
                     <div className="flex justify-between text-terracotta-700">
-                      <span>Diskon ({pricing.code})</span>
+                      <span>Diskon ({appliedPromo.code})</span>
                       <span className="font-medium">
-                        -{formatIDR(pricing.discountAmount)}
+                        -{formatIDR(discountAmount)}
                       </span>
                     </div>
                   )}
@@ -415,7 +508,7 @@ export function CheckoutClient({
                       Total Bayar
                     </span>
                     <span className="text-2xl font-bold text-sage-900">
-                      {formatIDR(pricing.finalAmount)}
+                      {formatIDR(finalAmount)}
                     </span>
                   </div>
                 </div>
@@ -440,7 +533,8 @@ export function CheckoutClient({
                     </>
                   ) : (
                     <>
-                      Bayar Sekarang &bull; {formatIDR(pricing.finalAmount)}
+                      {isUpgrade ? "Upgrade Sekarang" : "Bayar Sekarang"} &bull;{" "}
+                      {formatIDR(finalAmount)}
                     </>
                   )}
                 </Button>

@@ -208,7 +208,8 @@ export async function activatePaidSubscription(params: {
     };
   }
 
-  // 3. Update status subscription -> PAID
+  // 3. Update status subscription -> PAID + increment promo_codes.used_count jika ada promo
+  const wasPending = subscription.status !== "PAID";
   await admin
     .from("subscriptions")
     .update({
@@ -217,6 +218,20 @@ export async function activatePaidSubscription(params: {
       paid_at: new Date().toISOString(),
     })
     .eq("id", subscription.id);
+
+  if (wasPending && subscription.promo_code) {
+    const { data: promoRow } = await admin
+      .from("promo_codes")
+      .select("id, used_count")
+      .eq("code", subscription.promo_code)
+      .maybeSingle();
+    if (promoRow) {
+      await admin
+        .from("promo_codes")
+        .update({ used_count: (promoRow.used_count || 0) + 1 })
+        .eq("id", promoRow.id);
+    }
+  }
 
   // 4. Pastikan user punya workspace (jika belum, buat workspace baru + tautkan sebagai OWNER)
   let workspaceId = profile.active_workspace_id;

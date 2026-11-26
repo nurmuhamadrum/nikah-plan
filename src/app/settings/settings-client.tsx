@@ -16,12 +16,15 @@ import {
   MessageCircle,
   RefreshCw,
   RotateCcw,
+  ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   Users,
 } from "lucide-react";
 import type { Profile } from "@/types/database";
 import type { WorkspaceBundle } from "@/lib/workspace-data";
+import { formatIDR } from "@/lib/utils";
 import { fetchWorkspaceBundleOfflineFirst } from "@/lib/offline/query-helpers";
 import {
   clearOfflineCache,
@@ -40,6 +43,7 @@ import {
   exportBudgetToPDF,
 } from "@/lib/export-reports";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
+import { PushNotificationCard } from "@/components/settings/push-notification-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +62,8 @@ interface SettingsClientProps {
   initialBundle: WorkspaceBundle;
   members: { full_name: string; email: string; role: string }[];
   inviteUrl: string;
+  isAdmin?: boolean;
+  upgradePrice?: number;
 }
 
 export function SettingsClient({
@@ -65,6 +71,8 @@ export function SettingsClient({
   initialBundle,
   members,
   inviteUrl,
+  isAdmin = false,
+  upgradePrice = 50000,
 }: SettingsClientProps) {
   const queryClient = useQueryClient();
   const queuedCount = useAppStore((s) => s.queuedCount);
@@ -246,6 +254,14 @@ export function SettingsClient({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            {isAdmin && (
+              <Button asChild variant="sage" size="sm">
+                <Link href="/admin">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Buka Admin Portal
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" size="sm">
               <Link href="/onboarding?edit=1">
                 <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -266,6 +282,33 @@ export function SettingsClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* 1b. Upgrade Banner khusus Wedding Only Pass */}
+      {workspace.plan === "WEDDING_ONLY" && (
+        <Card className="rounded-3xl border-terracotta/30 bg-terracotta-50/70 shadow-card">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-terracotta-800 inline-flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-terracotta" />
+                Upgrade ke Complete Couple Pass
+              </p>
+              <p className="text-xs text-sage-800 leading-relaxed">
+                Cukup bayar selisih <strong>{formatIDR(upgradePrice)}</strong>{" "}
+                untuk membuka Dompet Honeymoon, kalkulator uang jajan harian,
+                multi-mata uang &amp; Angpao Bridge.
+              </p>
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/checkout?upgrade=1">
+                Upgrade ({formatIDR(upgradePrice)})
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 1c. Web Push Notifications H-3 */}
+      <PushNotificationCard />
 
       {/* 2. Export Laporan ke PDF & Excel */}
       <Card className="rounded-3xl border-sage/12 bg-white shadow-card">

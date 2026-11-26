@@ -191,7 +191,7 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
   if (workspace.plan !== "COMPLETE_PASS") {
     return (
       <Card className="rounded-3xl border-sage/15 bg-white shadow-soft">
-        <CardContent className="p-7 text-center space-y-3">
+        <CardContent className="p-7 text-center space-y-4">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
             <Lock className="h-6 w-6" />
           </div>
@@ -203,6 +203,11 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
             Honeymoon, kalkulator uang jajan harian, dan pencatatan multi-mata
             uang tersedia di <strong>Complete Couple Pass</strong>.
           </p>
+          <Button asChild size="lg">
+            <Link href="/checkout?upgrade=1">
+              Upgrade ke Complete Couple Pass
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     );
