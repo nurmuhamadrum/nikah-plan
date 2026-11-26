@@ -3,7 +3,8 @@ import { LoginClient } from "./login-client";
 
 export const metadata: Metadata = {
   title: "Masuk atau Daftar",
-  description: "Masuk ke NikahPlan dengan Google OAuth atau Email Magic Link.",
+  description:
+    "Masuk atau daftar akun NikahPlan menggunakan Google OAuth, Email & Kata Sandi, atau Email Magic Link.",
 };
 
 export default async function LoginPage({

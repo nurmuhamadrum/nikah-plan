@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-data";
+import { getAuthenticatedProfileAndWorkspace } from "@/lib/workspace-server";
 import { AppShell } from "@/components/layout/app-shell";
 import { DashboardClient } from "./dashboard-client";
 

@@ -5,7 +5,6 @@ import type {
   Database,
   HoneymoonChecklist,
   ItemPayment,
-  Profile,
   WeddingGift,
   Workspace,
 } from "@/types/database";
@@ -64,36 +63,4 @@ export async function fetchWorkspaceBundle(
     gifts: giftRes.data ?? [],
     checklists: checkRes.data ?? [],
   };
-}
-
-export async function getAuthenticatedProfileAndWorkspace(
-  supabase: SupabaseClient<Database>
-): Promise<{
-  profile: Profile | null;
-  bundle: WorkspaceBundle | null;
-}> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { profile: null, bundle: null };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || !profile.has_paid || !profile.active_workspace_id) {
-    return { profile: profile ?? null, bundle: null };
-  }
-
-  const bundle = await fetchWorkspaceBundle(
-    supabase,
-    profile.active_workspace_id
-  );
-
-  return { profile, bundle };
 }
