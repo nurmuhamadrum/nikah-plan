@@ -13,6 +13,8 @@ import {
   Gem,
   Heart,
   Wallet,
+  Car,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -78,6 +80,27 @@ export const CATEGORY_ICON_OPTIONS: {
     icon: Music,
     bgClass: "bg-cream-200",
     textClass: "text-sage-700",
+  },
+  {
+    key: "mail",
+    label: "Undangan & Souvenir",
+    icon: Mail,
+    bgClass: "bg-terracotta-50",
+    textClass: "text-terracotta-700",
+  },
+  {
+    key: "car",
+    label: "Transportasi",
+    icon: Car,
+    bgClass: "bg-sage-50",
+    textClass: "text-sage-800",
+  },
+  {
+    key: "sparkles",
+    label: "Make Up & Riasan",
+    icon: Sparkles,
+    bgClass: "bg-amberwarm-light",
+    textClass: "text-terracotta-700",
   },
   {
     key: "plane",

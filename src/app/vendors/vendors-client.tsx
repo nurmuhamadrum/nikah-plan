@@ -41,6 +41,8 @@ import { CategoryDialog } from "@/components/vendors/category-dialog";
 import { VendorDialog } from "@/components/vendors/vendor-dialog";
 import { PaymentDialog } from "@/components/vendors/payment-dialog";
 import { ReceiptPreviewDialog } from "@/components/vendors/receipt-preview-dialog";
+import { TemplatePickerDialog } from "@/components/vendors/template-picker-dialog";
+import { getBudgetHealthStatus } from "@/lib/budget-insights";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +105,7 @@ export function VendorsClient({
   const [vendorDialogOpen, setVendorDialogOpen] = useState(
     openNewVendorOnMount
   );
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<BudgetItem | null>(null);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -244,7 +247,17 @@ export function VendorsClient({
           <SyncStatusBadge />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={weddingCategories.length === 0}
+            onClick={() => setTemplateDialogOpen(true)}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-terracotta" />
+            Template Item
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -343,8 +356,13 @@ export function VendorsClient({
           })}
         </div>
 
-        {/* Active Category Header Bar (with quick edit category button) */}
-        {activeCategoryObj && (
+        {/* Active Category Header Bar (with health status & quick edit category button) */}
+        {activeCategoryObj && (() => {
+          const catHealth = getBudgetHealthStatus(
+            Math.max(summary.totalDeal, summary.totalPaid),
+            Number(activeCategoryObj.allocated_amount) || 0
+          );
+          return (
           <div className="flex items-center justify-between gap-2 rounded-2xl border border-sage/12 bg-sage-50/70 px-4 py-2.5 text-xs">
             <div className="flex items-center gap-2.5 min-w-0">
               <CategoryIconBadge
@@ -352,12 +370,22 @@ export function VendorsClient({
                 className="h-8 w-8"
               />
               <div className="min-w-0">
-                <p className="font-bold text-sage-900 truncate">
-                  {activeCategoryObj.name}
-                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <p className="font-bold text-sage-900 truncate">
+                    {activeCategoryObj.name}
+                  </p>
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${catHealth.badgeClass}`}
+                  >
+                    {catHealth.shortLabel}
+                    {Number(activeCategoryObj.allocated_amount) > 0
+                      ? ` • ${catHealth.usagePct}%`
+                      : ""}
+                  </span>
+                </div>
                 <p className="text-sage-600">
                   Target alokasi:{" "}
-                  <strong>
+                  <strong className="tabular-nums">
                     {formatIDR(Number(activeCategoryObj.allocated_amount) || 0)}
                   </strong>
                 </p>
@@ -377,7 +405,8 @@ export function VendorsClient({
               Edit Pos
             </Button>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Search + Funding Source Filter */}
@@ -790,6 +819,18 @@ export function VendorsClient({
         }
         receiptPath={receiptPreview.path}
         title={receiptPreview.title}
+      />
+
+      <TemplatePickerDialog
+        open={templateDialogOpen}
+        onOpenChange={setTemplateDialogOpen}
+        workspaceId={workspaceId}
+        categories={weddingCategories}
+        existingItems={weddingItems}
+        defaultCategoryId={
+          selectedCategory !== "ALL" ? selectedCategory : undefined
+        }
+        onSuccess={refreshData}
       />
     </div>
   );

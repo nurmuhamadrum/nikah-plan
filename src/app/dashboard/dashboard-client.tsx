@@ -28,6 +28,8 @@ import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
+import { BudgetInsightsCard } from "@/components/dashboard/budget-insights-card";
+import { computeWeddingInsights } from "@/lib/budget-insights";
 import { HoneymoonPanel } from "@/components/honeymoon/honeymoon-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,11 +75,6 @@ export function DashboardClient({
   const { workspace, categories, items, payments } = bundle;
 
   // --- KALKULASI WEDDING METRICS ---
-  const weddingCategories = useMemo(
-    () => categories.filter((c) => c.phase === "WEDDING"),
-    [categories]
-  );
-
   const weddingItems = useMemo(
     () => items.filter((i) => i.phase === "WEDDING"),
     [items]
@@ -181,26 +178,14 @@ export function DashboardClient({
       .slice(0, 3);
   }, [weddingItems, weddingPayments]);
 
+  // --- INSIGHT & DECISION SUPPORT (XLSX Summary Engine) ---
+  const weddingInsights = useMemo(
+    () => computeWeddingInsights(workspace, categories, items, payments),
+    [workspace, categories, items, payments]
+  );
+
   // --- RINGKASAN PER KATEGORI ---
-  const categorySummaries = useMemo(() => {
-    return weddingCategories.map((cat) => {
-      const catItems = weddingItems.filter((i) => i.category_id === cat.id);
-      const catItemIds = new Set(catItems.map((i) => i.id));
-      const catDeal = catItems.reduce(
-        (s, i) => s + (Number(i.deal_cost) || Number(i.estimated_cost) || 0),
-        0
-      );
-      const catPaid = weddingPayments
-        .filter((p) => catItemIds.has(p.item_id) && p.is_paid)
-        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
-      return {
-        category: cat,
-        itemCount: catItems.length,
-        totalDeal: catDeal,
-        totalPaid: catPaid,
-      };
-    });
-  }, [weddingCategories, weddingItems, weddingPayments]);
+  const categorySummaries = weddingInsights.categoryRows;
 
   const refreshData = async () => {
     await queryClient.invalidateQueries({
@@ -457,6 +442,9 @@ export function DashboardClient({
             </CardContent>
           </Card>
 
+          {/* Status Kesehatan 3 Warna, Insight & Grafik Kategori */}
+          <BudgetInsightsCard insights={weddingInsights} />
+
           {/* Tagihan Mendesak / Pengingat Jatuh Tempo */}
           {urgentPayments.length > 0 && (
             <div className="space-y-2.5">
@@ -539,12 +527,11 @@ export function DashboardClient({
             ) : (
               <RevealStagger className="space-y-2.5" stagger={0.05} inView={false}>
                 {categorySummaries.map(
-                  ({ category, itemCount, totalDeal, totalPaid }) => {
-                    const allocated = Number(category.allocated_amount) || 0;
+                  ({ category, itemCount, allocated, totalDeal, totalPaid, health }) => {
                     const displayAmount = totalDeal > 0 ? totalDeal : allocated;
                     const progress =
                       allocated > 0
-                        ? Math.min(100, Math.round((totalPaid / allocated) * 100))
+                        ? Math.min(100, Math.round((Math.max(totalDeal, totalPaid) / allocated) * 100))
                         : 0;
 
                     return (
@@ -556,12 +543,18 @@ export function DashboardClient({
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
                           <CategoryIconBadge iconKey={category.icon} />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <p className="text-sm font-bold text-sage-900 truncate">
                                 {category.name}
                               </p>
                               <span className="text-[11px] text-sage-500 shrink-0">
                                 ({itemCount} item)
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold shrink-0 ${health.badgeClass}`}
+                              >
+                                {health.shortLabel}
+                                {allocated > 0 ? ` • ${health.usagePct}%` : ""}
                               </span>
                             </div>
                             <p className="text-xs font-semibold tabular-nums text-sage-700 mt-0.5">
@@ -575,7 +568,7 @@ export function DashboardClient({
                             {allocated > 0 && (
                               <div className="mt-2 h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-cream-200">
                                 <div
-                                  className="h-full rounded-full bg-sage/80"
+                                  className={`h-full rounded-full transition-all ${health.barClass}`}
                                   style={{ width: `${progress}%` }}
                                 />
                               </div>

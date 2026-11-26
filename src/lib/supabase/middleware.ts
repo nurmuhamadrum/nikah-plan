@@ -8,6 +8,7 @@ const PROTECTED_PAID_PREFIXES = [
   "/dashboard",
   "/vendors",
   "/angpao",
+  "/panduan",
   "/settings",
 ];
 

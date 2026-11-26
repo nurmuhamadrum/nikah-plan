@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Home, ReceiptText, Gift, User } from "lucide-react";
+import { Home, ReceiptText, Gift, BookOpen, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home },
   { href: "/vendors", label: "Vendor", icon: ReceiptText },
   { href: "/angpao", label: "Angpao", icon: Gift },
+  { href: "/panduan", label: "Panduan", icon: BookOpen },
   { href: "/settings", label: "Profil", icon: User },
 ];
 
@@ -112,7 +113,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         aria-label="Navigasi utama"
         className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/60 bg-white/80 backdrop-blur-xl shadow-soft pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="mx-auto grid max-w-md grid-cols-4 h-16 px-2">
+        <div className="mx-auto grid max-w-md grid-cols-5 h-16 px-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -122,7 +123,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors",
+                  "relative flex flex-col items-center justify-center gap-1 text-[10.5px] font-semibold transition-colors",
                   isActive ? "text-sage-900" : "text-sage-500 hover:text-sage-800"
                 )}
               >
