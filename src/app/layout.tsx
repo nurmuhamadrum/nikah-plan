@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -47,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${plusJakarta.variable} ${playfair.variable}`}>
       <body className="min-h-screen bg-cream text-foreground">
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
