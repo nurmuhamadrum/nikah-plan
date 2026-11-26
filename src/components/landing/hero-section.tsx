@@ -58,7 +58,7 @@ const FLOATING_CARDS = [
     sub: "Termin 2 dari 3",
     tone: "bg-sage-50 text-sage",
     ring: "border-sage/20",
-    posClass: "top-8 left-4 xl:left-12",
+    posClass: "top-8 left-10 xl:left-[104px]",
     tiltClass: "-rotate-[1.5deg] hover:rotate-0 hover:scale-[1.03]",
     initialOffset: { x: -18, y: 8 },
     dot: true,
@@ -71,7 +71,7 @@ const FLOATING_CARDS = [
     sub: "+Rp 2,5 Jt",
     tone: "bg-amberwarm-light text-sage-900",
     ring: "border-amberwarm/35",
-    posClass: "top-[27%] right-0 xl:right-12",
+    posClass: "top-[27%] -right-4 xl:-right-12",
     tiltClass: "rotate-[1.5deg] hover:rotate-0 hover:scale-[1.03]",
     initialOffset: { x: 18, y: 0 },
     dot: false,
@@ -84,7 +84,7 @@ const FLOATING_CARDS = [
     sub: "Rp 750rb/hari",
     tone: "bg-terracotta-50 text-terracotta",
     ring: "border-terracotta/25",
-    posClass: "bottom-[23%] left-4 xl:left-12",
+    posClass: "bottom-[23%] left-10 xl:left-[104px]",
     tiltClass: "-rotate-[1deg] hover:rotate-0 hover:scale-[1.03]",
     initialOffset: { x: -18, y: 8 },
     dot: false,
@@ -107,7 +107,7 @@ export function HeroSection({
     <section className="relative isolate overflow-hidden px-4 pt-6 pb-12 sm:pt-9 sm:pb-16 lg:pt-8 lg:pb-14">
       <FloatingBotanicals preset="hero" />
 
-      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-6">
+      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-6">
         {/* Kolom teks (5 col) */}
         <div className="space-y-4 sm:space-y-5 text-center lg:col-span-5 lg:text-left">
           <motion.div
@@ -188,18 +188,27 @@ export function HeroSection({
           </motion.p>
 
           <motion.div
-            className="flex flex-col flex-wrap items-center justify-center gap-2.5 pt-0.5 sm:flex-row lg:justify-start"
+            className="flex flex-col items-center justify-center gap-2.5 pt-0.5 sm:flex-row sm:flex-nowrap lg:justify-start"
             initial={{ opacity: 0, y: 16, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: EASE, delay: accentDelay + 0.45 }}
           >
-            <Button asChild size="default" className="group h-10 sm:h-11 w-full sm:w-auto px-4 xl:px-5 text-sm">
+            <Button
+              asChild
+              size="default"
+              className="group h-10 w-full shrink-0 px-4 text-[13px] sm:w-auto"
+            >
               <Link href="/login?next=/checkout">
                 {hero.primaryCta}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="default" className="h-10 sm:h-11 w-full sm:w-auto px-4 xl:px-5 text-sm">
+            <Button
+              asChild
+              variant="outline"
+              size="default"
+              className="h-10 w-full shrink-0 px-4 text-[13px] sm:w-auto"
+            >
               <a href="#harga">
                 {hero.secondaryCta} ({lowestPriceLabel})
               </a>
@@ -251,7 +260,7 @@ export function HeroSection({
           {/* Halo hangat di belakang stage */}
           <div
             aria-hidden="true"
-            className="absolute inset-x-10 inset-y-4 -z-10 rounded-[2.5rem] bg-gradient-to-br from-terracotta-200/60 via-amberwarm-light to-sage-200/60 blur-2xl"
+            className="absolute left-28 -right-4 inset-y-4 -z-10 rounded-[2.5rem] bg-gradient-to-br from-terracotta-200/60 via-amberwarm-light to-sage-200/60 blur-2xl"
           />
 
           {/* Strip pill ringkas khusus layar tablet (640px–1179px) */}
@@ -280,9 +289,9 @@ export function HeroSection({
             })}
           </div>
 
-          {/* Widget Utama — terpusat dengan ruang tepi kiri & kanan ~125px */}
+          {/* Widget Utama — rata kanan sejajar dengan tepi kanan Header */}
           <motion.div
-            className="relative z-10 mx-auto w-full max-w-[440px]"
+            className="relative z-10 mx-auto w-full max-w-[440px] lg:ml-auto lg:mr-6"
             initial={{ opacity: 0, x: 32 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.85, ease: EASE, delay: 0.45 }}
