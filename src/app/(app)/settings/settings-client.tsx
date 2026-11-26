@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
+  BookOpen,
   Check,
   Copy,
   FileSpreadsheet,
@@ -268,6 +269,12 @@ export function SettingsClient({
                 Ubah Target Budget &amp; Profil
               </Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/panduan">
+                <BookOpen className="h-3.5 w-3.5" />
+                Pusat Panduan &amp; Skenario
+              </Link>
+            </Button>
             <form action="/auth/signout" method="post">
               <Button
                 variant="ghost"
@@ -294,8 +301,8 @@ export function SettingsClient({
               </p>
               <p className="text-xs text-sage-800 leading-relaxed">
                 Cukup bayar selisih <strong>{formatIDR(upgradePrice)}</strong>{" "}
-                untuk membuka Dompet Honeymoon, kalkulator uang jajan harian,
-                multi-mata uang &amp; Angpao Bridge.
+                untuk membuka Buat Undangan Online Sendiri, Dompet Honeymoon,
+                kalkulator uang jajan harian, multi-mata uang &amp; Angpao Bridge.
               </p>
             </div>
             <Button asChild size="sm" className="shrink-0">

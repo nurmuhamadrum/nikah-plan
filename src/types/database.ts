@@ -6,6 +6,12 @@ export type BudgetPhase = "WEDDING" | "HONEYMOON_PRE" | "HONEYMOON_ONTRIP";
 export type GiftType = "CASH" | "TRANSFER" | "PHYSICAL";
 export type GiftAllocation = "UNALLOCATED" | "WEDDING_COVER" | "HONEYMOON_FUND";
 export type PromoDiscountType = "PERCENT" | "FIXED";
+export type InvitationTheme =
+  | "BOTANICAL_SAGE"
+  | "WARM_TERRACOTTA"
+  | "CLASSIC_GOLD"
+  | "MIDNIGHT_GARDEN";
+export type RsvpAttendance = "HADIR" | "TIDAK_HADIR" | "RAGU";
 
 export type Profile = {
   id: string;
@@ -175,6 +181,67 @@ export type PushSubscriptionRow = {
   created_at: string;
 };
 
+export type LoveStoryItem = {
+  year: string;
+  title: string;
+  description: string;
+};
+
+export type GiftAccountItem = {
+  bank: string;
+  accountNumber: string;
+  accountHolder: string;
+};
+
+export type WeddingInvitation = {
+  id: string;
+  workspace_id: string;
+  slug: string;
+  is_published: boolean;
+  theme: InvitationTheme;
+  groom_name: string;
+  groom_full_name: string;
+  groom_parents: string;
+  groom_instagram: string | null;
+  bride_name: string;
+  bride_full_name: string;
+  bride_parents: string;
+  bride_instagram: string | null;
+  opening_quote: string;
+  quote_source: string;
+  cover_photo_url: string | null;
+  akad_date: string | null;
+  akad_time: string;
+  akad_venue: string;
+  akad_address: string;
+  akad_maps_url: string | null;
+  resepsi_date: string | null;
+  resepsi_time: string;
+  resepsi_venue: string;
+  resepsi_address: string;
+  resepsi_maps_url: string | null;
+  love_stories: LoveStoryItem[];
+  gift_accounts: GiftAccountItem[];
+  gift_address: string | null;
+  gallery_urls: string[];
+  show_rsvp: boolean;
+  show_gift: boolean;
+  closing_message: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InvitationRsvp = {
+  id: string;
+  invitation_id: string;
+  workspace_id: string;
+  guest_name: string;
+  attendance: RsvpAttendance;
+  guest_count: number;
+  message: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -268,6 +335,23 @@ export type Database = {
             "user_id" | "workspace_id" | "endpoint" | "p256dh" | "auth"
           >;
         Update: Partial<PushSubscriptionRow>;
+        Relationships: [];
+      };
+      wedding_invitations: {
+        Row: WeddingInvitation;
+        Insert: Partial<WeddingInvitation> &
+          Pick<WeddingInvitation, "workspace_id" | "slug">;
+        Update: Partial<WeddingInvitation>;
+        Relationships: [];
+      };
+      invitation_rsvps: {
+        Row: InvitationRsvp;
+        Insert: Partial<InvitationRsvp> &
+          Pick<
+            InvitationRsvp,
+            "invitation_id" | "workspace_id" | "guest_name" | "attendance"
+          >;
+        Update: Partial<InvitationRsvp>;
         Relationships: [];
       };
     };

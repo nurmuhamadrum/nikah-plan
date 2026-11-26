@@ -1,0 +1,1583 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { motion } from "motion/react";
+import {
+  AlertCircle,
+  Calendar,
+  Check,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  Gift,
+  Globe,
+  Heart,
+  ImagePlus,
+  Loader2,
+  Lock,
+  Mail,
+  MessageCircle,
+  Palette,
+  Plus,
+  Save,
+  Send,
+  Sparkles,
+  Trash2,
+  Users,
+} from "lucide-react";
+import type {
+  GiftAccountItem,
+  InvitationRsvp,
+  InvitationTheme,
+  LoveStoryItem,
+  WeddingInvitation,
+  Workspace,
+} from "@/types/database";
+import { createClient } from "@/lib/supabase/client";
+import { compressReceiptFile } from "@/lib/image-compression";
+import {
+  DEFAULT_CLOSING_MESSAGE,
+  DEFAULT_OPENING_QUOTE,
+  DEFAULT_QUOTE_SOURCE,
+  INVITATION_THEME_LIST,
+  buildGuestWhatsAppMessage,
+  slugifyInvitation,
+  splitCoupleNames,
+} from "@/lib/invitation-themes";
+import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/ui/empty-state";
+
+type BuilderTab = "tema" | "acara" | "amplop" | "rsvp";
+
+const BUILDER_TABS: { id: BuilderTab; label: string; icon: typeof Palette }[] =
+  [
+    { id: "tema", label: "Tema & Mempelai", icon: Palette },
+    { id: "acara", label: "Acara & Kisah", icon: Calendar },
+    { id: "amplop", label: "Amplop & Galeri", icon: Gift },
+    { id: "rsvp", label: "Kirim & RSVP", icon: Send },
+  ];
+
+interface UndanganClientProps {
+  workspace: Workspace;
+  initialInvitation: WeddingInvitation | null;
+  initialRsvps: InvitationRsvp[];
+  appUrl: string;
+  migrationMissing?: boolean;
+}
+
+export function UndanganClient({
+  workspace,
+  initialInvitation,
+  initialRsvps,
+  appUrl,
+  migrationMissing = false,
+}: UndanganClientProps) {
+  const [defaultGroom, defaultBride] = useMemo(
+    () => splitCoupleNames(workspace.couple_title),
+    [workspace.couple_title]
+  );
+
+  const [activeTab, setActiveTab] = useState<BuilderTab>("tema");
+  const [savedInvitation, setSavedInvitation] =
+    useState<WeddingInvitation | null>(initialInvitation);
+
+  // Form states
+  const [slug, setSlug] = useState<string>(
+    initialInvitation?.slug || slugifyInvitation(workspace.couple_title)
+  );
+  const [isPublished, setIsPublished] = useState<boolean>(
+    initialInvitation?.is_published ?? false
+  );
+  const [theme, setTheme] = useState<InvitationTheme>(
+    initialInvitation?.theme ?? "BOTANICAL_SAGE"
+  );
+
+  const [groomName, setGroomName] = useState(
+    initialInvitation?.groom_name || defaultGroom
+  );
+  const [groomFullName, setGroomFullName] = useState(
+    initialInvitation?.groom_full_name || ""
+  );
+  const [groomParents, setGroomParents] = useState(
+    initialInvitation?.groom_parents || ""
+  );
+  const [groomInstagram, setGroomInstagram] = useState(
+    initialInvitation?.groom_instagram || ""
+  );
+
+  const [brideName, setBrideName] = useState(
+    initialInvitation?.bride_name || defaultBride
+  );
+  const [brideFullName, setBrideFullName] = useState(
+    initialInvitation?.bride_full_name || ""
+  );
+  const [brideParents, setBrideParents] = useState(
+    initialInvitation?.bride_parents || ""
+  );
+  const [brideInstagram, setBrideInstagram] = useState(
+    initialInvitation?.bride_instagram || ""
+  );
+
+  const [openingQuote, setOpeningQuote] = useState(
+    initialInvitation?.opening_quote ?? DEFAULT_OPENING_QUOTE
+  );
+  const [quoteSource, setQuoteSource] = useState(
+    initialInvitation?.quote_source ?? DEFAULT_QUOTE_SOURCE
+  );
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState(
+    initialInvitation?.cover_photo_url || ""
+  );
+
+  const [akadDate, setAkadDate] = useState(
+    initialInvitation?.akad_date || workspace.wedding_date || ""
+  );
+  const [akadTime, setAkadTime] = useState(
+    initialInvitation?.akad_time || "08:00 - 10:00 WIB"
+  );
+  const [akadVenue, setAkadVenue] = useState(
+    initialInvitation?.akad_venue || ""
+  );
+  const [akadAddress, setAkadAddress] = useState(
+    initialInvitation?.akad_address || ""
+  );
+  const [akadMapsUrl, setAkadMapsUrl] = useState(
+    initialInvitation?.akad_maps_url || ""
+  );
+
+  const [resepsiDate, setResepsiDate] = useState(
+    initialInvitation?.resepsi_date || workspace.wedding_date || ""
+  );
+  const [resepsiTime, setResepsiTime] = useState(
+    initialInvitation?.resepsi_time || "11:00 - 14:00 WIB"
+  );
+  const [resepsiVenue, setResepsiVenue] = useState(
+    initialInvitation?.resepsi_venue || ""
+  );
+  const [resepsiAddress, setResepsiAddress] = useState(
+    initialInvitation?.resepsi_address || ""
+  );
+  const [resepsiMapsUrl, setResepsiMapsUrl] = useState(
+    initialInvitation?.resepsi_maps_url || ""
+  );
+
+  const [loveStories, setLoveStories] = useState<LoveStoryItem[]>(
+    Array.isArray(initialInvitation?.love_stories)
+      ? initialInvitation.love_stories
+      : []
+  );
+  const [giftAccounts, setGiftAccounts] = useState<GiftAccountItem[]>(
+    Array.isArray(initialInvitation?.gift_accounts)
+      ? initialInvitation.gift_accounts
+      : []
+  );
+  const [giftAddress, setGiftAddress] = useState(
+    initialInvitation?.gift_address || ""
+  );
+  const [galleryUrls, setGalleryUrls] = useState<string[]>(
+    Array.isArray(initialInvitation?.gallery_urls)
+      ? initialInvitation.gallery_urls
+      : []
+  );
+  const [showRsvp, setShowRsvp] = useState(
+    initialInvitation?.show_rsvp ?? true
+  );
+  const [showGift, setShowGift] = useState(
+    initialInvitation?.show_gift ?? true
+  );
+  const [closingMessage, setClosingMessage] = useState(
+    initialInvitation?.closing_message ?? DEFAULT_CLOSING_MESSAGE
+  );
+
+  // UI & upload states
+  const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [copiedSlug, setCopiedSlug] = useState(false);
+
+  // Guest share generator
+  const [guestNamesInput, setGuestNamesInput] = useState(
+    "Bapak Budi Santoso & Keluarga\nRina Wijaya"
+  );
+  const [copiedGuestIdx, setCopiedGuestIdx] = useState<number | null>(null);
+
+  // RSVP list
+  const [rsvps, setRsvps] = useState<InvitationRsvp[]>(initialRsvps);
+  const [deletingRsvpId, setDeletingRsvpId] = useState<string | null>(null);
+
+  const normalizedSlug = slugifyInvitation(slug);
+  const publicUrl = `${appUrl}/u/${savedInvitation?.slug || normalizedSlug}`;
+
+  const rsvpStats = useMemo(() => {
+    const hadir = rsvps.filter((r) => r.attendance === "HADIR");
+    const ragu = rsvps.filter((r) => r.attendance === "RAGU");
+    const tidak = rsvps.filter((r) => r.attendance === "TIDAK_HADIR");
+    const totalPax = hadir.reduce((s, r) => s + (r.guest_count || 1), 0);
+    return {
+      hadirCount: hadir.length,
+      totalPax,
+      raguCount: ragu.length,
+      tidakCount: tidak.length,
+    };
+  }, [rsvps]);
+
+  const parsedGuestList = useMemo(
+    () =>
+      guestNamesInput
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .slice(0, 50),
+    [guestNamesInput]
+  );
+
+  // =========================================================================
+  // GUARD: HANYA UNTUK PAKET COMPLETE_PASS
+  // =========================================================================
+  if (workspace.plan !== "COMPLETE_PASS") {
+    return (
+      <div className="space-y-5 pb-8">
+        <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
+          <div
+            aria-hidden="true"
+            className="pattern-leaves absolute inset-0 opacity-80"
+          />
+          <BotanicalCorner
+            className="pointer-events-none absolute -bottom-5 -right-4 h-36 w-36 opacity-25"
+            variant="terracotta"
+          />
+          <CardContent className="relative z-10 p-6 sm:p-8 text-center space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-amberwarm border border-white/20">
+              <Lock className="h-7 w-7" />
+            </div>
+            <Badge
+              variant="outline"
+              className="border-white/25 bg-white/10 text-cream-50"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amberwarm" />
+              Eksklusif Complete Couple Pass
+            </Badge>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold text-cream-50">
+              Buat Undangan Online Sendiri Tanpa Biaya Tambahan
+            </h1>
+            <p className="text-xs sm:text-sm text-cream-200/90 max-w-lg mx-auto leading-relaxed">
+              Paket aktif Anda adalah <strong>Wedding Only Pass</strong>.
+              Upgrade ke <strong>Complete Couple Pass</strong> untuk membuka
+              Pembuat Undangan Digital (hemat Rp 500rb–1,5 Jt biaya cetak!),
+              lengkap dengan 4 tema elegan, tautan personalisasi WhatsApp,
+              Amplop Digital, RSVP tamu, serta Honeymoon Planner.
+            </p>
+            <div className="pt-2">
+              <Button asChild size="lg">
+                <Link href="/checkout?upgrade=1">
+                  Upgrade ke Complete Couple Pass
+                  <Sparkles className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Preview 4 Tema yang akan didapat */}
+        <Card className="glass-strong rounded-3xl shadow-card">
+          <CardContent className="p-5 sm:p-6 space-y-4">
+            <div className="text-center space-y-1">
+              <p className="font-script text-3xl text-terracotta leading-none">
+                4 Tema Eksklusif
+              </p>
+              <h2 className="font-display text-lg font-semibold text-sage-900">
+                Siap Dipublikasikan di Tautan Kalian Sendiri
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {INVITATION_THEME_LIST.map((t) => (
+                <div
+                  key={t.id}
+                  className="rounded-2xl border border-sage/12 bg-white/90 p-4 flex items-center gap-3"
+                >
+                  <div className="flex -space-x-1.5 shrink-0">
+                    {t.swatches.map((hex) => (
+                      <span
+                        key={hex}
+                        className="h-7 w-7 rounded-full border-2 border-white shadow-sm"
+                        style={{ backgroundColor: hex }}
+                      />
+                    ))}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-sage-900">{t.name}</p>
+                    <p className="text-[11px] text-sage-600 line-clamp-1">
+                      {t.tagline}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // HANDLERS (COMPLETE_PASS)
+  // =========================================================================
+  const handleSave = async (overridePublish?: boolean) => {
+    setSaving(true);
+    setToast(null);
+    const nextPublish =
+      typeof overridePublish === "boolean" ? overridePublish : isPublished;
+
+    try {
+      const res = await fetch("/api/invitations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: normalizedSlug,
+          is_published: nextPublish,
+          theme,
+          groom_name: groomName,
+          groom_full_name: groomFullName,
+          groom_parents: groomParents,
+          groom_instagram: groomInstagram || null,
+          bride_name: brideName,
+          bride_full_name: brideFullName,
+          bride_parents: brideParents,
+          bride_instagram: brideInstagram || null,
+          opening_quote: openingQuote,
+          quote_source: quoteSource,
+          cover_photo_url: coverPhotoUrl || null,
+          akad_date: akadDate || null,
+          akad_time: akadTime,
+          akad_venue: akadVenue,
+          akad_address: akadAddress,
+          akad_maps_url: akadMapsUrl || null,
+          resepsi_date: resepsiDate || null,
+          resepsi_time: resepsiTime,
+          resepsi_venue: resepsiVenue,
+          resepsi_address: resepsiAddress,
+          resepsi_maps_url: resepsiMapsUrl || null,
+          love_stories: loveStories.filter((s) => s.title.trim()),
+          gift_accounts: giftAccounts.filter(
+            (g) => g.bank.trim() && g.accountNumber.trim()
+          ),
+          gift_address: giftAddress || null,
+          gallery_urls: galleryUrls.filter(Boolean),
+          show_rsvp: showRsvp,
+          show_gift: showGift,
+          closing_message: closingMessage,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setToast({
+          type: "error",
+          text: data.error || "Gagal menyimpan undangan.",
+        });
+      } else {
+        setSavedInvitation(data.invitation as WeddingInvitation);
+        setIsPublished(nextPublish);
+        setSlug(data.invitation.slug);
+        setToast({
+          type: "success",
+          text: nextPublish
+            ? `Undangan berhasil disimpan & dipublikasikan di /u/${data.invitation.slug}!`
+            : "Draft undangan berhasil disimpan.",
+        });
+      }
+    } catch {
+      setToast({
+        type: "error",
+        text: "Kendala jaringan. Pastikan perangkat online untuk menyimpan undangan.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUploadImage = async (
+    file: File,
+    kind: "cover" | "gallery"
+  ) => {
+    if (!file.type.startsWith("image/")) {
+      setToast({
+        type: "error",
+        text: "Format foto harus berupa JPG, PNG, atau WebP.",
+      });
+      return;
+    }
+
+    if (kind === "cover") setUploadingCover(true);
+    else setUploadingGallery(true);
+    setToast(null);
+
+    try {
+      const compressed = await compressReceiptFile(file);
+      const supabase = createClient();
+      const storagePath = `${workspace.id}/${kind}-${Date.now()}.${compressed.ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("invitations")
+        .upload(storagePath, compressed.blob, {
+          contentType: compressed.contentType,
+          upsert: true,
+        });
+
+      if (upErr) {
+        throw new Error(
+          upErr.message.includes("not found")
+            ? "Bucket storage `invitations` belum ada. Jalankan Migration 004 di Supabase SQL Editor."
+            : upErr.message
+        );
+      }
+
+      const { data: pub } = supabase.storage
+        .from("invitations")
+        .getPublicUrl(storagePath);
+
+      if (kind === "cover") {
+        setCoverPhotoUrl(pub.publicUrl);
+        setToast({
+          type: "success",
+          text: "Foto cover berhasil diunggah! Klik Simpan untuk menerapkan.",
+        });
+      } else {
+        setGalleryUrls((prev) => [...prev, pub.publicUrl].slice(0, 6));
+        setToast({
+          type: "success",
+          text: "Foto galeri ditambahkan! Klik Simpan untuk menerapkan.",
+        });
+      }
+    } catch (err) {
+      setToast({
+        type: "error",
+        text:
+          err instanceof Error ? err.message : "Gagal mengunggah foto.",
+      });
+    } finally {
+      if (kind === "cover") setUploadingCover(false);
+      else setUploadingGallery(false);
+    }
+  };
+
+  const handleDeleteRsvp = async (id: string) => {
+    setDeletingRsvpId(id);
+    try {
+      const res = await fetch(`/api/invitations/rsvp/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setRsvps((prev) => prev.filter((r) => r.id !== id));
+      }
+    } finally {
+      setDeletingRsvpId(null);
+    }
+  };
+
+  const handleCopyPublicUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedSlug(true);
+      setTimeout(() => setCopiedSlug(false), 2000);
+    } catch {
+      // Ignore
+    }
+  };
+
+  return (
+    <div className="space-y-5 pb-10">
+      {/* Header Banner */}
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
+        <div
+          aria-hidden="true"
+          className="pattern-leaves absolute inset-0 opacity-80"
+        />
+        <BotanicalCorner
+          className="pointer-events-none absolute -bottom-5 -right-4 h-36 w-36 opacity-25"
+          variant="terracotta"
+        />
+        <CardContent className="relative z-10 p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Badge
+              variant="outline"
+              className="border-white/25 bg-white/10 text-cream-50 text-[11px]"
+            >
+              <Mail className="h-3 w-3 text-amberwarm" />
+              Undangan Digital &bull; Complete Pass
+            </Badge>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                isPublished
+                  ? "bg-emerald-500/20 text-emerald-100 border border-emerald-300/35"
+                  : "bg-white/15 text-cream-100 border border-white/20"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isPublished ? "bg-emerald-400 animate-pulse" : "bg-amberwarm"
+                }`}
+              />
+              {isPublished ? "Live Publik" : "Draft"}
+            </span>
+          </div>
+
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold text-cream-50">
+              Pembuat Undangan Online
+            </h1>
+            <p className="text-xs sm:text-sm text-cream-200/90 mt-1">
+              Desain undangan digital Anda sendiri, kirim tautan personal ke
+              WhatsApp tamu, dan pantau RSVP secara real-time.
+            </p>
+          </div>
+
+          {/* URL Bar + Quick Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-2xl bg-white/10 border border-white/15 p-2.5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 min-w-0 flex-1 px-1.5">
+              <Globe className="h-4 w-4 text-amberwarm shrink-0" />
+              <span className="text-xs font-mono text-cream-100 truncate">
+                {publicUrl}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleCopyPublicUrl}
+                className="h-8 px-3 text-xs border-white/25 bg-white/10 text-cream-50 hover:bg-white/20"
+              >
+                {copiedSlug ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-300" />
+                    Tersalin
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    Salin
+                  </>
+                )}
+              </Button>
+              {savedInvitation && (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-xs border-white/25 bg-white/10 text-cream-50 hover:bg-white/20"
+                >
+                  <Link
+                    href={`/u/${savedInvitation.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Pratinjau
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {migrationMissing && (
+        <div className="flex items-start gap-2.5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 leading-relaxed">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
+          <div>
+            <strong>Migrasi Database 004 Diperlukan:</strong> Tabel{" "}
+            <code className="font-mono">wedding_invitations</code> belum dibuat
+            di Supabase. Jalankan berkas{" "}
+            <code className="font-mono">
+              supabase/migrations/20261127000004_digital_invitations.sql
+            </code>{" "}
+            di Supabase SQL Editor terlebih dahulu agar penyimpanan &amp; RSVP
+            aktif.
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div
+          className={`rounded-2xl border px-4 py-3 text-xs font-medium ${
+            toast.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          {toast.text}
+        </div>
+      )}
+
+      {/* 4 Sub-Tab Navigation */}
+      <div
+        role="tablist"
+        aria-label="Editor Undangan"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-2xl sm:rounded-full glass p-1 shadow-sm"
+      >
+        {BUILDER_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full py-2.5 px-2 text-xs font-semibold transition-colors ${
+                active ? "text-cream-50" : "text-sage-700 hover:text-sage-900"
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="undangan-tab-pill"
+                  className="absolute inset-0 rounded-xl sm:rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                />
+              )}
+              <Icon className="relative h-3.5 w-3.5" />
+              <span className="relative truncate">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ================================================================= */}
+      {/* TAB 1: TEMA & PROFIL MEMPELAI                                     */}
+      {/* ================================================================= */}
+      {activeTab === "tema" && (
+        <div className="space-y-5">
+          {/* Custom URL Slug */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="inv-slug">Alamat Tautan Undangan (Slug)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-xl border border-sage/15 bg-cream-100 px-3 py-2.5 text-xs font-mono text-sage-600 shrink-0">
+                    /u/
+                  </span>
+                  <Input
+                    id="inv-slug"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="andi-dan-rina"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <p className="text-[11px] text-sage-500">
+                  Hasil tautan: <span className="font-mono">/u/{normalizedSlug}</span>
+                </p>
+              </div>
+
+              {/* Pemilih 4 Tema */}
+              <div className="space-y-2.5 pt-1">
+                <Label>Pilih Tema Undangan (4 Desain Eksklusif)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {INVITATION_THEME_LIST.map((item) => {
+                    const selected = theme === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setTheme(item.id)}
+                        className={`rounded-2xl border-2 p-3.5 text-left transition-all flex items-center gap-3 ${
+                          selected
+                            ? "border-sage bg-white shadow-soft ring-2 ring-sage/10"
+                            : "border-sage/12 bg-white/80 hover:border-sage/35"
+                        }`}
+                      >
+                        <div className="flex -space-x-1.5 shrink-0">
+                          {item.swatches.map((hex) => (
+                            <span
+                              key={hex}
+                              className="h-7 w-7 rounded-full border-2 border-white shadow-sm"
+                              style={{ backgroundColor: hex }}
+                            />
+                          ))}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-bold text-sage-900">
+                              {item.name}
+                            </p>
+                            {selected && (
+                              <CheckCircle2 className="h-4 w-4 text-sage shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-[11px] text-sage-600 line-clamp-1 mt-0.5">
+                            {item.tagline}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profil Mempelai Pria & Wanita */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-5">
+              <h2 className="font-display text-lg font-semibold text-sage-900">
+                Profil Kedua Mempelai
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Pria */}
+                <div className="space-y-3 rounded-2xl border border-sage/12 bg-white/90 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-sage-700">
+                    Mempelai Pria
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Panggilan *</Label>
+                    <Input
+                      value={groomName}
+                      onChange={(e) => setGroomName(e.target.value)}
+                      placeholder="Andi"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Lengkap &amp; Gelar</Label>
+                    <Input
+                      value={groomFullName}
+                      onChange={(e) => setGroomFullName(e.target.value)}
+                      placeholder="Andi Pratama, S.T."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Putra dari</Label>
+                    <Input
+                      value={groomParents}
+                      onChange={(e) => setGroomParents(e.target.value)}
+                      placeholder="Bpk. Hendra & Ibu Siti"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Instagram (Opsional)</Label>
+                    <Input
+                      value={groomInstagram}
+                      onChange={(e) => setGroomInstagram(e.target.value)}
+                      placeholder="@andipratama"
+                    />
+                  </div>
+                </div>
+
+                {/* Wanita */}
+                <div className="space-y-3 rounded-2xl border border-terracotta/15 bg-white/90 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-terracotta-700">
+                    Mempelai Wanita
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Panggilan *</Label>
+                    <Input
+                      value={brideName}
+                      onChange={(e) => setBrideName(e.target.value)}
+                      placeholder="Rina"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Lengkap &amp; Gelar</Label>
+                    <Input
+                      value={brideFullName}
+                      onChange={(e) => setBrideFullName(e.target.value)}
+                      placeholder="Rina Wulandari, S.E."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Putri dari</Label>
+                    <Input
+                      value={brideParents}
+                      onChange={(e) => setBrideParents(e.target.value)}
+                      placeholder="Bpk. Agus & Ibu Dewi"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Instagram (Opsional)</Label>
+                    <Input
+                      value={brideInstagram}
+                      onChange={(e) => setBrideInstagram(e.target.value)}
+                      placeholder="@rinawulandari"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Cover Photo & Opening Quote */}
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Foto Cover Undangan (Opsional)</Label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {coverPhotoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={coverPhotoUrl}
+                        alt="Cover undangan"
+                        className="h-16 w-24 rounded-xl object-cover border border-sage/20"
+                      />
+                    )}
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-sage/20 bg-white px-4 py-2 text-xs font-semibold text-sage-800 hover:bg-sage-50 transition-colors">
+                      {uploadingCover ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <ImagePlus className="h-3.5 w-3.5 text-terracotta" />
+                      )}
+                      {uploadingCover ? "Mengunggah..." : "Unggah Foto Cover"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploadingCover}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleUploadImage(f, "cover");
+                        }}
+                      />
+                    </label>
+                    {coverPhotoUrl && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setCoverPhotoUrl("")}
+                        className="text-xs text-red-600"
+                      >
+                        Hapus Cover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ayat / Kutipan Pembuka</Label>
+                  <textarea
+                    rows={3}
+                    value={openingQuote}
+                    onChange={(e) => setOpeningQuote(e.target.value)}
+                    className="w-full rounded-xl border border-sage/20 bg-white px-3.5 py-2.5 text-sm text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage/35"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Sumber Kutipan</Label>
+                  <Input
+                    value={quoteSource}
+                    onChange={(e) => setQuoteSource(e.target.value)}
+                    placeholder="QS. Ar-Rum: 21"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* TAB 2: ACARA (AKAD & RESEPSI) + KISAH CINTA                       */}
+      {/* ================================================================= */}
+      {activeTab === "acara" && (
+        <div className="space-y-5">
+          {/* Akad & Resepsi */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-5">
+              <h2 className="font-display text-lg font-semibold text-sage-900">
+                Jadwal &amp; Lokasi Acara
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Akad */}
+                <div className="space-y-3 rounded-2xl border border-sage/12 bg-white/90 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-sage-700">
+                    Akad Nikah / Pemberkatan
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tanggal</Label>
+                    <Input
+                      type="date"
+                      value={akadDate}
+                      onChange={(e) => setAkadDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Waktu</Label>
+                    <Input
+                      value={akadTime}
+                      onChange={(e) => setAkadTime(e.target.value)}
+                      placeholder="08:00 - 10:00 WIB"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Tempat / Masjid</Label>
+                    <Input
+                      value={akadVenue}
+                      onChange={(e) => setAkadVenue(e.target.value)}
+                      placeholder="Masjid Agung Al-Azhar"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Alamat Lengkap</Label>
+                    <Input
+                      value={akadAddress}
+                      onChange={(e) => setAkadAddress(e.target.value)}
+                      placeholder="Jl. Sisingamangaraja, Jakarta Selatan"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Link Google Maps</Label>
+                    <Input
+                      value={akadMapsUrl}
+                      onChange={(e) => setAkadMapsUrl(e.target.value)}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                </div>
+
+                {/* Resepsi */}
+                <div className="space-y-3 rounded-2xl border border-terracotta/15 bg-white/90 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-terracotta-700">
+                    Resepsi Pernikahan
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tanggal</Label>
+                    <Input
+                      type="date"
+                      value={resepsiDate}
+                      onChange={(e) => setResepsiDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Waktu</Label>
+                    <Input
+                      value={resepsiTime}
+                      onChange={(e) => setResepsiTime(e.target.value)}
+                      placeholder="11:00 - 14:00 WIB"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nama Gedung / Ballroom</Label>
+                    <Input
+                      value={resepsiVenue}
+                      onChange={(e) => setResepsiVenue(e.target.value)}
+                      placeholder="Balai Kartini Jakarta"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Alamat Lengkap</Label>
+                    <Input
+                      value={resepsiAddress}
+                      onChange={(e) => setResepsiAddress(e.target.value)}
+                      placeholder="Jl. Gatot Subroto Kav. 37"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Link Google Maps</Label>
+                    <Input
+                      value={resepsiMapsUrl}
+                      onChange={(e) => setResepsiMapsUrl(e.target.value)}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Kisah Cinta (Love Story) */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-sage-900">
+                    Timeline Kisah Cinta (Opsional)
+                  </h2>
+                  <p className="text-xs text-sage-600">
+                    Bagikan momen berkesan dari pertama bertemu hingga lamaran.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={loveStories.length >= 6}
+                  onClick={() =>
+                    setLoveStories((prev) => [
+                      ...prev,
+                      { year: "2024", title: "", description: "" },
+                    ])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Tambah Momen
+                </Button>
+              </div>
+
+              {loveStories.length === 0 ? (
+                <EmptyState
+                  icon={Heart}
+                  compact
+                  tone="terracotta"
+                  title="Belum ada cerita kisah cinta"
+                  description="Tambahkan 2–4 momen spesial (Pertama Bertemu, Mulai Serius, Lamaran) agar undangan terasa lebih hangat."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {loveStories.map((story, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-sage/12 bg-white/95 p-4 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-sage-700">
+                          Momen #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLoveStories((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
+                          className="text-xs text-red-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Hapus
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <Input
+                          value={story.year}
+                          onChange={(e) =>
+                            setLoveStories((prev) =>
+                              prev.map((s, i) =>
+                                i === idx ? { ...s, year: e.target.value } : s
+                              )
+                            )
+                          }
+                          placeholder="Tahun (mis. 2022)"
+                        />
+                        <Input
+                          className="sm:col-span-2"
+                          value={story.title}
+                          onChange={(e) =>
+                            setLoveStories((prev) =>
+                              prev.map((s, i) =>
+                                i === idx ? { ...s, title: e.target.value } : s
+                              )
+                            )
+                          }
+                          placeholder="Judul momen (mis. Pertama Bertemu)"
+                        />
+                      </div>
+                      <Input
+                        value={story.description}
+                        onChange={(e) =>
+                          setLoveStories((prev) =>
+                            prev.map((s, i) =>
+                              i === idx
+                                ? { ...s, description: e.target.value }
+                                : s
+                            )
+                          )
+                        }
+                        placeholder="Cerita singkat momen ini..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs">Pesan Penutup Undangan</Label>
+                <textarea
+                  rows={2}
+                  value={closingMessage}
+                  onChange={(e) => setClosingMessage(e.target.value)}
+                  className="w-full rounded-xl border border-sage/20 bg-white px-3.5 py-2.5 text-sm text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage/35"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* TAB 3: AMPLOP DIGITAL & GALERI FOTO                               */}
+      {/* ================================================================= */}
+      {activeTab === "amplop" && (
+        <div className="space-y-5">
+          {/* Amplop Digital */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-sage-900">
+                    Amplop Digital &amp; Kado
+                  </h2>
+                  <p className="text-xs text-sage-600">
+                    Tamu bisa menyalin nomor rekening Anda dalam 1 klik.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showGift}
+                      onChange={(e) => setShowGift(e.target.checked)}
+                      className="rounded border-sage/30 text-sage"
+                    />
+                    Tampilkan
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={giftAccounts.length >= 4}
+                    onClick={() =>
+                      setGiftAccounts((prev) => [
+                        ...prev,
+                        { bank: "BCA", accountNumber: "", accountHolder: "" },
+                      ])
+                    }
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Tambah Rekening
+                  </Button>
+                </div>
+              </div>
+
+              {giftAccounts.length === 0 ? (
+                <EmptyState
+                  icon={Gift}
+                  compact
+                  tone="amber"
+                  title="Belum ada rekening amplop digital"
+                  description="Tambahkan nomor rekening BCA/Mandiri/GoPay/OVO agar tamu yang berhalangan hadir tetap bisa berbagi tanda kasih."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {giftAccounts.map((acc, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-sage/12 bg-white/95 p-4 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-sage-700">
+                          Rekening #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGiftAccounts((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
+                          className="text-xs text-red-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Hapus
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <Input
+                          value={acc.bank}
+                          onChange={(e) =>
+                            setGiftAccounts((prev) =>
+                              prev.map((a, i) =>
+                                i === idx ? { ...a, bank: e.target.value } : a
+                              )
+                            )
+                          }
+                          placeholder="Bank / E-Wallet (BCA)"
+                        />
+                        <Input
+                          value={acc.accountNumber}
+                          onChange={(e) =>
+                            setGiftAccounts((prev) =>
+                              prev.map((a, i) =>
+                                i === idx
+                                  ? { ...a, accountNumber: e.target.value }
+                                  : a
+                              )
+                            )
+                          }
+                          placeholder="Nomor Rekening"
+                        />
+                        <Input
+                          value={acc.accountHolder}
+                          onChange={(e) =>
+                            setGiftAccounts((prev) =>
+                              prev.map((a, i) =>
+                                i === idx
+                                  ? { ...a, accountHolder: e.target.value }
+                                  : a
+                              )
+                            )
+                          }
+                          placeholder="Atas Nama"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-1.5 pt-1">
+                <Label className="text-xs">
+                  Alamat Pengiriman Kado Fisik (Opsional)
+                </Label>
+                <Input
+                  value={giftAddress}
+                  onChange={(e) => setGiftAddress(e.target.value)}
+                  placeholder="Jl. Kemang Raya No. 12, Jakarta Selatan"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Galeri Foto Prewedding */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-sage-900">
+                    Galeri Foto ({galleryUrls.length} / 6)
+                  </h2>
+                  <p className="text-xs text-sage-600">
+                    Foto otomatis dikompresi ke WebP agar cepat dibuka tamu.
+                  </p>
+                </div>
+                {galleryUrls.length < 6 && (
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-sage/20 bg-white px-4 py-2 text-xs font-semibold text-sage-800 hover:bg-sage-50 transition-colors">
+                    {uploadingGallery ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-3.5 w-3.5 text-terracotta" />
+                    )}
+                    {uploadingGallery ? "Mengunggah..." : "Tambah Foto"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={uploadingGallery}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadImage(f, "gallery");
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {galleryUrls.length === 0 ? (
+                <EmptyState
+                  icon={ImagePlus}
+                  compact
+                  title="Belum ada foto galeri"
+                  description="Unggah hingga 6 foto prewedding terbaik kalian untuk ditampilkan pada halaman undangan."
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {galleryUrls.map((url, idx) => (
+                    <div
+                      key={`${url}-${idx}`}
+                      className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-sage/15 bg-cream-100"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={`Galeri ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGalleryUrls((prev) =>
+                            prev.filter((_, i) => i !== idx)
+                          )
+                        }
+                        aria-label="Hapus foto"
+                        className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white opacity-90 hover:bg-red-600 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* TAB 4: GENERATOR KIRIM WA TAMU & REKAP RSVP                       */}
+      {/* ================================================================= */}
+      {activeTab === "rsvp" && (
+        <div className="space-y-5">
+          {/* Generator Personalisasi Tamu WhatsApp */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div>
+                <Badge variant="softTerracotta" className="mb-1">
+                  Personalisasi Tamu
+                </Badge>
+                <h2 className="font-display text-lg font-semibold text-sage-900">
+                  Kirim Undangan Personal via WhatsApp
+                </h2>
+                <p className="text-xs text-sage-600 mt-0.5">
+                  Tulis daftar nama tamu (1 nama per baris). Setiap tamu akan
+                  mendapatkan tautan unik{" "}
+                  <code className="font-mono">?to=Nama+Tamu</code> &amp; pesan
+                  WhatsApp sopan siap kirim.
+                </p>
+              </div>
+
+              <textarea
+                rows={4}
+                value={guestNamesInput}
+                onChange={(e) => setGuestNamesInput(e.target.value)}
+                placeholder={"Bapak Budi Santoso & Keluarga\nSiti Rahma\nAndika & Partner"}
+                className="w-full rounded-2xl border border-sage/20 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage/35"
+              />
+
+              <div className="space-y-2 max-h-64 overflow-y-auto -mx-1 px-1">
+                {parsedGuestList.map((guest, idx) => {
+                  const guestUrl = `${publicUrl}?to=${encodeURIComponent(guest)}`;
+                  const waMsg = buildGuestWhatsAppMessage({
+                    guestName: guest,
+                    coupleLabel: `${groomName} & ${brideName}`,
+                    invitationUrl: guestUrl,
+                  });
+                  const waHref = `https://wa.me/?text=${encodeURIComponent(
+                    waMsg
+                  )}`;
+                  const copied = copiedGuestIdx === idx;
+
+                  return (
+                    <div
+                      key={`${guest}-${idx}`}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sage/12 bg-white/95 px-3.5 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-sage-900 truncate">
+                          {guest}
+                        </p>
+                        <p className="text-[10.5px] font-mono text-sage-500 truncate">
+                          {guestUrl}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2.5 text-[11px]"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(guestUrl);
+                            setCopiedGuestIdx(idx);
+                            setTimeout(() => setCopiedGuestIdx(null), 1800);
+                          }}
+                        >
+                          {copied ? (
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                          Link
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="sage"
+                          className="h-8 px-2.5 text-[11px]"
+                        >
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Kirim WA
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rekap RSVP & Buku Tamu */}
+          <Card className="glass-strong rounded-3xl shadow-card">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-sage-900">
+                    Rekap RSVP &amp; Ucapan Doa
+                  </h2>
+                  <p className="text-xs text-sage-600">
+                    Target estimasi tamu workspace:{" "}
+                    <strong>{workspace.guest_estimate} pax</strong>
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showRsvp}
+                    onChange={(e) => setShowRsvp(e.target.checked)}
+                    className="rounded border-sage/30 text-sage"
+                  />
+                  Buka Form RSVP
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/75 p-3">
+                  <p className="text-[10.5px] font-medium text-emerald-700">
+                    Konfirmasi Hadir
+                  </p>
+                  <p className="font-display text-xl font-semibold tabular-nums text-emerald-900">
+                    {rsvpStats.hadirCount}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-sage/15 bg-sage-50/80 p-3">
+                  <p className="text-[10.5px] font-medium text-sage-700">
+                    Total Tamu (Pax)
+                  </p>
+                  <p className="font-display text-xl font-semibold tabular-nums text-sage-900">
+                    {rsvpStats.totalPax} pax
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+                  <p className="text-[10.5px] font-medium text-amber-800">
+                    Masih Ragu
+                  </p>
+                  <p className="font-display text-xl font-semibold tabular-nums text-amber-950">
+                    {rsvpStats.raguCount}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-sage/12 bg-white p-3">
+                  <p className="text-[10.5px] font-medium text-sage-600">
+                    Tidak Hadir
+                  </p>
+                  <p className="font-display text-xl font-semibold tabular-nums text-sage-900">
+                    {rsvpStats.tidakCount}
+                  </p>
+                </div>
+              </div>
+
+              {rsvps.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  compact
+                  title="Belum ada konfirmasi RSVP"
+                  description="Publikasikan undangan lalu bagikan tautan ke tamu. Ucapan doa dan konfirmasi kehadiran akan otomatis tampil di sini."
+                />
+              ) : (
+                <div className="space-y-2.5">
+                  {rsvps.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-3 rounded-2xl border border-sage/12 bg-white/95 p-3.5"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-bold text-sage-900">
+                            {item.guest_name}
+                          </p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              item.attendance === "HADIR"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : item.attendance === "RAGU"
+                                  ? "bg-amber-50 text-amber-800 border border-amber-200"
+                                  : "bg-cream-200 text-sage-700"
+                            }`}
+                          >
+                            {item.attendance === "HADIR"
+                              ? `Hadir (${item.guest_count} org)`
+                              : item.attendance === "RAGU"
+                                ? "Masih Ragu"
+                                : "Tidak Hadir"}
+                          </span>
+                        </div>
+                        {item.message && (
+                          <p className="text-xs text-sage-700 leading-relaxed">
+                            &ldquo;{item.message}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={deletingRsvpId === item.id}
+                        onClick={() => handleDeleteRsvp(item.id)}
+                        aria-label="Hapus ucapan"
+                        className="text-sage-400 hover:text-red-600 p-1 transition-colors shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Sticky Bottom Save / Publish Bar */}
+      <div className="sticky bottom-20 md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-wrap items-center justify-between gap-2.5">
+        <label className="inline-flex items-center gap-2 text-xs font-semibold text-sage-900 cursor-pointer px-1">
+          <input
+            type="checkbox"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
+            className="h-4 w-4 rounded border-sage/30 text-sage"
+          />
+          Publikasikan ke umum
+        </label>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={saving}
+            onClick={() => handleSave(false)}
+          >
+            Simpan Draft
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={saving}
+            onClick={() => handleSave(true)}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="h-3.5 w-3.5" />
+                Simpan &amp; Publikasikan
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

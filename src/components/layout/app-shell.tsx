@@ -4,17 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Home, ReceiptText, Gift, BookOpen, User } from "lucide-react";
+import { Home, ReceiptText, Gift, BookOpen, Mail, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
 
-const NAV_ITEMS = [
+const DESKTOP_NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home },
   { href: "/vendors", label: "Vendor", icon: ReceiptText },
+  { href: "/undangan", label: "Undangan", icon: Mail },
   { href: "/angpao", label: "Angpao", icon: Gift },
   { href: "/panduan", label: "Panduan", icon: BookOpen },
+  { href: "/settings", label: "Profil", icon: User },
+];
+
+const MOBILE_NAV_ITEMS = [
+  { href: "/dashboard", label: "Beranda", icon: Home },
+  { href: "/vendors", label: "Vendor", icon: ReceiptText },
+  { href: "/undangan", label: "Undangan", icon: Mail },
+  { href: "/angpao", label: "Angpao", icon: Gift },
   { href: "/settings", label: "Profil", icon: User },
 ];
 
@@ -77,7 +86,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         </Link>
 
         <nav className="relative z-10 flex-1 space-y-1.5">
-          {NAV_ITEMS.map((item) => {
+          {DESKTOP_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
               activePath === item.href || activePath.startsWith(`${item.href}/`);
@@ -149,7 +158,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/60 bg-white/85 backdrop-blur-xl shadow-soft pb-[env(safe-area-inset-bottom)]"
       >
         <div className="mx-auto grid max-w-md grid-cols-5 h-16 px-1">
-          {NAV_ITEMS.map((item) => {
+          {MOBILE_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
               activePath === item.href || activePath.startsWith(`${item.href}/`);

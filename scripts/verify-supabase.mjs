@@ -167,6 +167,8 @@ async function runDiagnostics() {
     { name: "pricing_plans", desc: "Daftar paket harga (WEDDING_ONLY, COMPLETE_PASS)" },
     { name: "promo_codes", desc: "Kode promo diskon" },
     { name: "push_subscriptions", desc: "Langganan Web Push reminder termin" },
+    { name: "wedding_invitations", desc: "Undangan digital online (Complete Pass)" },
+    { name: "invitation_rsvps", desc: "Konfirmasi kehadiran & ucapan tamu undangan" },
   ];
 
   let missingTables = 0;
@@ -198,20 +200,22 @@ async function runDiagnostics() {
   }
 
   // Step 6: Supabase Storage Buckets Check
-  console.log(`\n${colors.bold}6. Memeriksa Supabase Storage (Bucket Bukti Pembayaran):${colors.reset}`);
+  console.log(`\n${colors.bold}6. Memeriksa Supabase Storage (Bucket Bukti Bayar & Undangan):${colors.reset}`);
   try {
     const { data: buckets, error: storageErr } = await adminClient.storage.listBuckets();
     if (storageErr) {
       warn(`Gagal membaca daftar bucket: ${storageErr.message}`);
     } else {
-      const receiptsBucket = buckets.find((b) => b.id === "receipts" || b.name === "receipts");
-      if (receiptsBucket) {
-        pass(`Storage bucket "receipts" ditemukan (Public: ${receiptsBucket.public})`);
-      } else {
-        warn(
-          `Storage bucket "receipts" belum ditemukan.`,
-          `Bucket akan dibuat otomatis saat migrasi supabase/combined_migrations.sql dijalankan.`
-        );
+      for (const bucketName of ["receipts", "invitations"]) {
+        const found = buckets.find((b) => b.id === bucketName || b.name === bucketName);
+        if (found) {
+          pass(`Storage bucket "${bucketName}" ditemukan (Public: ${found.public})`);
+        } else {
+          warn(
+            `Storage bucket "${bucketName}" belum ditemukan.`,
+            `Bucket akan dibuat otomatis saat migrasi supabase/combined_migrations.sql dijalankan.`
+          );
+        }
       }
     }
   } catch (err) {

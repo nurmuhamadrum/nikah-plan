@@ -4,6 +4,7 @@ import {
   FileSpreadsheet,
   Gift,
   HeartHandshake,
+  MailOpen,
   Plane,
   Receipt,
   Users,
@@ -12,6 +13,7 @@ import {
 
 const ITEMS = [
   { icon: CalendarClock, label: "Termin DP & Pelunasan" },
+  { icon: MailOpen, label: "Undangan Online Sendiri + RSVP" },
   { icon: HeartHandshake, label: "Split Funding Keluarga" },
   { icon: Gift, label: "Angpao → Dompet Honeymoon" },
   { icon: WifiOff, label: "Offline-First PWA" },

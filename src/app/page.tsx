@@ -3,9 +3,9 @@ import {
   CalendarClock,
   Gift,
   HeartHandshake,
+  MailOpen,
   Plane,
   WifiOff,
-  Wallet,
   Tag,
 } from "lucide-react";
 import {
@@ -51,15 +51,15 @@ const FEATURES = [
     accent: "from-sage-100 to-sage-50 text-sage",
   },
   {
-    icon: WifiOff,
-    title: "PWA Offline-First",
-    desc: "Tetap lancar input biaya saat sinyal lemah di wedding expo atau saat traveling di luar negeri. Sinkron otomatis saat kembali online.",
+    icon: MailOpen,
+    title: "Undangan Online Sendiri",
+    desc: "Buat website undangan pernikahan ber-4 tema elegan lengkap dengan tautan nama tamu WhatsApp, amplop digital, RSVP & ucapan (eksklusif Complete Pass).",
     accent: "from-terracotta-100 to-terracotta-50 text-terracotta",
   },
   {
-    icon: Wallet,
-    title: "1x Bayar untuk Berdua",
-    desc: "Undang pasangan lewat tautan WhatsApp. Pasangan langsung masuk ke workspace bersama tanpa perlu membayar ulang.",
+    icon: WifiOff,
+    title: "Offline-First & 1x Bayar Berdua",
+    desc: "Undang pasangan gratis via WhatsApp ke workspace bersama. Tetap lancar input biaya saat sinyal lemah di wedding expo atau traveling ke luar negeri.",
     accent: "from-amberwarm-light to-cream-100 text-sage-900",
   },
 ];
