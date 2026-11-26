@@ -1,0 +1,277 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import type { Workspace } from "@/types/database";
+import { createClient } from "@/lib/supabase/client";
+import {
+  buildDefaultHoneymoonCategories,
+  buildDefaultHoneymoonChecklists,
+  calculateTripDays,
+  getCurrencyOption,
+  HONEYMOON_CURRENCIES,
+} from "@/lib/budget-allocator";
+import { formatIDR } from "@/lib/utils";
+import { useAppStore } from "@/store/use-app-store";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface HoneymoonSettingsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workspace: Workspace;
+  hasHoneymoonCategories: boolean;
+  hasChecklists: boolean;
+  onSuccess: () => Promise<void>;
+}
+
+export function HoneymoonSettingsDialog({
+  open,
+  onOpenChange,
+  workspace,
+  hasHoneymoonCategories,
+  hasChecklists,
+  onSuccess,
+}: HoneymoonSettingsDialogProps) {
+  const startSync = useAppStore((s) => s.startSync);
+  const endSync = useAppStore((s) => s.endSync);
+
+  const [destination, setDestination] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [currency, setCurrency] = useState("JPY");
+  const [exchangeRate, setExchangeRate] = useState("105");
+  const [budgetTarget, setBudgetTarget] = useState("35000000");
+
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setErrorMsg(null);
+      setDestination(workspace.honeymoon_destination || "");
+      setStartDate(workspace.honeymoon_start_date || "");
+      setEndDate(workspace.honeymoon_end_date || "");
+      const cur = workspace.honeymoon_currency || "JPY";
+      setCurrency(cur);
+      setExchangeRate(
+        String(
+          cur !== "IDR" && Number(workspace.honeymoon_exchange_rate) > 1
+            ? Number(workspace.honeymoon_exchange_rate)
+            : getCurrencyOption(cur).defaultRateToIDR
+        )
+      );
+      setBudgetTarget(String(Number(workspace.honeymoon_budget_target) || 35000000));
+    }
+  }, [open, workspace]);
+
+  const handleCurrencyChange = (nextCode: string) => {
+    setCurrency(nextCode);
+    setExchangeRate(String(getCurrencyOption(nextCode).defaultRateToIDR));
+  };
+
+  const tripDays = calculateTripDays(startDate, endDate);
+  const budgetNum = Math.max(0, Number(budgetTarget) || 0);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!destination.trim()) return;
+
+    setSaving(true);
+    setErrorMsg(null);
+    startSync();
+
+    try {
+      const supabase = createClient();
+      const rateNum = Math.max(0.01, Number(exchangeRate) || 1);
+
+      const { error } = await supabase
+        .from("workspaces")
+        .update({
+          honeymoon_destination: destination.trim(),
+          honeymoon_start_date: startDate || null,
+          honeymoon_end_date: endDate || null,
+          honeymoon_currency: currency,
+          honeymoon_exchange_rate: currency === "IDR" ? 1 : rateNum,
+          honeymoon_budget_target: budgetNum,
+        })
+        .eq("id", workspace.id);
+
+      if (error) throw error;
+
+      // Seed kategori honeymoon default jika belum ada
+      if (!hasHoneymoonCategories) {
+        const defaultCats = buildDefaultHoneymoonCategories(budgetNum).map(
+          (c) => ({
+            ...c,
+            workspace_id: workspace.id,
+          })
+        );
+        await supabase.from("budget_categories").insert(defaultCats);
+      }
+
+      // Seed checklist pra-perjalanan default jika masih kosong
+      if (!hasChecklists) {
+        const defaultChecks = buildDefaultHoneymoonChecklists(
+          destination.trim()
+        ).map((c) => ({
+          ...c,
+          workspace_id: workspace.id,
+        }));
+        await supabase.from("honeymoon_checklists").insert(defaultChecks);
+      }
+
+      await onSuccess();
+      onOpenChange(false);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Gagal menyimpan pengaturan honeymoon."
+      );
+    } finally {
+      endSync();
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Pengaturan Rencana Honeymoon</DialogTitle>
+          <DialogDescription>
+            Kurs mata uang tersimpan digunakan untuk konversi otomatis IDR saat
+            mencatat pengeluaran (termasuk saat offline).
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSave} className="space-y-4">
+          {errorMsg && (
+            <p className="rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2 text-xs text-terracotta-800">
+              {errorMsg}
+            </p>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="hm-set-dest">Destinasi</Label>
+            <Input
+              id="hm-set-dest"
+              required
+              placeholder="Contoh: Jepang (Tokyo & Kyoto)"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="hm-set-start">Tanggal Berangkat</Label>
+              <Input
+                id="hm-set-start"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hm-set-end">Tanggal Pulang</Label>
+              <Input
+                id="hm-set-end"
+                type="date"
+                min={startDate || undefined}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Mata Uang Tujuan</Label>
+              <Select value={currency} onValueChange={handleCurrencyChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HONEYMOON_CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} ({c.symbol}) — {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hm-set-rate">Kurs ke IDR (1 {currency})</Label>
+              <Input
+                id="hm-set-rate"
+                type="number"
+                step="0.5"
+                min={1}
+                disabled={currency === "IDR"}
+                value={currency === "IDR" ? "1" : exchangeRate}
+                onChange={(e) => setExchangeRate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="hm-set-budget">Target Dana Awal Honeymoon (IDR)</Label>
+            <Input
+              id="hm-set-budget"
+              type="number"
+              min={0}
+              step={1000000}
+              value={budgetTarget}
+              onChange={(e) => setBudgetTarget(e.target.value)}
+            />
+            {tripDays > 0 && budgetNum > 0 && (
+              <p className="text-xs text-sage-600">
+                Durasi <strong>{tripDays} hari</strong> &bull; Rata-rata awal{" "}
+                <strong>{formatIDR(budgetNum / tripDays)}/hari</strong>
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              Batal
+            </Button>
+            <Button type="submit" disabled={saving || !destination.trim()}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan Rencana"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

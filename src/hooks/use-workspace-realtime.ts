@@ -15,6 +15,12 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
     if (!workspaceId) return;
 
     const supabase = createClient();
+    const invalidate = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace-data", workspaceId],
+      });
+    };
+
     const channel = supabase
       .channel(`workspace-sync-${workspaceId}`)
       .on(
@@ -25,9 +31,7 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
           table: "workspaces",
           filter: `id=eq.${workspaceId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["workspace-data", workspaceId] });
-        }
+        invalidate
       )
       .on(
         "postgres_changes",
@@ -37,9 +41,7 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
           table: "budget_categories",
           filter: `workspace_id=eq.${workspaceId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["workspace-data", workspaceId] });
-        }
+        invalidate
       )
       .on(
         "postgres_changes",
@@ -49,9 +51,7 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
           table: "budget_items",
           filter: `workspace_id=eq.${workspaceId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["workspace-data", workspaceId] });
-        }
+        invalidate
       )
       .on(
         "postgres_changes",
@@ -61,9 +61,27 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
           table: "item_payments",
           filter: `workspace_id=eq.${workspaceId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["workspace-data", workspaceId] });
-        }
+        invalidate
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "wedding_gifts",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        invalidate
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "honeymoon_checklists",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        invalidate
       )
       .subscribe();
 

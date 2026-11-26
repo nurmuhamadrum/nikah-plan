@@ -178,3 +178,25 @@ export function calculateTripDays(
     Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   return Math.max(1, diffDays);
 }
+
+export function convertToIDR(
+  foreignAmount: number,
+  exchangeRate: number
+): number {
+  if (!Number.isFinite(foreignAmount) || !Number.isFinite(exchangeRate)) {
+    return 0;
+  }
+  return Math.round(Math.max(0, foreignAmount) * Math.max(0, exchangeRate));
+}
+
+export function formatForeignCurrency(
+  amount: number,
+  currencyCode: string
+): string {
+  const opt = getCurrencyOption(currencyCode);
+  const hasDecimals = ["USD", "EUR", "SGD", "AUD", "MYR"].includes(opt.code);
+  const formatted = new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: hasDecimals ? 2 : 0,
+  }).format(amount);
+  return `${opt.symbol}${formatted}`;
+}

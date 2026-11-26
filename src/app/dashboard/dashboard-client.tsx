@@ -6,20 +6,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Calendar,
-  CheckCircle2,
   ChevronRight,
-  Lock,
-  Plane,
   Plus,
-  Sparkles,
-  Wallet,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspaceBundle, type WorkspaceBundle } from "@/lib/workspace-data";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
 import { formatIDR } from "@/lib/utils";
-import { calculateTripDays } from "@/lib/budget-allocator";
 import {
   CategoryIconBadge,
   FUNDING_SOURCE_META,
@@ -28,6 +22,7 @@ import type { FundingSource, Profile } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
+import { HoneymoonPanel } from "@/components/honeymoon/honeymoon-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +66,7 @@ export function DashboardClient({
     initialData: initialBundle,
   });
 
-  const { workspace, categories, items, payments, gifts, checklists } = bundle;
+  const { workspace, categories, items, payments } = bundle;
 
   // --- KALKULASI WEDDING METRICS ---
   const weddingCategories = useMemo(
@@ -203,34 +198,11 @@ export function DashboardClient({
     });
   }, [weddingCategories, weddingItems, weddingPayments]);
 
-  // --- HONEYMOON SUMMARY PREVIEW ---
-  const honeymoonSummary = useMemo(() => {
-    const hmTarget = Number(workspace.honeymoon_budget_target) || 0;
-    const angpaoForHoneymoon = gifts
-      .filter((g) => g.allocated_to === "HONEYMOON_FUND")
-      .reduce((s, g) => s + (Number(g.amount) || 0), 0);
-    const totalWallet = hmTarget + angpaoForHoneymoon;
-    const hmItems = items.filter((i) => i.phase !== "WEDDING");
-    const preTripSpent = hmItems
-      .filter((i) => i.phase === "HONEYMOON_PRE")
-      .reduce((s, i) => s + (Number(i.deal_cost) || Number(i.estimated_cost) || 0), 0);
-    const remainingForTrip = Math.max(0, totalWallet - preTripSpent);
-    const days = calculateTripDays(
-      workspace.honeymoon_start_date,
-      workspace.honeymoon_end_date
-    );
-    const dailyPocket = days > 0 ? Math.round(remainingForTrip / days) : 0;
-
-    return {
-      totalWallet,
-      preTripSpent,
-      remainingForTrip,
-      days,
-      dailyPocket,
-      completedChecklist: checklists.filter((c) => c.is_completed).length,
-      totalChecklist: checklists.length,
-    };
-  }, [workspace, gifts, items, checklists]);
+  const refreshData = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["workspace-data", workspaceId],
+    });
+  };
 
   const handleQuickMarkPaid = async (paymentId: string) => {
     setMarkingId(paymentId);
@@ -591,143 +563,10 @@ export function DashboardClient({
         </div>
       ) : (
         /* ================================================================= */
-        /* MODE HONEYMOON (Preview terstruktur — lengkap di Phase 3)         */
+        /* MODE HONEYMOON PENUH (Phase 3)                                    */
         /* ================================================================= */
-        <div className="space-y-5 relative z-10">
-          {workspace.plan !== "COMPLETE_PASS" ? (
-            <Card className="rounded-3xl border-sage/15 bg-white shadow-soft">
-              <CardContent className="p-6 text-center space-y-3">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
-                  <Lock className="h-6 w-6" />
-                </div>
-                <h2 className="font-display text-2xl font-bold text-sage-900">
-                  Modul Honeymoon Planner
-                </h2>
-                <p className="text-sm text-sage-600 max-w-md mx-auto">
-                  Paket aktif Anda saat ini adalah{" "}
-                  <strong>Wedding Only Pass</strong>. Modul Dompet Honeymoon,
-                  kalkulator uang jajan harian &amp; konversi multi-mata uang
-                  tersedia pada paket <strong>Complete Couple Pass</strong>.
-                </p>
-              </CardContent>
-            </Card>
-          ) : !workspace.honeymoon_destination ? (
-            <Card className="rounded-3xl border-sage/15 bg-white shadow-soft">
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sage-50 text-sage">
-                  <Plane className="h-6 w-6" />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="font-display text-2xl font-bold text-sage-900">
-                    Belum Ada Rencana Honeymoon
-                  </h2>
-                  <p className="text-sm text-sage-600">
-                    Atur destinasi, tanggal perjalanan, mata uang tujuan, dan
-                    target dana bulan madu Anda.
-                  </p>
-                </div>
-                <Button asChild size="lg">
-                  <Link href="/onboarding?edit=1">Atur Rencana Honeymoon</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Hero Card Dompet Honeymoon (Warm Sage #3D5245 ala Screen 3) */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-sage-600">
-                      Rencana Honeymoon
-                    </p>
-                    <h2 className="text-xl sm:text-2xl font-bold text-sage-900 inline-flex items-center gap-2">
-                      <span>{workspace.honeymoon_destination}</span>
-                      {honeymoonSummary.days > 0 && (
-                        <span className="text-base font-medium text-sage-600">
-                          ({honeymoonSummary.days} Hari)
-                        </span>
-                      )}
-                      <Plane className="h-5 w-5 text-terracotta" />
-                    </h2>
-                  </div>
-                  <Badge variant="softSage">{workspace.honeymoon_currency}</Badge>
-                </div>
-
-                <Card className="relative overflow-hidden rounded-3xl border-0 bg-sage text-cream-50 shadow-soft">
-                  <CardContent className="p-5 sm:p-6 space-y-4">
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-cream-200/85">
-                        Dompet Honeymoon &bull; Total Dana
-                      </p>
-                      <p className="text-3xl sm:text-4xl font-bold tracking-tight">
-                        {formatIDR(honeymoonSummary.totalWallet)}
-                      </p>
-                    </div>
-
-                    <div className="border-t border-white/15 pt-4 flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs text-cream-200/85">
-                          Estimasi Uang Jajan Harian
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold mt-0.5">
-                          {honeymoonSummary.dailyPocket > 0
-                            ? `${formatIDR(honeymoonSummary.dailyPocket)} / hari`
-                            : "Atur tanggal trip"}
-                        </p>
-                      </div>
-                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-terracotta-200">
-                        <Wallet className="h-6 w-6" />
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Preview Checklist Pra-Perjalanan */}
-                <Card className="rounded-2xl border-sage/12 bg-white">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-sage-900">
-                        Persiapan Pra-Perjalanan
-                      </h3>
-                      <span className="text-xs font-semibold text-sage-600">
-                        {honeymoonSummary.completedChecklist}/
-                        {honeymoonSummary.totalChecklist} selesai
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {checklists.map((c) => (
-                        <div
-                          key={c.id}
-                          className="flex items-center gap-2.5 text-sm text-sage-800"
-                        >
-                          <CheckCircle2
-                            className={`h-4 w-4 shrink-0 ${
-                              c.is_completed ? "text-sage" : "text-sage-300"
-                            }`}
-                          />
-                          <span
-                            className={
-                              c.is_completed ? "line-through text-sage-500" : ""
-                            }
-                          >
-                            {c.title}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pt-2 rounded-xl bg-cream-50 border border-sage/10 p-3 flex items-center gap-2 text-xs text-sage-700">
-                      <Sparkles className="h-4 w-4 text-terracotta shrink-0" />
-                      <span>
-                        Pengeluaran multi-mata uang, konversi kurs otomatis &amp;
-                        jembatan dana Angpao akan aktif penuh pada{" "}
-                        <strong>Phase 3</strong>.
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </>
-          )}
+        <div className="relative z-10">
+          <HoneymoonPanel bundle={bundle} onRefresh={refreshData} />
         </div>
       )}
     </div>
