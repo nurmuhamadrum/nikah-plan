@@ -231,7 +231,7 @@ export function SettingsClient({
       </div>
 
       {/* 1. Info Akun & Paket */}
-      <Card className="rounded-3xl border-sage/12 bg-white shadow-card">
+      <Card className="glass-strong rounded-3xl shadow-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="font-display text-xl">

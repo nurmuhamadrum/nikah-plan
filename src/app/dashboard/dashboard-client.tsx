@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -25,6 +26,7 @@ import {
 import type { FundingSource, Profile } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { HoneymoonPanel } from "@/components/honeymoon/honeymoon-panel";
 import { Button } from "@/components/ui/button";
@@ -268,13 +270,13 @@ export function DashboardClient({
       {/* Couple Header + Sync Indicator */}
       <header className="relative z-10 space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-terracotta tracking-tight">
+          <h1 className="font-script text-4xl sm:text-5xl text-gradient-warm leading-tight py-0.5">
             {workspace.couple_title}
           </h1>
           {weddingCountdown !== null && weddingCountdown >= 0 && (
-            <Badge variant="softSage" className="text-xs">
-              <Calendar className="h-3.5 w-3.5" />
-              H-{weddingCountdown} Hari
+            <Badge variant="shimmer" className="text-xs">
+              <Calendar className="relative h-3.5 w-3.5 text-terracotta" />
+              <span className="relative">H-{weddingCountdown} Hari</span>
             </Badge>
           )}
         </div>
@@ -285,33 +287,47 @@ export function DashboardClient({
       <div
         role="tablist"
         aria-label="Mode Anggaran"
-        className="relative z-10 grid grid-cols-2 rounded-full bg-cream-200/90 p-1 border border-sage/10"
+        className="relative z-10 grid grid-cols-2 rounded-full glass p-1 shadow-sm"
       >
         <button
           type="button"
           role="tab"
           aria-selected={mode === "WEDDING"}
           onClick={() => setMode("WEDDING")}
-          className={`rounded-full py-2.5 text-sm font-semibold transition-all ${
+          className={`relative rounded-full py-2.5 text-sm font-semibold transition-colors ${
             mode === "WEDDING"
-              ? "bg-sage text-cream-50 shadow-sm"
+              ? "text-cream-50"
               : "text-sage-700 hover:text-sage-900"
           }`}
         >
-          Pernikahan
+          {mode === "WEDDING" && (
+            <motion.span
+              layoutId="dashboard-mode-pill"
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+              transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            />
+          )}
+          <span className="relative">Pernikahan</span>
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={mode === "HONEYMOON"}
           onClick={() => setMode("HONEYMOON")}
-          className={`rounded-full py-2.5 text-sm font-semibold transition-all ${
+          className={`relative rounded-full py-2.5 text-sm font-semibold transition-colors ${
             mode === "HONEYMOON"
-              ? "bg-sage text-cream-50 shadow-sm"
+              ? "text-cream-50"
               : "text-sage-700 hover:text-sage-900"
           }`}
         >
-          Honeymoon
+          {mode === "HONEYMOON" && (
+            <motion.span
+              layoutId="dashboard-mode-pill"
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+              transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            />
+          )}
+          <span className="relative">Honeymoon</span>
         </button>
       </div>
 
@@ -320,64 +336,74 @@ export function DashboardClient({
       {/* ================================================================= */}
       {mode === "WEDDING" ? (
         <div className="space-y-5 relative z-10">
-          {/* Kartu Kesehatan Anggaran & Funding Split Bar */}
-          <Card className="rounded-3xl border-sage/12 bg-white shadow-soft">
-            <CardContent className="p-5 sm:p-6 space-y-5">
+          {/* Kartu Kesehatan Anggaran (Hero Gradient Sage) & Funding Split Bar */}
+          <Card className="relative overflow-hidden rounded-3xl border-0 bg-white/90 shadow-lift">
+            <div className="relative bg-gradient-to-br from-sage-700 via-sage to-sage-900 p-5 sm:p-6 text-cream-50 space-y-4">
+              <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
+              <BotanicalCorner
+                className="pointer-events-none absolute -bottom-5 -right-4 h-32 w-32 opacity-20"
+                variant="terracotta"
+              />
+
               {/* Primary Metric: Sisa Anggaran */}
-              <div className="space-y-2.5">
+              <div className="relative z-10 space-y-2.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <div>
-                    <p className="text-xs font-medium text-sage-600">
+                    <p className="text-xs font-medium text-cream-200/85">
                       Sisa Anggaran Tersedia
                     </p>
-                    <p className="text-3xl sm:text-4xl font-bold tracking-tight text-sage-900 mt-0.5">
+                    <p className="font-display text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums text-cream-50 mt-0.5">
                       {formatIDR(metrics.remainingBudget)}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-sage-600">
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-cream-50">
                     ~{metrics.remainingPct}%
                   </span>
                 </div>
 
-                {/* Progress Bar Warm Sage */}
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-cream-200">
-                  <div
-                    className="h-full rounded-full bg-sage transition-all duration-500"
-                    style={{ width: `${metrics.spentPct}%` }}
+                {/* Progress Bar Animated */}
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/15">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-terracotta-300 via-amberwarm to-amberwarm-light"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${metrics.spentPct}%` }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                   />
                 </div>
 
                 {/* 3 Sub-Metrics Grid */}
                 <div className="grid grid-cols-3 gap-2 pt-1.5">
-                  <div className="rounded-xl bg-cream-50 px-3 py-2 border border-sage/8">
-                    <p className="text-[10px] font-medium text-sage-600">
+                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[10px] font-medium text-cream-200/85">
                       Target Bujet
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-sage-900 truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-cream-50 tabular-nums truncate mt-0.5">
                       {formatIDR(metrics.targetBudget)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-cream-50 px-3 py-2 border border-sage/8">
-                    <p className="text-[10px] font-medium text-sage-600">
+                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[10px] font-medium text-cream-200/85">
                       Deal Vendor
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-terracotta-700 truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-terracotta-200 tabular-nums truncate mt-0.5">
                       {formatIDR(metrics.totalDeal)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-cream-50 px-3 py-2 border border-sage/8">
-                    <p className="text-[10px] font-medium text-sage-600">
+                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[10px] font-medium text-cream-200/85">
                       Sudah Dibayar
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-sage-800 truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-amberwarm-light tabular-nums truncate mt-0.5">
                       {formatIDR(metrics.totalPaid)}
                     </p>
                   </div>
                 </div>
               </div>
+            </div>
 
+            <CardContent className="p-5 sm:p-6">
               {/* Pembagian Dana (Funding Split Bar) */}
-              <div className="space-y-2.5 pt-2 border-t border-sage/10">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-sage-800">
                     Pembagian Dana
@@ -420,7 +446,7 @@ export function DashboardClient({
                           style={{ backgroundColor: meta.color }}
                         />
                         <span className="font-medium">{meta.label}</span>
-                        <span className="font-bold text-sage-900">
+                        <span className="font-bold text-sage-900 tabular-nums">
                           ({entry.pct}%)
                         </span>
                       </div>
@@ -511,7 +537,7 @@ export function DashboardClient({
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-2.5">
+              <RevealStagger className="space-y-2.5" stagger={0.05} inView={false}>
                 {categorySummaries.map(
                   ({ category, itemCount, totalDeal, totalPaid }) => {
                     const allocated = Number(category.allocated_amount) || 0;
@@ -522,10 +548,10 @@ export function DashboardClient({
                         : 0;
 
                     return (
+                      <RevealItem key={category.id}>
                       <Link
-                        key={category.id}
                         href={`/vendors?category=${category.id}`}
-                        className="group flex items-center justify-between gap-3 rounded-2xl border border-sage/10 bg-white p-4 shadow-sm transition-all hover:border-sage/30 hover:shadow-card"
+                        className="group flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/85 backdrop-blur-sm p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sage/30 hover:shadow-card"
                       >
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
                           <CategoryIconBadge iconKey={category.icon} />
@@ -538,7 +564,7 @@ export function DashboardClient({
                                 ({itemCount} item)
                               </span>
                             </div>
-                            <p className="text-xs font-semibold text-sage-700 mt-0.5">
+                            <p className="text-xs font-semibold tabular-nums text-sage-700 mt-0.5">
                               {formatIDR(displayAmount)}{" "}
                               <span className="font-normal text-sage-500">
                                 {totalDeal > 0
@@ -559,10 +585,11 @@ export function DashboardClient({
 
                         <ChevronRight className="h-5 w-5 text-sage-400 transition-transform group-hover:translate-x-0.5 group-hover:text-sage-700 shrink-0" />
                       </Link>
+                      </RevealItem>
                     );
                   }
                 )}
-              </div>
+              </RevealStagger>
             )}
           </div>
         </div>

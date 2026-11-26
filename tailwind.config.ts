@@ -90,18 +90,65 @@ const config: Config = {
           light: "#F5E9D3",
         },
       },
+      // Tailwind 3 hanya menyediakan opacity kelipatan 5; nilai 8 & 12 dipakai di banyak komponen
+      opacity: {
+        8: "0.08",
+        12: "0.12",
+      },
+      spacing: {
+        4.5: "1.125rem",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
-        serif: ["var(--font-playfair)", "Georgia", "serif"],
+        sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        serif: ["var(--font-fraunces)", "Georgia", "serif"],
+        display: ["var(--font-fraunces)", "Georgia", "serif"],
+        script: ["var(--font-pinyon)", "cursive"],
       },
       boxShadow: {
         soft: "0 4px 20px -4px rgba(61, 82, 69, 0.08)",
         card: "0 2px 12px -2px rgba(61, 82, 69, 0.06), 0 0 0 1px rgba(61, 82, 69, 0.05)",
+        glow: "0 10px 40px -10px rgba(200, 125, 85, 0.55)",
+        lift: "0 24px 60px -24px rgba(38, 52, 43, 0.30)",
+      },
+      keyframes: {
+        "blob-drift": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(30px, -40px) scale(1.08)" },
+          "66%": { transform: "translate(-25px, 20px) scale(0.95)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0) rotate(var(--float-rotate, 0deg))" },
+          "50%": { transform: "translateY(-12px) rotate(calc(var(--float-rotate, 0deg) + 4deg))" },
+        },
+        "float-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "60%, 100%": { transform: "translateX(100%)" },
+        },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
+        "gradient-pan": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+      },
+      animation: {
+        "blob-drift": "blob-drift 18s ease-in-out infinite",
+        float: "float 7s ease-in-out infinite",
+        "float-soft": "float-soft 6s ease-in-out infinite",
+        shimmer: "shimmer 3s ease-in-out infinite",
+        marquee: "marquee 40s linear infinite",
+        "gradient-pan": "gradient-pan 6s ease infinite",
       },
     },
   },

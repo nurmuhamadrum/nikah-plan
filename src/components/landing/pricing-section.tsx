@@ -4,6 +4,7 @@ import { PLANS, type PlanDefinition } from "@/lib/plans";
 import type { PlanType } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -22,30 +23,34 @@ export function PricingSection({
   const planList = [plans.WEDDING_ONLY, plans.COMPLETE_PASS];
 
   return (
-    <section id="harga" className="py-16 sm:py-24 px-4">
+    <section id="harga" className="scroll-mt-16 py-20 sm:py-28 px-4">
       <div className="mx-auto max-w-5xl">
-        <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+        <Reveal className="text-center max-w-2xl mx-auto space-y-4 mb-14">
           <Badge variant="softTerracotta" className="mx-auto">
             <Sparkles className="h-3.5 w-3.5" />
             Sekali Bayar &bull; Tanpa Langganan Bulanan
           </Badge>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-sage-900">
-            Pilih Paket Couple Pass Terbaikmu
+          <h2 className="font-display text-3xl sm:text-[2.75rem] sm:leading-[1.15] font-semibold text-sage-900">
+            Pilih Paket{" "}
+            <span className="font-script text-gradient-warm text-[1.25em] font-normal">
+              Couple Pass
+            </span>{" "}
+            Terbaikmu
           </h2>
           <p className="text-sage-700/85 text-sm sm:text-base">
             Satu kali pembayaran sudah mencakup akses penuh untuk 2 akun (Anda &amp;
             Pasangan) dengan sinkronisasi real-time dan mode offline PWA.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        <RevealStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-stretch" stagger={0.15}>
           {planList.map((plan) => (
+            <RevealItem key={plan.id} className="h-full">
             <Card
-              key={plan.id}
-              className={`relative flex flex-col justify-between rounded-3xl transition-all ${
+              className={`relative flex h-full flex-col justify-between rounded-[2rem] transition-all duration-300 hover:-translate-y-1 ${
                 plan.recommended
-                  ? "border-2 border-sage bg-white shadow-soft"
-                  : "border border-sage/15 bg-white/90"
+                  ? "border-gradient-warm border-transparent bg-white shadow-glow md:scale-[1.03]"
+                  : "border border-white/70 bg-white/75 hover:shadow-lift"
               }`}
             >
               {plan.badge && (
@@ -66,7 +71,7 @@ export function PricingSection({
                   </CardDescription>
 
                   <div className="pt-4 flex items-baseline gap-2.5">
-                    <span className="text-3xl sm:text-4xl font-bold tracking-tight text-sage-900">
+                    <span className="font-display text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums text-sage-900">
                       {formatIDR(plan.price)}
                     </span>
                     {plan.originalPrice > plan.price && (
@@ -124,8 +129,9 @@ export function PricingSection({
                 </Button>
               </CardFooter>
             </Card>
+            </RevealItem>
           ))}
-        </div>
+        </RevealStagger>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-sage-700">
           <span className="inline-flex items-center gap-1.5">

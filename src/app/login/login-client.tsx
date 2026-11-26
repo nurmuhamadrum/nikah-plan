@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import {
   Mail,
   Lock,
@@ -16,10 +17,13 @@ import {
   ArrowLeft,
   LogIn,
   UserPlus,
+  HeartHandshake,
+  ShieldCheck,
+  WifiOff,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -266,26 +270,84 @@ export function LoginClient({ nextPath, initialError }: LoginClientProps) {
   const isAdminFlow = nextPath?.startsWith("/admin");
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-cream px-4 py-8">
-      <BotanicalCorner
-        className="fixed -top-4 -right-4 h-44 w-44"
-        variant="sage"
-      />
-      <BotanicalCorner
-        className="fixed -bottom-6 -left-6 h-44 w-44 rotate-180"
-        variant="terracotta"
-      />
+    <div className="relative min-h-screen flex flex-col justify-between overflow-hidden px-4 py-6 sm:py-8">
+      <FloatingBotanicals preset="page" fixed />
 
-      <div className="relative z-10 mx-auto w-full max-w-md">
+      <div className="relative z-10 mx-auto w-full max-w-5xl my-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-700 hover:text-sage-900 mb-6"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-700 hover:text-sage-900 mb-5"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Beranda
         </Link>
 
-        <Card className="border-sage/15 shadow-soft overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Panel Ilustratif Desktop */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden lg:flex lg:col-span-6 flex-col justify-between rounded-[2rem] bg-gradient-to-br from-sage-700 via-sage to-sage-900 p-9 text-cream-50 shadow-lift relative overflow-hidden min-h-[520px]"
+          >
+            <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
+            <div className="relative space-y-4">
+              <p className="font-script text-4xl text-amberwarm leading-none">
+                From &ldquo;I Do&rdquo; to Honeymoon
+              </p>
+              <h2 className="font-display text-3xl font-semibold leading-tight text-cream-50">
+                Satu Ruang Bersama untuk Merencanakan Hari Bahagia Kalian.
+              </h2>
+              <p className="text-sm text-cream-200/90 leading-relaxed">
+                Catat deal vendor, termin DP, porsi dana keluarga, hingga alokasi angpao ke dompet bulan madu — sinkron otomatis di HP Anda dan pasangan.
+              </p>
+            </div>
+
+            <div className="relative space-y-3 pt-6">
+              {[
+                {
+                  icon: ShieldCheck,
+                  title: "Bayar 1x untuk 2 Akun",
+                  desc: "Pasangan langsung bergabung gratis lewat tautan WhatsApp.",
+                },
+                {
+                  icon: HeartHandshake,
+                  title: "Split Funding Transparan",
+                  desc: "Pisahkan tabungan bersama & kontribusi keluarga secara rapi.",
+                },
+                {
+                  icon: WifiOff,
+                  title: "PWA Offline-First",
+                  desc: "Tetap lancar input biaya saat wedding expo atau traveling.",
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.title}
+                    className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-3.5 backdrop-blur-sm"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-amberwarm">
+                      <Icon className="h-4.5 w-4.5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-cream-50">{item.title}</p>
+                      <p className="text-xs text-cream-200/85 mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Kartu Login */}
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-6 mx-auto w-full max-w-md"
+          >
+            <Card className="glass-strong rounded-[2rem] shadow-lift overflow-hidden">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-3">
               <NikahPlanLogo size="lg" />
@@ -391,13 +453,20 @@ export function LoginClient({ nextPath, initialError }: LoginClientProps) {
                       setAuthMethod("password");
                       setErrorMsg(null);
                     }}
-                    className={`rounded-full py-2 text-xs font-semibold transition-all ${
+                    className={`relative rounded-full py-2 text-xs font-semibold transition-colors ${
                       authMethod === "password"
-                        ? "bg-sage text-cream-50 shadow-sm"
+                        ? "text-cream-50"
                         : "text-sage-700 hover:text-sage-900"
                     }`}
                   >
-                    Email &amp; Sandi
+                    {authMethod === "password" && (
+                      <motion.span
+                        layoutId="auth-method-pill"
+                        className="absolute inset-0 rounded-full bg-sage shadow-sm"
+                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      />
+                    )}
+                    <span className="relative">Email &amp; Sandi</span>
                   </button>
                   <button
                     type="button"
@@ -405,13 +474,20 @@ export function LoginClient({ nextPath, initialError }: LoginClientProps) {
                       setAuthMethod("magiclink");
                       setErrorMsg(null);
                     }}
-                    className={`rounded-full py-2 text-xs font-semibold transition-all ${
+                    className={`relative rounded-full py-2 text-xs font-semibold transition-colors ${
                       authMethod === "magiclink"
-                        ? "bg-sage text-cream-50 shadow-sm"
+                        ? "text-cream-50"
                         : "text-sage-700 hover:text-sage-900"
                     }`}
                   >
-                    Magic Link
+                    {authMethod === "magiclink" && (
+                      <motion.span
+                        layoutId="auth-method-pill"
+                        className="absolute inset-0 rounded-full bg-sage shadow-sm"
+                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      />
+                    )}
+                    <span className="relative">Magic Link</span>
                   </button>
                 </div>
 
@@ -599,6 +675,8 @@ export function LoginClient({ nextPath, initialError }: LoginClientProps) {
             </p>
           </CardContent>
         </Card>
+          </motion.div>
+        </div>
       </div>
 
       <footer className="relative z-10 text-center text-xs text-sage-600/75 mt-8">

@@ -13,7 +13,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,12 +70,8 @@ export function JoinClient({
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-cream px-4 py-10">
-      <BotanicalCorner className="fixed -top-4 -right-4 h-44 w-44" variant="sage" />
-      <BotanicalCorner
-        className="fixed -bottom-6 -left-6 h-44 w-44 rotate-180"
-        variant="terracotta"
-      />
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-10">
+      <FloatingBotanicals preset="page" fixed />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex justify-center mb-6">
@@ -84,7 +80,7 @@ export function JoinClient({
           </Link>
         </div>
 
-        <Card className="border-sage/15 shadow-soft">
+        <Card className="glass-strong rounded-[2rem] shadow-lift">
           {!workspace ? (
             <>
               <CardHeader className="text-center">
@@ -111,7 +107,7 @@ export function JoinClient({
           ) : (
             <>
               <CardHeader className="text-center pb-3">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sage-50 text-sage">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sage-50 text-sage shadow-sm animate-pulse">
                   <HeartHandshake className="h-7 w-7" />
                 </div>
                 <div className="flex justify-center mb-2">

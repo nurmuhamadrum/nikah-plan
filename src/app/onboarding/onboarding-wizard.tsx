@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   ArrowLeft,
@@ -30,7 +31,7 @@ import {
 } from "@/lib/budget-allocator";
 import { formatIDR, formatNumberID } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -222,15 +223,8 @@ export function OnboardingWizard({
   };
 
   return (
-    <div className="relative min-h-screen bg-cream px-4 py-6 sm:py-10 overflow-x-hidden">
-      <BotanicalCorner
-        className="fixed -top-4 -right-4 h-44 w-44 opacity-30"
-        variant="sage"
-      />
-      <BotanicalCorner
-        className="fixed -bottom-6 -left-6 h-40 w-40 rotate-180 opacity-25"
-        variant="terracotta"
-      />
+    <div className="relative min-h-screen px-4 py-6 sm:py-10 overflow-x-hidden">
+      <FloatingBotanicals preset="page" fixed />
 
       <div className="relative z-10 mx-auto max-w-xl space-y-6">
         {/* Header Logo & Stepper */}
@@ -245,15 +239,16 @@ export function OnboardingWizard({
               const active = step === s.id;
               return (
                 <div key={s.id} className="flex-1 space-y-1.5">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${
-                      done
-                        ? "bg-sage"
-                        : active
-                          ? "bg-terracotta"
-                          : "bg-cream-300"
-                    }`}
-                  />
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-300/80">
+                    <motion.div
+                      className={`h-full rounded-full ${
+                        done ? "bg-sage" : active ? "bg-terracotta" : "bg-transparent"
+                      }`}
+                      initial={false}
+                      animate={{ width: done || active ? "100%" : "0%" }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
                   <p
                     className={`text-[10px] sm:text-[11px] font-semibold truncate ${
                       active
@@ -272,7 +267,7 @@ export function OnboardingWizard({
         </div>
 
         {/* Main Card */}
-        <Card className="rounded-3xl border-sage/15 bg-white/95 shadow-soft">
+        <Card className="glass-strong rounded-[2rem] shadow-lift overflow-hidden">
           <CardContent className="p-5 sm:p-7 space-y-6">
             {errorMsg && (
               <div className="flex items-start gap-2 rounded-xl border border-terracotta/30 bg-terracotta-50 p-3.5 text-sm text-terracotta-800">
@@ -281,6 +276,14 @@ export function OnboardingWizard({
               </div>
             )}
 
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 14 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -14 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              >
             {/* STEP 1: PROFIL & UNDANG PASANGAN */}
             {step === 1 && (
               <div className="space-y-5">
@@ -917,6 +920,8 @@ export function OnboardingWizard({
                 </div>
               </div>
             )}
+              </motion.div>
+            </AnimatePresence>
           </CardContent>
         </Card>
       </div>

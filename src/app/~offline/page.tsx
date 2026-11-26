@@ -6,13 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function OfflineFallbackPage() {
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
           <NikahPlanLogo size="lg" />
         </div>
 
-        <Card className="rounded-3xl border-sage/15 bg-white shadow-soft">
+        <Card className="glass-strong rounded-3xl shadow-lift">
           <CardContent className="p-7 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
               <WifiOff className="h-7 w-7" />

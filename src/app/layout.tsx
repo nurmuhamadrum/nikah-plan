@@ -1,19 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Manrope, Pinyon_Script } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
+import { BackgroundDecor } from "@/components/brand/background-decor";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["500", "600", "700"],
+  variable: "--font-fraunces",
+  axes: ["SOFT", "opsz"],
+  display: "swap",
+});
+
+const pinyon = Pinyon_Script({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-pinyon",
   display: "swap",
 });
 
@@ -61,8 +68,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${plusJakarta.variable} ${playfair.variable}`}>
-      <body className="min-h-screen bg-cream text-foreground">
+    <html
+      lang="id"
+      className={`${manrope.variable} ${fraunces.variable} ${pinyon.variable}`}
+    >
+      <body className="min-h-screen bg-canvas text-foreground">
+        <BackgroundDecor />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

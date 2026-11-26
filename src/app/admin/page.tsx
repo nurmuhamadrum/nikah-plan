@@ -28,8 +28,8 @@ export default async function AdminPage() {
     }
 
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center px-4">
-        <Card className="max-w-md w-full rounded-3xl border-terracotta/25 shadow-soft">
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="glass-strong max-w-md w-full rounded-3xl border-terracotta/25 shadow-lift">
           <CardContent className="p-7 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
               <ShieldAlert className="h-7 w-7" />

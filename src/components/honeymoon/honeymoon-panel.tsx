@@ -289,9 +289,10 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
         </Button>
       </div>
 
-      {/* Kartu Dompet Honeymoon (Warm Sage #3D5245 + Progress Ring ala Screen 3) */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-white shadow-soft">
-        <div className="relative bg-sage text-cream-50 p-5 sm:p-6 space-y-4">
+      {/* Kartu Dompet Honeymoon (Warm Sage Gradient + Pola Botani) */}
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-white/90 shadow-lift">
+        <div className="relative bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 p-5 sm:p-6 space-y-4">
+          <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
           <BotanicalCorner
             className="absolute -top-3 -right-3 h-32 w-32 opacity-25"
             variant="terracotta"
@@ -311,7 +312,7 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
                   : `1 ${workspace.honeymoon_currency} = ${formatIDR(Number(workspace.honeymoon_exchange_rate))}`}
               </Badge>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold tracking-tight">
+            <p className="font-display text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums">
               {formatIDR(metrics.totalWallet)}
             </p>
             {metrics.angpaoBoost > 0 && (

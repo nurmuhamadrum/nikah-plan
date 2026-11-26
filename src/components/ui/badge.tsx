@@ -12,6 +12,8 @@ const badgeVariants = cva(
         softSage: "border-sage/15 bg-sage-50 text-sage-700",
         softTerracotta: "border-terracotta/25 bg-terracotta-50 text-terracotta-700",
         outline: "border-sage/20 bg-white text-sage-700",
+        shimmer:
+          "relative overflow-hidden border-white/70 bg-white/70 backdrop-blur text-sage-800 shadow-sm before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/80 before:to-transparent",
       },
     },
     defaultVariants: {

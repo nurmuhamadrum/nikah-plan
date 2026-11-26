@@ -274,7 +274,7 @@ export function VendorsClient({
 
       {/* Ringkasan Estimasi vs Deal vs Aktual */}
       <div className="grid grid-cols-3 gap-2.5">
-        <Card className="rounded-2xl border-sage/10 bg-white">
+        <Card className="glass-strong rounded-2xl">
           <CardContent className="p-3.5">
             <p className="text-[11px] font-medium text-sage-600">
               Estimasi Awal

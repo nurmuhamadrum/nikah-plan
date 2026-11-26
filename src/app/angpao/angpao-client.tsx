@@ -257,10 +257,11 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
         </Button>
       </div>
 
-      {/* Hero Summary Card (Warm Sage #3D5245) */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-sage text-cream-50 shadow-soft">
+      {/* Hero Summary Card (Warm Sage Gradient) */}
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
+        <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
         <BotanicalCorner
-          className="absolute -bottom-6 -right-4 h-36 w-36 opacity-20"
+          className="absolute -bottom-6 -right-4 h-36 w-36 opacity-25"
           variant="terracotta"
         />
         <CardContent className="relative z-10 p-5 sm:p-6 space-y-5">
@@ -269,7 +270,7 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
               <p className="text-xs font-medium text-cream-200/85">
                 Total Pemasukan Angpao (Tunai &amp; Transfer)
               </p>
-              <p className="text-3xl sm:text-4xl font-bold tracking-tight mt-1">
+              <p className="font-display text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums mt-1">
                 {formatIDR(stats.totalCash)}
               </p>
               <p className="text-xs text-cream-200/80 mt-1">

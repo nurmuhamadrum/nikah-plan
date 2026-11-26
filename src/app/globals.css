@@ -45,12 +45,130 @@
   }
 
   body {
-    @apply bg-cream text-foreground font-sans antialiased selection:bg-terracotta/20 selection:text-sage-800;
+    @apply text-foreground font-sans antialiased selection:bg-terracotta/20 selection:text-sage-800;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Kanvas global: krem hangat + gradien mesh lembut sage / terracotta / amber */
+  .bg-canvas {
+    background-color: #f7f5f0;
+    background-image:
+      radial-gradient(60rem 40rem at -10% -10%, rgba(114, 150, 130, 0.22), transparent 60%),
+      radial-gradient(50rem 36rem at 110% 0%, rgba(232, 174, 143, 0.26), transparent 60%),
+      radial-gradient(46rem 34rem at 50% 115%, rgba(212, 163, 89, 0.18), transparent 60%),
+      radial-gradient(40rem 30rem at 105% 85%, rgba(158, 185, 169, 0.20), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  /* Tekstur grain halus (noise SVG inline, tanpa aset tambahan) */
+  .grain-overlay {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.32 0 0 0 0 0.27 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.07;
+    mix-blend-mode: multiply;
+  }
+
+  /* Permukaan kaca untuk header, sidebar, dan kartu di atas background bergradien */
+  .glass {
+    @apply border border-white/60 bg-white/70 backdrop-blur-xl;
+  }
+
+  .glass-strong {
+    @apply border border-white/70 bg-white/85 backdrop-blur-xl;
+  }
+
+  /* Border gradien beranimasi (dipakai kartu paket rekomendasi / widget hero) */
+  .border-gradient-warm {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .border-gradient-warm::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(120deg, #c87d55, #d4a359, #729682, #c87d55);
+    background-size: 300% 300%;
+    animation: gradient-pan 6s ease infinite;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Pola botani transparan untuk kartu gelap (dashboard hero card) */
+  .pattern-leaves {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120' fill='none'%3E%3Cpath d='M90 28C82 14 70 10 62 12C68 22 76 30 90 28Z' stroke='%23F7F5F0' stroke-opacity='.12' stroke-width='1.2'/%3E%3Cpath d='M30 80C38 66 50 62 58 64C52 74 44 82 30 80Z' stroke='%23F7F5F0' stroke-opacity='.10' stroke-width='1.2'/%3E%3C/svg%3E");
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: var(--font-playfair), Georgia, serif;
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-variation-settings: "SOFT" 100;
+    letter-spacing: -0.015em;
+  }
+
+  .font-script {
+    font-family: var(--font-pinyon), cursive;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .text-gradient-warm {
+    color: #b2663f;
+    background-image: linear-gradient(100deg, #9e4d26 0%, #c87d55 52%, #b88232 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  .animation-delay-2000 {
+    animation-delay: -2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: -4s;
+  }
+
+  .animation-delay-6000 {
+    animation-delay: -6s;
+  }
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

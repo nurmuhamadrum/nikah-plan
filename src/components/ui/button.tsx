@@ -9,10 +9,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-terracotta text-white shadow-sm hover:bg-terracotta-600",
-        sage: "bg-sage text-cream-50 shadow-sm hover:bg-sage-700",
+          "bg-gradient-to-br from-terracotta-400 via-terracotta to-terracotta-600 text-white shadow-sm hover:shadow-glow hover:-translate-y-0.5",
+        sage: "bg-gradient-to-br from-sage-500 to-sage-700 text-cream-50 shadow-sm hover:shadow-lift hover:-translate-y-0.5",
         outline:
-          "border border-sage/20 bg-white text-sage-800 hover:bg-sage-50 hover:border-sage/35",
+          "border border-sage/20 bg-white/80 backdrop-blur text-sage-800 hover:bg-white hover:border-sage/35",
         secondary:
           "bg-cream-200 text-sage-800 hover:bg-cream-300",
         ghost: "text-sage-700 hover:bg-sage-50 hover:text-sage-900",

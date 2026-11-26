@@ -20,7 +20,7 @@ import type { PlanDefinition } from "@/lib/plans";
 import { formatIDR } from "@/lib/utils";
 import type { PlanType } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -282,11 +282,8 @@ export function CheckoutClient({
         />
       )}
 
-      <div className="relative min-h-screen bg-cream px-4 py-8 overflow-x-hidden">
-        <BotanicalCorner
-          className="fixed -top-6 -right-6 h-44 w-44 opacity-25"
-          variant="sage"
-        />
+      <div className="relative min-h-screen px-4 py-8 overflow-x-hidden">
+        <FloatingBotanicals preset="page" fixed />
 
         <div className="relative z-10 mx-auto max-w-4xl">
           {/* Top Bar */}
@@ -351,10 +348,10 @@ export function CheckoutClient({
                     key={key}
                     type="button"
                     onClick={() => handlePlanChange(key)}
-                    className={`w-full text-left rounded-2xl border-2 p-5 transition-all bg-white ${
+                    className={`w-full text-left rounded-3xl p-5 transition-all duration-300 hover:-translate-y-0.5 ${
                       isSelected
-                        ? "border-sage shadow-soft ring-2 ring-sage/10"
-                        : "border-sage/15 hover:border-sage/35"
+                        ? "border-gradient-warm border-2 border-transparent bg-white shadow-glow"
+                        : "border border-white/70 bg-white/80 backdrop-blur-sm hover:border-sage/30 hover:shadow-lift"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -375,7 +372,7 @@ export function CheckoutClient({
                       </div>
 
                       <div className="text-right shrink-0">
-                        <p className="text-xl font-bold text-sage-900">
+                        <p className="font-display text-xl font-semibold tabular-nums text-sage-900">
                           {formatIDR(displayPrice)}
                         </p>
                         {!isUpgrade && item.originalPrice > item.price && (

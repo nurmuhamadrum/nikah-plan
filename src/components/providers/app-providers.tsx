@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MotionConfig } from "motion/react";
 import { useAppStore } from "@/store/use-app-store";
 import { flushSyncQueue, refreshQueuedCount } from "@/lib/offline/sync-engine";
 
@@ -52,6 +53,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, [queryClient, setSyncStatus]);
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </QueryClientProvider>
   );
 }

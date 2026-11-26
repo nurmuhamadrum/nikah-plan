@@ -4,11 +4,8 @@ import {
   Gift,
   HeartHandshake,
   Plane,
-  ShieldCheck,
   WifiOff,
   Wallet,
-  ArrowRight,
-  Sparkles,
   Tag,
 } from "lucide-react";
 import {
@@ -17,12 +14,14 @@ import {
 } from "@/lib/dynamic-config";
 import { formatIDR } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
-import { InteractiveBudgetPreview } from "@/components/landing/interactive-budget-preview";
+import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
+import { HeroSection } from "@/components/landing/hero-section";
+import { ScrollHeader } from "@/components/landing/scroll-header";
+import { FeatureMarquee } from "@/components/landing/feature-marquee";
 import { PricingSection } from "@/components/landing/pricing-section";
+import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const revalidate = 60;
 
@@ -31,37 +30,37 @@ const FEATURES = [
     icon: CalendarClock,
     title: "Pelacak Termin DP & Pelunasan",
     desc: "Bandingkan estimasi awal vs harga deal vendor, pantau Booking Fee, DP 30%, hingga pelunasan H-14 lengkap dengan bukti bayar.",
-    accent: "bg-sage-50 text-sage",
+    accent: "from-sage-100 to-sage-50 text-sage",
   },
   {
     icon: HeartHandshake,
     title: "Split Funding Transparan",
     desc: "Pisahkan sumber dana Tabungan Bersama, Keluarga Pria, dan Keluarga Wanita secara otomatis tanpa ribet di spreadsheet.",
-    accent: "bg-terracotta-50 text-terracotta",
+    accent: "from-terracotta-100 to-terracotta-50 text-terracotta",
   },
   {
     icon: Gift,
     title: "Angpao Bridge ke Honeymoon",
     desc: "Catat amplop & hadiah pasca-resepsi lalu alokasikan dalam 1 klik untuk menutup sisa tagihan vendor atau mengisi Dompet Honeymoon.",
-    accent: "bg-amberwarm-light text-sage-900",
+    accent: "from-amberwarm-light to-cream-100 text-sage-900",
   },
   {
     icon: Plane,
     title: "Dompet Honeymoon & Uang Jajan",
     desc: "Hitung otomatis jatah uang saku harian, catat belanja multi-mata uang (JPY, EUR, THB, SGD, USD) dengan konversi kurs IDR.",
-    accent: "bg-sage-50 text-sage",
+    accent: "from-sage-100 to-sage-50 text-sage",
   },
   {
     icon: WifiOff,
     title: "PWA Offline-First",
     desc: "Tetap lancar input biaya saat sinyal lemah di wedding expo atau saat traveling di luar negeri. Sinkron otomatis saat kembali online.",
-    accent: "bg-terracotta-50 text-terracotta",
+    accent: "from-terracotta-100 to-terracotta-50 text-terracotta",
   },
   {
     icon: Wallet,
     title: "1x Bayar untuk Berdua",
     desc: "Undang pasangan lewat tautan WhatsApp. Pasangan langsung masuk ke workspace bersama tanpa perlu membayar ulang.",
-    accent: "bg-amberwarm-light text-sage-900",
+    accent: "from-amberwarm-light to-cream-100 text-sage-900",
   },
 ];
 
@@ -75,12 +74,12 @@ export default async function LandingPage() {
   const lowestPrice = Math.min(plans.WEDDING_ONLY.price, plans.COMPLETE_PASS.price);
 
   return (
-    <div className="min-h-screen bg-cream text-foreground overflow-x-hidden">
+    <div className="min-h-screen overflow-x-clip text-foreground">
       {/* Dynamic Announcement Promo Banner (managed from /admin) */}
       {announcement.enabled && announcement.text && (
-        <div className="bg-sage text-cream-50 px-4 py-2 text-center text-xs font-medium">
-          <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-center gap-2">
-            <Tag className="h-3.5 w-3.5 text-terracotta-200 shrink-0" />
+        <div className="relative overflow-hidden bg-gradient-to-r from-sage-700 via-sage to-sage-700 px-4 py-2 text-center text-xs font-medium text-cream-50">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2">
+            <Tag className="h-3.5 w-3.5 shrink-0 text-terracotta-200" />
             <span>{announcement.text}</span>
             {announcement.promoCode && (
               <span className="rounded-full bg-white/15 px-2.5 py-0.5 font-mono text-[11px] font-bold tracking-wider">
@@ -92,22 +91,26 @@ export default async function LandingPage() {
       )}
 
       {/* Sticky Header */}
-      <header className="sticky top-0 z-40 border-b border-sage/10 bg-cream/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <ScrollHeader>
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" aria-label="NikahPlan Beranda">
             <NikahPlanLogo size="md" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-sage-700">
-            <a href="#simulasi" className="hover:text-sage-900 transition-colors">
-              Simulasi Budget
-            </a>
-            <a href="#fitur" className="hover:text-sage-900 transition-colors">
-              Fitur Utama
-            </a>
-            <a href="#harga" className="hover:text-sage-900 transition-colors">
-              Harga Couple Pass
-            </a>
+          <nav className="hidden items-center gap-1 text-sm font-semibold text-sage-700 md:flex">
+            {[
+              { href: "#simulasi", label: "Simulasi Budget" },
+              { href: "#fitur", label: "Fitur Utama" },
+              { href: "#harga", label: "Harga Couple Pass" },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-4 py-2 transition-colors hover:bg-white/70 hover:text-sage-900"
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
 
           <div className="flex items-center gap-2.5">
@@ -119,126 +122,104 @@ export default async function LandingPage() {
             </Button>
           </div>
         </div>
-      </header>
+      </ScrollHeader>
 
       {/* Hero Section + Interactive Budget Preview */}
-      <section className="relative pt-10 pb-16 sm:pt-16 sm:pb-24 px-4">
-        <BotanicalCorner
-          className="hidden lg:block absolute top-0 right-0 h-56 w-56 opacity-30"
-          variant="sage"
-        />
+      <HeroSection hero={hero} lowestPriceLabel={formatIDR(lowestPrice)} />
 
-        <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
-            <Badge variant="softSage" className="mx-auto lg:mx-0">
-              <Sparkles className="h-3.5 w-3.5 text-terracotta" />
-              {hero.badge}
-            </Badge>
-
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.35rem] font-bold leading-[1.12] tracking-tight text-sage-900">
-              {hero.headline}{" "}
-              <span className="text-terracotta">{hero.headlineAccent}</span>{" "}
-              {hero.headlineSuffix}
-            </h1>
-
-            <p className="text-base sm:text-lg text-sage-700/90 leading-relaxed max-w-xl mx-auto lg:mx-0">
-              {hero.subheadline}
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/login?next=/checkout">
-                  {hero.primaryCta}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                <a href="#harga">
-                  {hero.secondaryCta} ({formatIDR(lowestPrice)})
-                </a>
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 pt-2 text-xs font-medium text-sage-700">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-sage" />
-                Bayar 1x untuk 2 Akun
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <WifiOff className="h-4 w-4 text-sage" />
-                Bisa Dipakai Offline
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <HeartHandshake className="h-4 w-4 text-terracotta" />
-                Khusus Pengantin Indonesia
-              </span>
-            </div>
-          </div>
-
-          {/* Interactive Budget Preview Widget */}
-          <div id="simulasi" className="lg:col-span-6">
-            <InteractiveBudgetPreview />
-          </div>
-        </div>
-      </section>
+      {/* Marquee fitur */}
+      <FeatureMarquee />
 
       {/* Feature Highlights */}
-      <section id="fitur" className="py-16 sm:py-24 px-4 bg-white/65 border-y border-sage/10">
+      <section id="fitur" className="relative scroll-mt-16 px-4 py-20 sm:py-28">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+          <Reveal className="mx-auto mb-14 max-w-2xl space-y-4 text-center">
             <Badge variant="softSage">Ekosistem Terpadu</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-sage-900">
-              Dirancang Khusus untuk Realita Persiapan Nikah di Indonesia
+            <h2 className="font-display text-3xl font-semibold text-sage-900 sm:text-[2.75rem] sm:leading-[1.15]">
+              Dirancang Khusus untuk{" "}
+              <span className="font-script text-gradient-warm text-[1.25em] font-normal">
+                Realita
+              </span>{" "}
+              Persiapan Nikah di Indonesia
             </h2>
-            <p className="text-sm sm:text-base text-sage-700/85">
+            <p className="text-sm text-sage-700/85 sm:text-base">
               Bukan sekadar tabel Excel di layar kecil. Setiap fitur menjawab
               kebutuhan nyata calon pengantin dari lamaran sampai pulang bulan
               madu.
             </p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((item) => {
+          <RevealStagger className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((item, idx) => {
               const Icon = item.icon;
               return (
-                <Card
-                  key={item.title}
-                  className="rounded-2xl border-sage/10 bg-white hover:shadow-soft transition-shadow"
-                >
-                  <CardContent className="p-6 space-y-3">
-                    <div
-                      className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${item.accent}`}
+                <RevealItem key={item.title} className="h-full">
+                  <div className="group relative h-full overflow-hidden rounded-3xl border border-white/70 bg-white/75 p-6 shadow-card backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -right-2 -top-6 font-display text-[6.5rem] font-semibold leading-none text-sage/[0.06] transition-colors group-hover:text-terracotta/10"
                     >
-                      <Icon className="h-5 w-5" />
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <div className="relative space-y-3">
+                      <div
+                        className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 ${item.accent}`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-base font-bold text-sage-900">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-sage-700/85">
+                        {item.desc}
+                      </p>
                     </div>
-                    <h3 className="text-base font-bold text-sage-900">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-sage-700/85 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </RevealItem>
               );
             })}
-          </div>
+          </RevealStagger>
         </div>
       </section>
 
       {/* Dynamic Pricing Section */}
       <PricingSection plans={plans} />
 
+      {/* Closing CTA */}
+      <section className="px-4 pb-20 sm:pb-28">
+        <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-sage-700 via-sage to-sage-800 px-6 py-14 text-center text-cream-50 shadow-lift sm:px-12">
+          <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
+          <FloatingBotanicals preset="page" className="opacity-50" />
+          <div className="relative space-y-5">
+            <p className="font-script text-4xl text-amberwarm sm:text-5xl">
+              From &ldquo;I Do&rdquo; to Honeymoon
+            </p>
+            <h2 className="mx-auto max-w-2xl font-display text-2xl font-semibold sm:text-4xl">
+              Mulai rencanakan hari bahagia kalian dengan tenang hari ini.
+            </h2>
+            <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <Link href="/login?next=/checkout">Aktifkan Couple Pass</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full border-white/30 bg-white/10 text-cream-50 hover:bg-white/20 sm:w-auto"
+              >
+                <a href="#simulasi">Coba Simulasi Gratis</a>
+              </Button>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-sage/10 bg-cream-200/50 py-10 px-4">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+      <footer className="relative border-t border-sage/10 bg-white/40 px-4 py-10 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex flex-col items-center gap-3 sm:flex-row">
             <NikahPlanLogo size="sm" />
-            <span className="hidden sm:inline text-sage-400">|</span>
+            <span className="hidden text-sage-400 sm:inline">|</span>
             <p className="text-xs text-sage-700">
               Wedding &amp; Honeymoon Budget Planner untuk Pasangan Indonesia
             </p>

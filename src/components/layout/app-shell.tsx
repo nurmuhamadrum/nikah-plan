@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import { Home, ReceiptText, Gift, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
+import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
 
 const NAV_ITEMS = [
@@ -30,14 +32,19 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
     .join("");
 
   return (
-    <div className="min-h-screen bg-cream text-foreground flex flex-col md:flex-row">
+    <div className="min-h-screen text-foreground flex flex-col md:flex-row">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-sage/10 bg-cream-50/95 px-4 py-6 z-30">
-        <Link href="/dashboard" className="px-2 mb-8">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-white/60 bg-cream-50/75 backdrop-blur-xl px-4 py-6 z-30 overflow-hidden shadow-soft">
+        <BotanicalCorner
+          className="absolute -bottom-6 -left-6 h-36 w-36 rotate-180 opacity-20"
+          variant="sage"
+        />
+
+        <Link href="/dashboard" className="relative z-10 px-2 mb-8">
           <NikahPlanLogo size="md" />
         </Link>
 
-        <nav className="flex-1 space-y-1.5">
+        <nav className="relative z-10 flex-1 space-y-1.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -47,14 +54,21 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all",
+                  "relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
                   isActive
-                    ? "bg-sage text-cream-50 shadow-sm"
-                    : "text-sage-700 hover:bg-sage-50 hover:text-sage-900"
+                    ? "text-cream-50"
+                    : "text-sage-700 hover:bg-white/70 hover:text-sage-900"
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                {isActive && (
+                  <motion.span
+                    layoutId="desktop-nav-pill"
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <Icon className="relative h-4 w-4" />
+                <span className="relative">{item.label}</span>
               </Link>
             );
           })}
@@ -62,7 +76,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
 
         <Link
           href="/settings"
-          className="mt-auto flex items-center gap-3 rounded-2xl border border-sage/10 bg-white p-3 hover:border-sage/25 transition-colors"
+          className="relative z-10 mt-auto flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-3 hover:border-sage/25 hover:bg-white transition-all shadow-sm"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -93,10 +107,10 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation Bar (Matching Reference UI) */}
+      {/* Mobile Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-sage/12 bg-white/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/60 bg-white/80 backdrop-blur-xl shadow-soft pb-[env(safe-area-inset-bottom)]"
       >
         <div className="mx-auto grid max-w-md grid-cols-4 h-16 px-2">
           {NAV_ITEMS.map((item) => {
@@ -113,12 +127,16 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
                 )}
               >
                 {isActive && (
-                  <span className="absolute top-0 h-0.5 w-8 rounded-full bg-sage" />
+                  <motion.span
+                    layoutId="mobile-nav-indicator"
+                    className="absolute top-0 h-0.5 w-8 rounded-full bg-sage"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
                 )}
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-transform",
-                    isActive && "stroke-[2.3] text-sage"
+                    isActive && "stroke-[2.3] text-sage scale-105"
                   )}
                 />
                 <span>{item.label}</span>

@@ -62,12 +62,12 @@ export default async function OnboardingPage({
 
   if (!workspace) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center px-4 py-12">
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg space-y-6">
           <div className="flex justify-center">
             <NikahPlanLogo size="lg" />
           </div>
-          <Card className="rounded-3xl border-terracotta/30 bg-white shadow-soft">
+          <Card className="glass-strong rounded-3xl border-terracotta/30 shadow-lift">
             <CardContent className="p-6 sm:p-7 space-y-4 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
                 <AlertCircle className="h-7 w-7" />
