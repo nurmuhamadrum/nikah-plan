@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { GiftAllocation, GiftType, WeddingGift } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
-import { useAppStore } from "@/store/use-app-store";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   Dialog,
   DialogContent,
@@ -43,8 +43,7 @@ export function GiftDialog({
   canAllocateHoneymoon,
   onSuccess,
 }: GiftDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [senderName, setSenderName] = useState("");
   const [giftType, setGiftType] = useState<GiftType>("CASH");
@@ -80,14 +79,9 @@ export function GiftDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
-      const amountNum =
-        giftType === "PHYSICAL"
-          ? Math.max(0, Number(amount) || 0)
-          : Math.max(0, Number(amount) || 0);
+      const amountNum = Math.max(0, Number(amount) || 0);
 
       const safeAllocation: GiftAllocation =
         giftType === "PHYSICAL"
@@ -104,28 +98,33 @@ export function GiftDialog({
         notes: notes.trim() || null,
       };
 
-      if (gift) {
-        const { error } = await supabase
-          .from("wedding_gifts")
-          .update(payload)
-          .eq("id", gift.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("wedding_gifts").insert({
-          workspace_id: workspaceId,
-          ...payload,
-        });
-        if (error) throw error;
-      }
+      const { queued } = gift
+        ? await executeOfflineFirstMutation({
+            workspaceId,
+            table: "wedding_gifts",
+            operation: "UPDATE",
+            recordId: gift.id,
+            payload,
+            queryClient,
+          })
+        : await executeOfflineFirstMutation({
+            workspaceId,
+            table: "wedding_gifts",
+            operation: "INSERT",
+            payload: {
+              workspace_id: workspaceId,
+              ...payload,
+            },
+            queryClient,
+          });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menyimpan data angpao."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
@@ -139,23 +138,22 @@ export function GiftDialog({
 
     setDeleting(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("wedding_gifts")
-        .delete()
-        .eq("id", gift.id);
-      if (error) throw error;
-      await onSuccess();
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "wedding_gifts",
+        operation: "DELETE",
+        recordId: gift.id,
+        queryClient,
+      });
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menghapus catatan."
       );
     } finally {
-      endSync();
       setDeleting(false);
     }
   };

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, Loader2, Trash2 } from "lucide-react";
 import type { BudgetCategory, BudgetItem, Workspace } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   buildDefaultHoneymoonCategories,
   convertToIDR,
@@ -12,7 +13,6 @@ import {
   HONEYMOON_CURRENCIES,
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
-import { useAppStore } from "@/store/use-app-store";
 import {
   Dialog,
   DialogContent,
@@ -57,8 +57,7 @@ export function HoneymoonExpenseDialog({
   prefill,
   onSuccess,
 }: HoneymoonExpenseDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [phase, setPhase] = useState<HoneymoonPhase>("HONEYMOON_ONTRIP");
   const [categoryId, setCategoryId] = useState("");
@@ -166,30 +165,29 @@ export function HoneymoonExpenseDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       let resolvedCategoryId = categoryId;
+      let anyQueued = false;
 
       // Auto-seed kategori honeymoon jika workspace belum memilikinya
       if (!resolvedCategoryId) {
         const defaults = buildDefaultHoneymoonCategories(
           Number(workspace.honeymoon_budget_target) || 0
-        ).map((c) => ({ ...c, workspace_id: workspace.id }));
-
-        const { data: createdCats, error: catErr } = await supabase
-          .from("budget_categories")
-          .insert(defaults)
-          .select("id, phase");
-
-        if (catErr || !createdCats?.length) {
-          throw new Error("Gagal membuat kategori honeymoon default.");
+        );
+        for (const c of defaults) {
+          const { id, queued } = await executeOfflineFirstMutation({
+            workspaceId: workspace.id,
+            table: "budget_categories",
+            operation: "INSERT",
+            payload: { ...c, workspace_id: workspace.id },
+            queryClient,
+          });
+          if (queued) anyQueued = true;
+          if (!resolvedCategoryId && c.phase === phase) {
+            resolvedCategoryId = id;
+          }
         }
-
-        const matched =
-          createdCats.find((c) => c.phase === phase) ?? createdCats[0];
-        resolvedCategoryId = matched.id;
       }
 
       const payload = {
@@ -201,42 +199,48 @@ export function HoneymoonExpenseDialog({
         currency,
         foreign_amount: currency === "IDR" ? null : amountNum,
         notes: notes.trim() || null,
+        vendor_contact: null,
         is_booked: true,
       };
 
-      let savedItemId = editingItem?.id;
-
-      if (editingItem) {
-        const { error } = await supabase
-          .from("budget_items")
-          .update(payload)
-          .eq("id", editingItem.id);
-        if (error) throw error;
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("budget_items")
-          .insert({
-            workspace_id: workspace.id,
-            ...payload,
+      const { id: savedItemId, queued } = editingItem
+        ? await executeOfflineFirstMutation({
+            workspaceId: workspace.id,
+            table: "budget_items",
+            operation: "UPDATE",
+            recordId: editingItem.id,
+            payload,
+            queryClient,
           })
-          .select("id")
-          .single();
-        if (error) throw error;
-        savedItemId = inserted?.id;
-      }
+        : await executeOfflineFirstMutation({
+            workspaceId: workspace.id,
+            table: "budget_items",
+            operation: "INSERT",
+            payload: {
+              workspace_id: workspace.id,
+              ...payload,
+            },
+            queryClient,
+          });
 
-      // Jika dibuka dari tombol "Bayar Sekarang" di checklist, tandai checklist selesai & tautkan item
+      if (queued) anyQueued = true;
+
       if (prefill?.checklistId && markChecklistDone) {
-        await supabase
-          .from("honeymoon_checklists")
-          .update({
+        const res = await executeOfflineFirstMutation({
+          workspaceId: workspace.id,
+          table: "honeymoon_checklists",
+          operation: "UPDATE",
+          recordId: prefill.checklistId,
+          payload: {
             is_completed: true,
             linked_item_id: savedItemId ?? null,
-          })
-          .eq("id", prefill.checklistId);
+          },
+          queryClient,
+        });
+        if (res.queued) anyQueued = true;
       }
 
-      await onSuccess();
+      if (!anyQueued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
@@ -245,7 +249,6 @@ export function HoneymoonExpenseDialog({
           : "Gagal menyimpan pengeluaran honeymoon."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
@@ -259,22 +262,21 @@ export function HoneymoonExpenseDialog({
 
     setDeleting(true);
     setErrorMsg(null);
-    startSync();
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("budget_items")
-        .delete()
-        .eq("id", editingItem.id);
-      if (error) throw error;
-      await onSuccess();
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId: workspace.id,
+        table: "budget_items",
+        operation: "DELETE",
+        recordId: editingItem.id,
+        queryClient,
+      });
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menghapus pengeluaran."
       );
     } finally {
-      endSync();
       setDeleting(false);
     }
   };

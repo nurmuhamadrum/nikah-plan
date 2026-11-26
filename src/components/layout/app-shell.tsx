@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, ReceiptText, Gift, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
+import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home },
@@ -87,6 +88,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
       {/* Main Content Area */}
       <main className="flex-1 md:pl-64 pb-24 md:pb-10">
         <div className="mx-auto w-full max-w-3xl px-4 pt-5 sm:px-6 sm:pt-7">
+          <InstallPromptBanner />
           {children}
         </div>
       </main>

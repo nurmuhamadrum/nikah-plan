@@ -9,8 +9,10 @@ interface AppState {
   mode: AppMode;
   syncStatus: SyncStatus;
   pendingMutations: number;
+  queuedCount: number;
   setMode: (mode: AppMode) => void;
   setSyncStatus: (status: SyncStatus) => void;
+  setQueuedCount: (count: number) => void;
   startSync: () => void;
   endSync: () => void;
 }
@@ -19,8 +21,10 @@ export const useAppStore = create<AppState>((set) => ({
   mode: "WEDDING",
   syncStatus: "synced",
   pendingMutations: 0,
+  queuedCount: 0,
   setMode: (mode) => set({ mode }),
   setSyncStatus: (syncStatus) => set({ syncStatus }),
+  setQueuedCount: (queuedCount) => set({ queuedCount }),
   startSync: () =>
     set((state) => ({
       pendingMutations: state.pendingMutations + 1,

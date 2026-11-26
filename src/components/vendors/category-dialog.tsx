@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { BudgetCategory } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import { CATEGORY_ICON_OPTIONS } from "@/lib/category-icons";
-import { useAppStore } from "@/store/use-app-store";
 import {
   Dialog,
   DialogContent,
@@ -35,8 +35,7 @@ export function CategoryDialog({
   nextSortOrder,
   onSuccess,
 }: CategoryDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("utensils");
@@ -66,42 +65,45 @@ export function CategoryDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       const amountNum = Math.max(0, Number(allocatedAmount) || 0);
 
-      if (category) {
-        const { error } = await supabase
-          .from("budget_categories")
-          .update({
-            name: name.trim(),
-            icon,
-            allocated_amount: amountNum,
+      const { queued } = category
+        ? await executeOfflineFirstMutation({
+            workspaceId,
+            table: "budget_categories",
+            operation: "UPDATE",
+            recordId: category.id,
+            payload: {
+              name: name.trim(),
+              icon,
+              allocated_amount: amountNum,
+            },
+            queryClient,
           })
-          .eq("id", category.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("budget_categories").insert({
-          workspace_id: workspaceId,
-          phase: "WEDDING",
-          name: name.trim(),
-          icon,
-          allocated_amount: amountNum,
-          sort_order: nextSortOrder,
-        });
-        if (error) throw error;
-      }
+        : await executeOfflineFirstMutation({
+            workspaceId,
+            table: "budget_categories",
+            operation: "INSERT",
+            payload: {
+              workspace_id: workspaceId,
+              phase: "WEDDING",
+              name: name.trim(),
+              icon,
+              allocated_amount: amountNum,
+              sort_order: nextSortOrder,
+            },
+            queryClient,
+          });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menyimpan kategori."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
@@ -115,24 +117,23 @@ export function CategoryDialog({
 
     setDeleting(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("budget_categories")
-        .delete()
-        .eq("id", category.id);
-      if (error) throw error;
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "budget_categories",
+        operation: "DELETE",
+        recordId: category.id,
+        queryClient,
+      });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menghapus kategori."
       );
     } finally {
-      endSync();
       setDeleting(false);
     }
   };

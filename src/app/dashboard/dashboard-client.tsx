@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,8 +9,12 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchWorkspaceBundle, type WorkspaceBundle } from "@/lib/workspace-data";
+import type { WorkspaceBundle } from "@/lib/workspace-data";
+import { fetchWorkspaceBundleOfflineFirst } from "@/lib/offline/query-helpers";
+import {
+  executeOfflineFirstMutation,
+  saveWorkspaceSnapshot,
+} from "@/lib/offline/sync-engine";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
 import { formatIDR } from "@/lib/utils";
@@ -49,20 +53,18 @@ export function DashboardClient({
   const queryClient = useQueryClient();
   const mode = useAppStore((s) => s.mode);
   const setMode = useAppStore((s) => s.setMode);
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
   const [markingId, setMarkingId] = useState<string | null>(null);
 
   const workspaceId = initialBundle.workspace.id;
   useWorkspaceRealtime(workspaceId);
 
+  useEffect(() => {
+    saveWorkspaceSnapshot(initialBundle);
+  }, [initialBundle]);
+
   const { data: bundle = initialBundle } = useQuery({
     queryKey: ["workspace-data", workspaceId],
-    queryFn: async () => {
-      const supabase = createClient();
-      const fresh = await fetchWorkspaceBundle(supabase, workspaceId);
-      return fresh ?? initialBundle;
-    },
+    queryFn: () => fetchWorkspaceBundleOfflineFirst(workspaceId, initialBundle),
     initialData: initialBundle,
   });
 
@@ -206,19 +208,22 @@ export function DashboardClient({
 
   const handleQuickMarkPaid = async (paymentId: string) => {
     setMarkingId(paymentId);
-    startSync();
     try {
-      const supabase = createClient();
       const today = new Date().toISOString().split("T")[0];
-      await supabase
-        .from("item_payments")
-        .update({ is_paid: true, paid_date: today })
-        .eq("id", paymentId);
-      await queryClient.invalidateQueries({
-        queryKey: ["workspace-data", workspaceId],
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "item_payments",
+        operation: "UPDATE",
+        recordId: paymentId,
+        payload: { is_paid: true, paid_date: today },
+        queryClient,
       });
+      if (!queued) {
+        await queryClient.invalidateQueries({
+          queryKey: ["workspace-data", workspaceId],
+        });
+      }
     } finally {
-      endSync();
       setMarkingId(null);
     }
   };

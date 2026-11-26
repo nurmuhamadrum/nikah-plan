@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,8 +17,12 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchWorkspaceBundle, type WorkspaceBundle } from "@/lib/workspace-data";
+import type { WorkspaceBundle } from "@/lib/workspace-data";
+import { fetchWorkspaceBundleOfflineFirst } from "@/lib/offline/query-helpers";
+import {
+  executeOfflineFirstMutation,
+  saveWorkspaceSnapshot,
+} from "@/lib/offline/sync-engine";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
 import { formatIDR } from "@/lib/utils";
@@ -78,20 +82,18 @@ const ALLOC_META: Record<
 export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
   const setMode = useAppStore((s) => s.setMode);
 
   const workspaceId = initialBundle.workspace.id;
   useWorkspaceRealtime(workspaceId);
 
+  useEffect(() => {
+    saveWorkspaceSnapshot(initialBundle);
+  }, [initialBundle]);
+
   const { data: bundle = initialBundle } = useQuery({
     queryKey: ["workspace-data", workspaceId],
-    queryFn: async () => {
-      const supabase = createClient();
-      const fresh = await fetchWorkspaceBundle(supabase, workspaceId);
-      return fresh ?? initialBundle;
-    },
+    queryFn: () => fetchWorkspaceBundleOfflineFirst(workspaceId, initialBundle),
     initialData: initialBundle,
   });
 
@@ -187,17 +189,21 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
     if (!confirmed) return;
 
     setAllocatingHoneymoon(true);
-    startSync();
     try {
-      const supabase = createClient();
-      const ids = unallocatedCashGifts.map((g) => g.id);
-      await supabase
-        .from("wedding_gifts")
-        .update({ allocated_to: "HONEYMOON_FUND" })
-        .in("id", ids);
-      await refreshData();
+      let anyOnline = false;
+      for (const g of unallocatedCashGifts) {
+        const { queued } = await executeOfflineFirstMutation({
+          workspaceId,
+          table: "wedding_gifts",
+          operation: "UPDATE",
+          recordId: g.id,
+          payload: { allocated_to: "HONEYMOON_FUND" },
+          queryClient,
+        });
+        if (!queued) anyOnline = true;
+      }
+      if (anyOnline) await refreshData();
     } finally {
-      endSync();
       setAllocatingHoneymoon(false);
     }
   };
@@ -207,16 +213,17 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
     target: GiftAllocation
   ) => {
     setQuickUpdatingId(giftId);
-    startSync();
     try {
-      const supabase = createClient();
-      await supabase
-        .from("wedding_gifts")
-        .update({ allocated_to: target })
-        .eq("id", giftId);
-      await refreshData();
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "wedding_gifts",
+        operation: "UPDATE",
+        recordId: giftId,
+        payload: { allocated_to: target },
+        queryClient,
+      });
+      if (!queued) await refreshData();
     } finally {
-      endSync();
       setQuickUpdatingId(null);
     }
   };

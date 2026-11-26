@@ -54,7 +54,7 @@ export default async function SettingsPage() {
     <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
       <SettingsClient
         profile={profile}
-        workspace={bundle.workspace}
+        initialBundle={bundle}
         members={members}
         inviteUrl={inviteUrl}
       />

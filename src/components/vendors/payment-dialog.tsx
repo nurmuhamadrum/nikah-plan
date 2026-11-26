@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2, Upload, FileCheck2, X } from "lucide-react";
 import type { BudgetItem, FundingSource, ItemPayment } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 import { compressReceiptFile } from "@/lib/image-compression";
 import { FUNDING_SOURCE_META } from "@/lib/category-icons";
-import { useAppStore } from "@/store/use-app-store";
+import {
+  executeOfflineFirstMutation,
+  queueReceiptUploadOffline,
+} from "@/lib/offline/sync-engine";
 import {
   Dialog,
   DialogContent,
@@ -45,8 +49,7 @@ export function PaymentDialog({
   payment,
   onSuccess,
 }: PaymentDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [label, setLabel] = useState("DP 30%");
   const [amount, setAmount] = useState("0");
@@ -96,91 +99,107 @@ export function PaymentDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       const amountNum = Math.max(0, Number(amount) || 0);
       const effectivePaidDate = isPaid
         ? paidDate || new Date().toISOString().split("T")[0]
         : null;
 
-      let receiptPath = existingReceiptPath;
-      let targetPaymentId = payment?.id;
-
-      // 1. Insert atau update record termin terlebih dahulu agar punya paymentId
-      if (payment) {
-        const { error } = await supabase
-          .from("item_payments")
-          .update({
-            label: label.trim(),
-            amount: amountNum,
-            funding,
-            due_date: dueDate || null,
-            is_paid: isPaid,
-            paid_date: effectivePaidDate,
-            receipt_url: receiptPath,
+      // 1. Insert / update termin lewat offline-first mutation engine
+      const { id: targetPaymentId, queued } = payment
+        ? await executeOfflineFirstMutation({
+            workspaceId,
+            table: "item_payments",
+            operation: "UPDATE",
+            recordId: payment.id,
+            payload: {
+              label: label.trim(),
+              amount: amountNum,
+              funding,
+              due_date: dueDate || null,
+              is_paid: isPaid,
+              paid_date: effectivePaidDate,
+              receipt_url: existingReceiptPath,
+            },
+            queryClient,
           })
-          .eq("id", payment.id);
-        if (error) throw error;
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("item_payments")
-          .insert({
-            workspace_id: workspaceId,
-            item_id: item.id,
-            label: label.trim(),
-            amount: amountNum,
-            funding,
-            due_date: dueDate || null,
-            is_paid: isPaid,
-            paid_date: effectivePaidDate,
-            receipt_url: null,
-          })
-          .select("id")
-          .single();
-        if (error || !inserted) throw error ?? new Error("Gagal membuat termin");
-        targetPaymentId = inserted.id;
-      }
-
-      // 2. Jika ada file bukti bayar baru, kompres otomatis & unggah ke Supabase Storage `receipts`
-      if (selectedFile && targetPaymentId) {
-        const compressed = await compressReceiptFile(selectedFile);
-        const storagePath = `${workspaceId}/${targetPaymentId}-${Date.now()}.${compressed.ext}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("receipts")
-          .upload(storagePath, compressed.blob, {
-            contentType: compressed.contentType,
-            upsert: true,
+        : await executeOfflineFirstMutation({
+            workspaceId,
+            table: "item_payments",
+            operation: "INSERT",
+            payload: {
+              workspace_id: workspaceId,
+              item_id: item.id,
+              label: label.trim(),
+              amount: amountNum,
+              funding,
+              due_date: dueDate || null,
+              is_paid: isPaid,
+              paid_date: effectivePaidDate,
+              receipt_url: null,
+            },
+            queryClient,
           });
 
-        if (uploadError) {
-          throw new Error(
-            `Termin tersimpan, tetapi gagal unggah bukti bayar: ${uploadError.message}`
-          );
-        }
+      // 2. Kompres & unggah bukti bayar (jika offline, antrekan ke Dexie receiptOutbox!)
+      if (selectedFile && targetPaymentId) {
+        const compressed = await compressReceiptFile(selectedFile);
 
-        // Hapus file lama jika mengganti bukti bayar
-        if (existingReceiptPath && existingReceiptPath !== storagePath) {
-          await supabase.storage.from("receipts").remove([existingReceiptPath]);
-        }
+        if (queued || (typeof navigator !== "undefined" && !navigator.onLine)) {
+          await queueReceiptUploadOffline({
+            workspaceId,
+            paymentId: targetPaymentId,
+            blob: compressed.blob,
+            ext: compressed.ext,
+            contentType: compressed.contentType,
+            previousPath: existingReceiptPath,
+          });
+        } else {
+          const supabase = createClient();
+          const storagePath = `${workspaceId}/${targetPaymentId}-${Date.now()}.${compressed.ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from("receipts")
+            .upload(storagePath, compressed.blob, {
+              contentType: compressed.contentType,
+              upsert: true,
+            });
 
-        receiptPath = storagePath;
-        await supabase
-          .from("item_payments")
-          .update({ receipt_url: receiptPath })
-          .eq("id", targetPaymentId);
+          if (uploadError) {
+            // Fallback ke antrean offline jika jaringan putus saat upload
+            await queueReceiptUploadOffline({
+              workspaceId,
+              paymentId: targetPaymentId,
+              blob: compressed.blob,
+              ext: compressed.ext,
+              contentType: compressed.contentType,
+              previousPath: existingReceiptPath,
+            });
+          } else {
+            if (existingReceiptPath && existingReceiptPath !== storagePath) {
+              await supabase.storage
+                .from("receipts")
+                .remove([existingReceiptPath]);
+            }
+            await executeOfflineFirstMutation({
+              workspaceId,
+              table: "item_payments",
+              operation: "UPDATE",
+              recordId: targetPaymentId,
+              payload: { receipt_url: storagePath },
+              queryClient,
+            });
+          }
+        }
       }
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menyimpan termin pembayaran."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
@@ -192,27 +211,30 @@ export function PaymentDialog({
 
     setDeleting(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
-      if (payment.receipt_url) {
+      if (
+        payment.receipt_url &&
+        (typeof navigator === "undefined" || navigator.onLine)
+      ) {
+        const supabase = createClient();
         await supabase.storage.from("receipts").remove([payment.receipt_url]);
       }
-      const { error } = await supabase
-        .from("item_payments")
-        .delete()
-        .eq("id", payment.id);
-      if (error) throw error;
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "item_payments",
+        operation: "DELETE",
+        recordId: payment.id,
+        queryClient,
+      });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menghapus termin."
       );
     } finally {
-      endSync();
       setDeleting(false);
     }
   };

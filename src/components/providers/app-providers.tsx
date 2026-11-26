@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAppStore } from "@/store/use-app-store";
+import { flushSyncQueue, refreshQueuedCount } from "@/lib/offline/sync-engine";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,22 +22,34 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const setSyncStatus = useAppStore((s) => s.setSyncStatus);
 
   useEffect(() => {
-    const updateOnlineState = () => {
+    const handleOnline = async () => {
+      setSyncStatus("syncing");
+      await flushSyncQueue(queryClient);
+      setSyncStatus("synced");
+    };
+
+    const handleOffline = () => {
+      setSyncStatus("offline");
+    };
+
+    // Inisialisasi status online/offline & cek antrean offline tertunda
+    refreshQueuedCount().then((count) => {
       if (!navigator.onLine) {
         setSyncStatus("offline");
+      } else if (count > 0) {
+        handleOnline();
       } else {
         setSyncStatus("synced");
       }
-    };
+    });
 
-    updateOnlineState();
-    window.addEventListener("online", updateOnlineState);
-    window.addEventListener("offline", updateOnlineState);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
     return () => {
-      window.removeEventListener("online", updateOnlineState);
-      window.removeEventListener("offline", updateOnlineState);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
-  }, [setSyncStatus]);
+  }, [queryClient, setSyncStatus]);
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

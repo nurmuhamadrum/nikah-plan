@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { BudgetCategory, BudgetItem } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
-import { useAppStore } from "@/store/use-app-store";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   Dialog,
   DialogContent,
@@ -43,8 +43,7 @@ export function VendorDialog({
   item,
   onSuccess,
 }: VendorDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
@@ -87,10 +86,8 @@ export function VendorDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       const payload = {
         category_id: categoryId,
         title: title.trim(),
@@ -101,30 +98,36 @@ export function VendorDialog({
         is_booked: isBooked,
       };
 
-      if (item) {
-        const { error } = await supabase
-          .from("budget_items")
-          .update(payload)
-          .eq("id", item.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("budget_items").insert({
-          workspace_id: workspaceId,
-          phase: "WEDDING",
-          currency: "IDR",
-          ...payload,
-        });
-        if (error) throw error;
-      }
+      const { queued } = item
+        ? await executeOfflineFirstMutation({
+            workspaceId,
+            table: "budget_items",
+            operation: "UPDATE",
+            recordId: item.id,
+            payload,
+            queryClient,
+          })
+        : await executeOfflineFirstMutation({
+            workspaceId,
+            table: "budget_items",
+            operation: "INSERT",
+            payload: {
+              workspace_id: workspaceId,
+              phase: "WEDDING",
+              currency: "IDR",
+              foreign_amount: null,
+              ...payload,
+            },
+            queryClient,
+          });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menyimpan data vendor."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
@@ -138,24 +141,23 @@ export function VendorDialog({
 
     setDeleting(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("budget_items")
-        .delete()
-        .eq("id", item.id);
-      if (error) throw error;
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "budget_items",
+        operation: "DELETE",
+        recordId: item.id,
+        queryClient,
+      });
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal menghapus vendor."
       );
     } finally {
-      endSync();
       setDeleting(false);
     }
   };

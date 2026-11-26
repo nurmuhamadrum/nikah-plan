@@ -1,0 +1,53 @@
+{
+  "name": "NikahPlan — Wedding & Honeymoon Budget Planner",
+  "short_name": "NikahPlan",
+  "description": "Aplikasi PWA Offline-First untuk mengatur anggaran pernikahan, termin vendor, angpao, hingga dompet bulan madu bersama pasangan.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F5F0",
+  "theme_color": "#3D5245",
+  "lang": "id-ID",
+  "categories": ["finance", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard Anggaran",
+      "short_name": "Beranda",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Vendor & Termin",
+      "short_name": "Vendor",
+      "url": "/vendors",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Catat Angpao",
+      "short_name": "Angpao",
+      "url": "/angpao",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

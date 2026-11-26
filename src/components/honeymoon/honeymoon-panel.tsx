@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   Edit3,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import type { WorkspaceBundle } from "@/lib/workspace-data";
 import type { BudgetItem, HoneymoonChecklist } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   calculateTripDays,
   formatForeignCurrency,
@@ -23,7 +24,6 @@ import {
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
 import { CategoryIconBadge } from "@/lib/category-icons";
-import { useAppStore } from "@/store/use-app-store";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { HoneymoonExpenseDialog } from "@/components/honeymoon/honeymoon-expense-dialog";
 import { HoneymoonSettingsDialog } from "@/components/honeymoon/honeymoon-settings-dialog";
@@ -38,8 +38,7 @@ interface HoneymoonPanelProps {
 }
 
 export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const { workspace, categories, items, gifts, checklists } = bundle;
 
@@ -140,49 +139,52 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
   }, [workspace, gifts, hmItems]);
 
   const handleToggleChecklist = async (item: HoneymoonChecklist) => {
-    startSync();
-    try {
-      const supabase = createClient();
-      await supabase
-        .from("honeymoon_checklists")
-        .update({ is_completed: !item.is_completed })
-        .eq("id", item.id);
-      await onRefresh();
-    } finally {
-      endSync();
-    }
+    const { queued } = await executeOfflineFirstMutation({
+      workspaceId: workspace.id,
+      table: "honeymoon_checklists",
+      operation: "UPDATE",
+      recordId: item.id,
+      payload: { is_completed: !item.is_completed },
+      queryClient,
+    });
+    if (!queued) await onRefresh();
   };
 
   const handleAddChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistTitle.trim()) return;
     setAddingChecklist(true);
-    startSync();
     try {
-      const supabase = createClient();
-      await supabase.from("honeymoon_checklists").insert({
-        workspace_id: workspace.id,
-        title: newChecklistTitle.trim(),
-        category: "PRETRIP",
-        sort_order: checklists.length + 1,
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId: workspace.id,
+        table: "honeymoon_checklists",
+        operation: "INSERT",
+        payload: {
+          workspace_id: workspace.id,
+          title: newChecklistTitle.trim(),
+          category: "PRETRIP",
+          is_completed: false,
+          linked_item_id: null,
+          sort_order: checklists.length + 1,
+        },
+        queryClient,
       });
       setNewChecklistTitle("");
-      await onRefresh();
+      if (!queued) await onRefresh();
     } finally {
-      endSync();
       setAddingChecklist(false);
     }
   };
 
   const handleDeleteChecklist = async (id: string) => {
-    startSync();
-    try {
-      const supabase = createClient();
-      await supabase.from("honeymoon_checklists").delete().eq("id", id);
-      await onRefresh();
-    } finally {
-      endSync();
-    }
+    const { queued } = await executeOfflineFirstMutation({
+      workspaceId: workspace.id,
+      table: "honeymoon_checklists",
+      operation: "DELETE",
+      recordId: id,
+      queryClient,
+    });
+    if (!queued) await onRefresh();
   };
 
   // Guard untuk paket WEDDING_ONLY

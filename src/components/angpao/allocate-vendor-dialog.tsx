@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, CheckCircle2, Loader2, ReceiptText } from "lucide-react";
 import type { BudgetItem, ItemPayment, WeddingGift } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
 import { formatIDR } from "@/lib/utils";
-import { useAppStore } from "@/store/use-app-store";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,16 @@ export function AllocateVendorDialog({
   unpaidPayments,
   onSuccess,
 }: AllocateVendorDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const workspaceId =
+    unallocatedGifts[0]?.workspace_id ||
+    unpaidPayments[0]?.payment.workspace_id ||
+    "";
 
   const availablePool = useMemo(
     () =>
@@ -61,44 +65,48 @@ export function AllocateVendorDialog({
   };
 
   const handleConfirm = async () => {
+    if (!workspaceId) return;
     setSubmitting(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       const today = new Date().toISOString().split("T")[0];
+      let anyOnline = false;
 
-      // 1. Jika ada termin vendor yang dipilih, lunasi sekaligus tandai sumber dana = ANGPAO
-      if (selectedPaymentIds.length > 0) {
-        const { error: payError } = await supabase
-          .from("item_payments")
-          .update({
+      for (const paymentId of selectedPaymentIds) {
+        const { queued } = await executeOfflineFirstMutation({
+          workspaceId,
+          table: "item_payments",
+          operation: "UPDATE",
+          recordId: paymentId,
+          payload: {
             is_paid: true,
             paid_date: today,
             funding: "ANGPAO",
-          })
-          .in("id", selectedPaymentIds);
-
-        if (payError) throw payError;
+          },
+          queryClient,
+        });
+        if (!queued) anyOnline = true;
       }
 
-      // 2. Tandai gift tunai/transfer unallocated menjadi WEDDING_COVER
       const cashGiftIds = unallocatedGifts
         .filter((g) => g.gift_type !== "PHYSICAL")
         .map((g) => g.id);
 
-      if (cashGiftIds.length > 0) {
-        const { error: giftError } = await supabase
-          .from("wedding_gifts")
-          .update({ allocated_to: "WEDDING_COVER" })
-          .in("id", cashGiftIds);
-
-        if (giftError) throw giftError;
+      for (const giftId of cashGiftIds) {
+        const { queued } = await executeOfflineFirstMutation({
+          workspaceId,
+          table: "wedding_gifts",
+          operation: "UPDATE",
+          recordId: giftId,
+          payload: { allocated_to: "WEDDING_COVER" },
+          queryClient,
+        });
+        if (!queued) anyOnline = true;
       }
 
       setSelectedPaymentIds([]);
-      await onSuccess();
+      if (anyOnline) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
@@ -107,7 +115,6 @@ export function AllocateVendorDialog({
           : "Gagal mengalokasikan dana angpao ke tagihan vendor."
       );
     } finally {
-      endSync();
       setSubmitting(false);
     }
   };

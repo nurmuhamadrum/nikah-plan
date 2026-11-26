@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import type { Workspace } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
+import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import {
   buildDefaultHoneymoonCategories,
   buildDefaultHoneymoonChecklists,
@@ -12,7 +13,6 @@ import {
   HONEYMOON_CURRENCIES,
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
-import { useAppStore } from "@/store/use-app-store";
 import {
   Dialog,
   DialogContent,
@@ -49,8 +49,7 @@ export function HoneymoonSettingsDialog({
   hasChecklists,
   onSuccess,
 }: HoneymoonSettingsDialogProps) {
-  const startSync = useAppStore((s) => s.startSync);
-  const endSync = useAppStore((s) => s.endSync);
+  const queryClient = useQueryClient();
 
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -95,49 +94,59 @@ export function HoneymoonSettingsDialog({
 
     setSaving(true);
     setErrorMsg(null);
-    startSync();
 
     try {
-      const supabase = createClient();
       const rateNum = Math.max(0.01, Number(exchangeRate) || 1);
-
-      const { error } = await supabase
-        .from("workspaces")
-        .update({
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId: workspace.id,
+        table: "workspaces",
+        operation: "UPDATE",
+        recordId: workspace.id,
+        payload: {
           honeymoon_destination: destination.trim(),
           honeymoon_start_date: startDate || null,
           honeymoon_end_date: endDate || null,
           honeymoon_currency: currency,
           honeymoon_exchange_rate: currency === "IDR" ? 1 : rateNum,
           honeymoon_budget_target: budgetNum,
-        })
-        .eq("id", workspace.id);
+        },
+        queryClient,
+      });
 
-      if (error) throw error;
-
-      // Seed kategori honeymoon default jika belum ada
       if (!hasHoneymoonCategories) {
-        const defaultCats = buildDefaultHoneymoonCategories(budgetNum).map(
-          (c) => ({
-            ...c,
-            workspace_id: workspace.id,
-          })
-        );
-        await supabase.from("budget_categories").insert(defaultCats);
+        const defaultCats = buildDefaultHoneymoonCategories(budgetNum);
+        for (const c of defaultCats) {
+          await executeOfflineFirstMutation({
+            workspaceId: workspace.id,
+            table: "budget_categories",
+            operation: "INSERT",
+            payload: { ...c, workspace_id: workspace.id },
+            queryClient,
+          });
+        }
       }
 
-      // Seed checklist pra-perjalanan default jika masih kosong
       if (!hasChecklists) {
         const defaultChecks = buildDefaultHoneymoonChecklists(
           destination.trim()
-        ).map((c) => ({
-          ...c,
-          workspace_id: workspace.id,
-        }));
-        await supabase.from("honeymoon_checklists").insert(defaultChecks);
+        );
+        for (const c of defaultChecks) {
+          await executeOfflineFirstMutation({
+            workspaceId: workspace.id,
+            table: "honeymoon_checklists",
+            operation: "INSERT",
+            payload: {
+              ...c,
+              workspace_id: workspace.id,
+              is_completed: false,
+              linked_item_id: null,
+            },
+            queryClient,
+          });
+        }
       }
 
-      await onSuccess();
+      if (!queued) await onSuccess();
       onOpenChange(false);
     } catch (err) {
       setErrorMsg(
@@ -146,7 +155,6 @@ export function HoneymoonSettingsDialog({
           : "Gagal menyimpan pengaturan honeymoon."
       );
     } finally {
-      endSync();
       setSaving(false);
     }
   };
