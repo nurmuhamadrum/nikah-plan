@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 27% 95%; /* #F7F5F0 Warm Cream */
+    --foreground: 146 18% 18%; /* Deep Warm Sage Charcoal */
+
+    --card: 0 0% 100%; /* Pure Soft White */
+    --card-foreground: 146 18% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 146 18% 18%;
+
+    --primary: 143 15% 28%; /* #3D5245 Warm Sage Green */
+    --primary-foreground: 43 27% 97%;
+
+    --secondary: 21 51% 56%; /* #C87D55 Soft Terracotta */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 40 20% 90%;
+    --muted-foreground: 143 10% 42%;
+
+    --accent: 35 58% 59%; /* #D4A359 Warm Amber */
+    --accent-foreground: 146 18% 18%;
+
+    --destructive: 8 64% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 38 18% 86%;
+    --input: 38 18% 84%;
+    --ring: 143 15% 28%;
+
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-cream text-foreground font-sans antialiased selection:bg-terracotta/20 selection:text-sage-800;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-playfair), Georgia, serif;
+  }
+}
