@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  Eye,
   Gift,
   Globe,
   Heart,
@@ -25,6 +26,7 @@ import {
   Sparkles,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import type {
   GiftAccountItem,
@@ -50,6 +52,7 @@ import {
   splitCoupleNames,
 } from "@/lib/invitation-themes";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { LivePreviewPanel } from "@/components/invitations/live-preview-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -213,6 +216,7 @@ export function UndanganClient({
     text: string;
   } | null>(null);
   const [copiedSlug, setCopiedSlug] = useState(false);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Guest share generator
   const [guestNamesInput, setGuestNamesInput] = useState(
@@ -226,6 +230,83 @@ export function UndanganClient({
 
   const normalizedSlug = slugifyInvitation(slug);
   const publicUrl = `${appUrl}/u/${savedInvitation?.slug || normalizedSlug}`;
+
+  const draftInvitation = useMemo<WeddingInvitation>(
+    () => ({
+      id: savedInvitation?.id || "draft-preview",
+      workspace_id: workspace.id,
+      slug: normalizedSlug,
+      is_published: isPublished,
+      theme,
+      groom_name: groomName.trim() || "Mempelai Pria",
+      groom_full_name: groomFullName.trim(),
+      groom_parents: groomParents.trim(),
+      groom_instagram: groomInstagram.trim() || null,
+      bride_name: brideName.trim() || "Mempelai Wanita",
+      bride_full_name: brideFullName.trim(),
+      bride_parents: brideParents.trim(),
+      bride_instagram: brideInstagram.trim() || null,
+      opening_quote: openingQuote.trim(),
+      quote_source: quoteSource.trim(),
+      cover_photo_url: coverPhotoUrl || null,
+      akad_date: akadDate || null,
+      akad_time: akadTime.trim(),
+      akad_venue: akadVenue.trim(),
+      akad_address: akadAddress.trim(),
+      akad_maps_url: akadMapsUrl.trim() || null,
+      resepsi_date: resepsiDate || null,
+      resepsi_time: resepsiTime.trim(),
+      resepsi_venue: resepsiVenue.trim(),
+      resepsi_address: resepsiAddress.trim(),
+      resepsi_maps_url: resepsiMapsUrl.trim() || null,
+      love_stories: loveStories.filter((s) => s.title.trim().length > 0),
+      gift_accounts: giftAccounts.filter(
+        (g) => g.bank.trim().length > 0 && g.accountNumber.trim().length > 0
+      ),
+      gift_address: giftAddress.trim() || null,
+      gallery_urls: galleryUrls,
+      show_rsvp: showRsvp,
+      show_gift: showGift,
+      closing_message: closingMessage.trim(),
+      created_at: savedInvitation?.created_at || "",
+      updated_at: savedInvitation?.updated_at || "",
+    }),
+    [
+      savedInvitation,
+      workspace.id,
+      normalizedSlug,
+      isPublished,
+      theme,
+      groomName,
+      groomFullName,
+      groomParents,
+      groomInstagram,
+      brideName,
+      brideFullName,
+      brideParents,
+      brideInstagram,
+      openingQuote,
+      quoteSource,
+      coverPhotoUrl,
+      akadDate,
+      akadTime,
+      akadVenue,
+      akadAddress,
+      akadMapsUrl,
+      resepsiDate,
+      resepsiTime,
+      resepsiVenue,
+      resepsiAddress,
+      resepsiMapsUrl,
+      loveStories,
+      giftAccounts,
+      giftAddress,
+      galleryUrls,
+      showRsvp,
+      showGift,
+      closingMessage,
+    ]
+  );
 
   const rsvpStats = useMemo(() => {
     const hadir = rsvps.filter((r) => r.attendance === "HADIR");
@@ -283,8 +364,9 @@ export function UndanganClient({
               Paket aktif Anda adalah <strong>Wedding Only Pass</strong>.
               Upgrade ke <strong>Complete Couple Pass</strong> untuk membuka
               Pembuat Undangan Digital (hemat Rp 500rb–1,5 Jt biaya cetak!),
-              lengkap dengan 4 tema elegan, tautan personalisasi WhatsApp,
-              Amplop Digital, RSVP tamu, serta Honeymoon Planner.
+              lengkap dengan 8 tema beragam layout &amp; ornamen, tautan
+              personalisasi WhatsApp, Amplop Digital, RSVP tamu, serta Honeymoon
+              Planner.
             </p>
             <div className="pt-2">
               <Button asChild size="lg">
@@ -297,12 +379,12 @@ export function UndanganClient({
           </CardContent>
         </Card>
 
-        {/* Preview 4 Tema yang akan didapat */}
+        {/* Preview 8 Tema yang akan didapat */}
         <Card className="glass-strong rounded-3xl shadow-card">
           <CardContent className="p-5 sm:p-6 space-y-4">
             <div className="text-center space-y-1">
               <p className="font-script text-3xl text-terracotta leading-none">
-                4 Tema Eksklusif
+                8 Tema Beragam Layout
               </p>
               <h2 className="font-display text-lg font-semibold text-sage-900">
                 Siap Dipublikasikan di Tautan Kalian Sendiri
@@ -325,8 +407,13 @@ export function UndanganClient({
                     ))}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-sage-900">{t.name}</p>
-                    <p className="text-[11px] text-sage-600 line-clamp-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-sm font-bold text-sage-900">{t.name}</p>
+                      <span className="rounded-full bg-cream-100 border border-sage/15 px-2 py-0.5 text-[10px] font-semibold text-sage-700">
+                        {t.styleLabel}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-sage-600 line-clamp-1 mt-0.5">
                       {t.tagline}
                     </p>
                   </div>
@@ -618,7 +705,17 @@ export function UndanganClient({
                 {publicUrl}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowMobilePreview(true)}
+                className="lg:hidden h-8 px-3 text-xs border-amberwarm/45 bg-amberwarm/20 text-cream-50 hover:bg-amberwarm/30"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Pratinjau Live
+              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -651,7 +748,7 @@ export function UndanganClient({
                     rel="noopener noreferrer"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Pratinjau
+                    Buka Link
                   </Link>
                 </Button>
               )}
@@ -688,12 +785,15 @@ export function UndanganClient({
         </div>
       )}
 
-      {/* 4 Sub-Tab Navigation */}
-      <div
-        role="tablist"
-        aria-label="Editor Undangan"
-        className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-2xl sm:rounded-full glass p-1 shadow-sm"
-      >
+      {/* Split Studio Layout: Editor (Kiri) + Live Phone Preview (Kanan di Desktop) */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_370px] xl:grid-cols-[minmax(0,1fr)_395px] lg:gap-6 lg:items-start">
+        <div className="space-y-5 min-w-0">
+          {/* 4 Sub-Tab Navigation */}
+          <div
+            role="tablist"
+            aria-label="Editor Undangan"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-2xl sm:rounded-full glass p-1 shadow-sm"
+          >
         {BUILDER_TABS.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -749,9 +849,14 @@ export function UndanganClient({
                 </p>
               </div>
 
-              {/* Pemilih 4 Tema */}
+              {/* Pemilih 8 Tema Beragam Layout */}
               <div className="space-y-2.5 pt-1">
-                <Label>Pilih Tema Undangan (4 Desain Eksklusif)</Label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label>Pilih Tema Undangan (8 Desain &amp; Gaya Layout)</Label>
+                  <span className="text-[11px] text-sage-500">
+                    Klik tema untuk melihat pratinjau langsung
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {INVITATION_THEME_LIST.map((item) => {
                     const selected = theme === item.id;
@@ -760,31 +865,34 @@ export function UndanganClient({
                         key={item.id}
                         type="button"
                         onClick={() => setTheme(item.id)}
-                        className={`rounded-2xl border-2 p-3.5 text-left transition-all flex items-center gap-3 ${
+                        className={`rounded-2xl border-2 p-3.5 text-left transition-all flex items-start gap-3 ${
                           selected
                             ? "border-sage bg-white shadow-soft ring-2 ring-sage/10"
                             : "border-sage/12 bg-white/80 hover:border-sage/35"
                         }`}
                       >
-                        <div className="flex -space-x-1.5 shrink-0">
+                        <div className="flex -space-x-1.5 shrink-0 pt-0.5">
                           {item.swatches.map((hex) => (
                             <span
                               key={hex}
-                              className="h-7 w-7 rounded-full border-2 border-white shadow-sm"
+                              className="h-6 w-6 rounded-full border-2 border-white shadow-sm"
                               style={{ backgroundColor: hex }}
                             />
                           ))}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-bold text-sage-900">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <p className="text-sm font-bold text-sage-900 truncate">
                               {item.name}
                             </p>
                             {selected && (
                               <CheckCircle2 className="h-4 w-4 text-sage shrink-0" />
                             )}
                           </div>
-                          <p className="text-[11px] text-sage-600 line-clamp-1 mt-0.5">
+                          <span className="mt-1 inline-block rounded-full bg-cream-100 border border-sage/15 px-2 py-0.5 text-[10px] font-semibold text-sage-700">
+                            {item.styleLabel}
+                          </span>
+                          <p className="text-[11px] text-sage-600 line-clamp-2 mt-1 leading-snug">
                             {item.tagline}
                           </p>
                         </div>
@@ -1610,48 +1718,102 @@ export function UndanganClient({
         </div>
       )}
 
-      {/* Sticky Bottom Save / Publish Bar */}
-      <div className="sticky bottom-20 md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-wrap items-center justify-between gap-2.5">
-        <label className="inline-flex items-center gap-2 text-xs font-semibold text-sage-900 cursor-pointer px-1">
-          <input
-            type="checkbox"
-            checked={isPublished}
-            onChange={(e) => setIsPublished(e.target.checked)}
-            className="h-4 w-4 rounded border-sage/30 text-sage"
-          />
-          Publikasikan ke umum
-        </label>
+          {/* Sticky Bottom Save / Publish Bar */}
+          <div className="sticky bottom-20 md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-wrap items-center justify-between gap-2.5">
+            <label className="inline-flex items-center gap-2 text-xs font-semibold text-sage-900 cursor-pointer px-1">
+              <input
+                type="checkbox"
+                checked={isPublished}
+                onChange={(e) => setIsPublished(e.target.checked)}
+                className="h-4 w-4 rounded border-sage/30 text-sage"
+              />
+              Publikasikan ke umum
+            </label>
 
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={saving}
-            onClick={() => handleSave(false)}
-          >
-            Simpan Draft
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={saving}
-            onClick={() => handleSave(true)}
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="h-3.5 w-3.5" />
-                Simpan &amp; Publikasikan
-              </>
-            )}
-          </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMobilePreview(true)}
+                className="lg:hidden"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Pratinjau
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => handleSave(false)}
+              >
+                Simpan Draft
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={saving}
+                onClick={() => handleSave(true)}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3.5 w-3.5" />
+                    Simpan &amp; Publikasikan
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
+
+        {/* Kolom Kanan Desktop: Sticky Live Interactive Phone Preview */}
+        <aside className="hidden lg:block lg:sticky lg:top-6">
+          <LivePreviewPanel
+            invitation={draftInvitation}
+            rsvps={rsvps}
+            savedSlug={savedInvitation?.slug}
+          />
+        </aside>
       </div>
+
+      {/* Modal Pratinjau Live untuk Mobile & Tablet (< lg) */}
+      {showMobilePreview && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden flex items-center justify-center bg-sage-950/75 p-4 backdrop-blur-sm"
+          onClick={() => setShowMobilePreview(false)}
+        >
+          <div
+            className="relative w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-cream-50 p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3">
+              <p className="font-display text-base font-semibold text-sage-900">
+                Pratinjau Undangan Live
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowMobilePreview(false)}
+                aria-label="Tutup pratinjau"
+                className="rounded-full border border-sage/15 bg-white p-1.5 text-sage-700 hover:bg-sage-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <LivePreviewPanel
+              invitation={draftInvitation}
+              rsvps={rsvps}
+              savedSlug={savedInvitation?.slug}
+              viewportHeightClass="h-[62vh]"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

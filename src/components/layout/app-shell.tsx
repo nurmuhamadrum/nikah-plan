@@ -146,7 +146,12 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
 
       {/* Main Content Area */}
       <main className="flex-1 md:pl-64 pb-24 md:pb-10">
-        <div className="mx-auto w-full max-w-3xl px-4 pt-5 sm:px-6 sm:pt-7">
+        <div
+          className={cn(
+            "mx-auto w-full px-4 pt-5 sm:px-6 sm:pt-7",
+            pathname === "/undangan" ? "max-w-6xl" : "max-w-3xl"
+          )}
+        >
           <InstallPromptBanner />
           {children}
         </div>

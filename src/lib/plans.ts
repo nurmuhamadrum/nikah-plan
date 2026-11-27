@@ -29,7 +29,7 @@ export const PLANS: Record<PlanType, PlanDefinition> = {
       { label: "Mode Offline PWA + Sinkronisasi Real-time", included: true },
       { label: "Honeymoon Planner & Dompet Multi-Mata Uang", included: false },
       { label: "Kalkulator Uang Jajan Harian & Checklist Travel", included: false },
-      { label: "Buat Undangan Online Sendiri (4 Tema + RSVP & Buku Tamu)", included: false },
+      { label: "Buat Undangan Online Sendiri (8 Tema Beragam Layout + RSVP & Buku Tamu)", included: false },
     ],
   },
   COMPLETE_PASS: {
@@ -48,7 +48,7 @@ export const PLANS: Record<PlanType, PlanDefinition> = {
       { label: "Mode Offline PWA + Sinkronisasi Real-time", included: true },
       { label: "Honeymoon Planner & Dompet Multi-Mata Uang", included: true },
       { label: "Kalkulator Uang Jajan Harian & Checklist Travel", included: true },
-      { label: "Buat Undangan Online Sendiri (4 Tema + RSVP & Buku Tamu)", included: true },
+      { label: "Buat Undangan Online Sendiri (8 Tema Beragam Layout + RSVP & Buku Tamu)", included: true },
     ],
   },
 };

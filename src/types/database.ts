@@ -10,7 +10,11 @@ export type InvitationTheme =
   | "BOTANICAL_SAGE"
   | "WARM_TERRACOTTA"
   | "CLASSIC_GOLD"
-  | "MIDNIGHT_GARDEN";
+  | "MIDNIGHT_GARDEN"
+  | "MINIMAL_EDITORIAL"
+  | "JAVANESE_HERITAGE"
+  | "POLAROID_SCRAPBOOK"
+  | "SAKURA_BLUSH";
 export type RsvpAttendance = "HADIR" | "TIDAK_HADIR" | "RAGU";
 
 export type Profile = {

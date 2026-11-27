@@ -53,7 +53,7 @@ const FEATURES = [
   {
     icon: MailOpen,
     title: "Undangan Online Sendiri",
-    desc: "Buat website undangan pernikahan ber-4 tema elegan lengkap dengan tautan nama tamu WhatsApp, amplop digital, RSVP & ucapan (eksklusif Complete Pass).",
+    desc: "Buat website undangan pernikahan ber-8 tema beragam layout lengkap dengan live preview, tautan nama tamu WhatsApp, amplop digital, RSVP & ucapan (eksklusif Complete Pass).",
     accent: "from-terracotta-100 to-terracotta-50 text-terracotta",
   },
   {
