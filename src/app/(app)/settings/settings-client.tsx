@@ -322,6 +322,12 @@ export function SettingsClient({
                 Pusat Panduan &amp; Skenario
               </Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/user-guide">
+                <FileText className="h-3.5 w-3.5" />
+                User Guide Aplikasi
+              </Link>
+            </Button>
             <form action="/auth/signout" method="post">
               <Button
                 variant="ghost"
