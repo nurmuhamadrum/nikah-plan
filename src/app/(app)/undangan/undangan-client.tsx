@@ -35,7 +35,11 @@ import type {
   Workspace,
 } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
-import { compressReceiptFile } from "@/lib/image-compression";
+import {
+  compressImage,
+  formatFileSize,
+  IMAGE_COMPRESSION_PRESETS,
+} from "@/lib/image-compression";
 import {
   DEFAULT_CLOSING_MESSAGE,
   DEFAULT_OPENING_QUOTE,
@@ -196,8 +200,14 @@ export function UndanganClient({
 
   // UI & upload states
   const [saving, setSaving] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [coverUploadStatus, setCoverUploadStatus] = useState<string | null>(
+    null
+  );
+  const [galleryUploadStatus, setGalleryUploadStatus] = useState<string | null>(
+    null
+  );
+  const uploadingCover = coverUploadStatus !== null;
+  const uploadingGallery = galleryUploadStatus !== null;
   const [toast, setToast] = useState<{
     type: "success" | "error";
     text: string;
@@ -407,10 +417,25 @@ export function UndanganClient({
   };
 
   const handleUploadImage = async (
-    file: File,
+    files: File | File[],
     kind: "cover" | "gallery"
   ) => {
-    if (!file.type.startsWith("image/")) {
+    const fileList = Array.isArray(files) ? files : [files];
+    if (fileList.length === 0) return;
+
+    const remainingSlots =
+      kind === "cover" ? 1 : Math.max(0, 6 - galleryUrls.length);
+    if (remainingSlots <= 0) {
+      setToast({
+        type: "error",
+        text: "Galeri sudah mencapai batas maksimal 6 foto.",
+      });
+      return;
+    }
+
+    const targets = fileList.slice(0, remainingSlots);
+    const invalid = targets.find((f) => !f.type.startsWith("image/"));
+    if (invalid) {
       setToast({
         type: "error",
         text: "Format foto harus berupa JPG, PNG, atau WebP.",
@@ -418,55 +443,99 @@ export function UndanganClient({
       return;
     }
 
-    if (kind === "cover") setUploadingCover(true);
-    else setUploadingGallery(true);
     setToast(null);
+    const supabase = createClient();
+    const preset =
+      kind === "cover"
+        ? IMAGE_COMPRESSION_PRESETS.INVITATION_COVER
+        : IMAGE_COMPRESSION_PRESETS.INVITATION_GALLERY;
+
+    let totalOriginal = 0;
+    let totalCompressed = 0;
+    const uploadedUrls: string[] = [];
 
     try {
-      const compressed = await compressReceiptFile(file);
-      const supabase = createClient();
-      const storagePath = `${workspace.id}/${kind}-${Date.now()}.${compressed.ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("invitations")
-        .upload(storagePath, compressed.blob, {
-          contentType: compressed.contentType,
-          upsert: true,
-        });
+      for (let i = 0; i < targets.length; i++) {
+        const file = targets[i];
+        const stepLabel =
+          targets.length > 1 ? ` (${i + 1}/${targets.length})` : "";
 
-      if (upErr) {
-        throw new Error(
-          upErr.message.includes("not found")
-            ? "Bucket storage `invitations` belum ada. Jalankan Migration 004 di Supabase SQL Editor."
-            : upErr.message
-        );
+        if (kind === "cover") {
+          setCoverUploadStatus(`Mengompresi${stepLabel}...`);
+        } else {
+          setGalleryUploadStatus(`Mengompresi${stepLabel}...`);
+        }
+
+        const compressed = await compressImage(file, preset);
+        totalOriginal += compressed.originalSize;
+        totalCompressed += compressed.compressedSize;
+
+        if (kind === "cover") {
+          setCoverUploadStatus(`Mengunggah${stepLabel}...`);
+        } else {
+          setGalleryUploadStatus(`Mengunggah${stepLabel}...`);
+        }
+
+        const storagePath = `${workspace.id}/${kind}-${Date.now()}-${i}.${compressed.ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("invitations")
+          .upload(storagePath, compressed.blob, {
+            contentType: compressed.contentType,
+            upsert: true,
+          });
+
+        if (upErr) {
+          throw new Error(
+            upErr.message.includes("not found")
+              ? "Bucket storage `invitations` belum ada. Jalankan Migration 004 di Supabase SQL Editor."
+              : upErr.message
+          );
+        }
+
+        const { data: pub } = supabase.storage
+          .from("invitations")
+          .getPublicUrl(storagePath);
+
+        uploadedUrls.push(pub.publicUrl);
       }
 
-      const { data: pub } = supabase.storage
-        .from("invitations")
-        .getPublicUrl(storagePath);
+      const savedPct =
+        totalOriginal > 0
+          ? Math.max(
+              0,
+              Math.round(((totalOriginal - totalCompressed) / totalOriginal) * 100)
+            )
+          : 0;
+      const compressionSummary =
+        savedPct > 0
+          ? ` (${formatFileSize(totalOriginal)} → ${formatFileSize(totalCompressed)} · hemat ${savedPct}%)`
+          : ` (${formatFileSize(totalCompressed)})`;
 
-      if (kind === "cover") {
-        setCoverPhotoUrl(pub.publicUrl);
+      if (kind === "cover" && uploadedUrls[0]) {
+        setCoverPhotoUrl(uploadedUrls[0]);
         setToast({
           type: "success",
-          text: "Foto cover berhasil diunggah! Klik Simpan untuk menerapkan.",
+          text: `Foto cover berhasil diunggah${compressionSummary}! Klik Simpan untuk menerapkan.`,
         });
-      } else {
-        setGalleryUrls((prev) => [...prev, pub.publicUrl].slice(0, 6));
+      } else if (uploadedUrls.length > 0) {
+        setGalleryUrls((prev) => [...prev, ...uploadedUrls].slice(0, 6));
         setToast({
           type: "success",
-          text: "Foto galeri ditambahkan! Klik Simpan untuk menerapkan.",
+          text: `${uploadedUrls.length} foto galeri ditambahkan${compressionSummary}! Klik Simpan untuk menerapkan.`,
         });
       }
     } catch (err) {
+      if (kind === "gallery" && uploadedUrls.length > 0) {
+        setGalleryUrls((prev) => [...prev, ...uploadedUrls].slice(0, 6));
+      }
       setToast({
         type: "error",
         text:
           err instanceof Error ? err.message : "Gagal mengunggah foto.",
       });
     } finally {
-      if (kind === "cover") setUploadingCover(false);
-      else setUploadingGallery(false);
+      if (kind === "cover") setCoverUploadStatus(null);
+      else setGalleryUploadStatus(null);
     }
   };
 
@@ -833,7 +902,7 @@ export function UndanganClient({
                       ) : (
                         <ImagePlus className="h-3.5 w-3.5 text-terracotta" />
                       )}
-                      {uploadingCover ? "Mengunggah..." : "Unggah Foto Cover"}
+                      {coverUploadStatus ?? "Unggah Foto Cover"}
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
@@ -841,6 +910,7 @@ export function UndanganClient({
                         disabled={uploadingCover}
                         onChange={(e) => {
                           const f = e.target.files?.[0];
+                          e.target.value = "";
                           if (f) handleUploadImage(f, "cover");
                         }}
                       />
@@ -1263,15 +1333,19 @@ export function UndanganClient({
                     ) : (
                       <ImagePlus className="h-3.5 w-3.5 text-terracotta" />
                     )}
-                    {uploadingGallery ? "Mengunggah..." : "Tambah Foto"}
+                    {galleryUploadStatus ?? "Tambah Foto"}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      multiple
                       className="hidden"
                       disabled={uploadingGallery}
                       onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleUploadImage(f, "gallery");
+                        const list = e.target.files
+                          ? Array.from(e.target.files)
+                          : [];
+                        e.target.value = "";
+                        if (list.length > 0) handleUploadImage(list, "gallery");
                       }}
                     />
                   </label>

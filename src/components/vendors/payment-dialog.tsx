@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2, Upload, FileCheck2, X } from "lucide-react";
 import type { BudgetItem, FundingSource, ItemPayment } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
-import { compressReceiptFile } from "@/lib/image-compression";
+import {
+  compressReceiptFile,
+  formatFileSize,
+  type CompressedImageResult,
+} from "@/lib/image-compression";
 import { FUNDING_SOURCE_META } from "@/lib/category-icons";
 import {
   executeOfflineFirstMutation,
@@ -61,15 +65,38 @@ export function PaymentDialog({
     null
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [compressedFile, setCompressedFile] =
+    useState<CompressedImageResult | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const clearSelectedAttachment = () => {
+    setSelectedFile(null);
+    setCompressedFile(null);
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   useEffect(() => {
     if (open) {
       setErrorMsg(null);
-      setSelectedFile(null);
+      clearSelectedAttachment();
       if (payment) {
         setLabel(payment.label);
         setAmount(String(Number(payment.amount) || 0));
@@ -92,6 +119,30 @@ export function PaymentDialog({
       }
     }
   }, [open, payment, item]);
+
+  const handleFileChange = async (file: File | null) => {
+    setErrorMsg(null);
+    clearSelectedAttachment();
+    if (!file) return;
+
+    setSelectedFile(file);
+    setCompressing(true);
+    try {
+      const result = await compressReceiptFile(file);
+      setCompressedFile(result);
+      if (result.contentType.startsWith("image/")) {
+        setPreviewUrl(URL.createObjectURL(result.blob));
+      }
+    } catch (err) {
+      setSelectedFile(null);
+      setCompressedFile(null);
+      setErrorMsg(
+        err instanceof Error ? err.message : "Gagal memproses file bukti bayar."
+      );
+    } finally {
+      setCompressing(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,9 +193,10 @@ export function PaymentDialog({
             queryClient,
           });
 
-      // 2. Kompres & unggah bukti bayar (jika offline, antrekan ke Dexie receiptOutbox!)
+      // 2. Unggah bukti bayar terkompresi (jika offline, antrekan ke Dexie receiptOutbox!)
       if (selectedFile && targetPaymentId) {
-        const compressed = await compressReceiptFile(selectedFile);
+        const compressed =
+          compressedFile ?? (await compressReceiptFile(selectedFile));
 
         if (queued || (typeof navigator !== "undefined" && !navigator.onLine)) {
           await queueReceiptUploadOffline({
@@ -369,48 +421,91 @@ export function PaymentDialog({
               Bukti Bayar / Kwitansi (JPG, PNG, WebP, PDF)
             </Label>
 
-            <div className="rounded-xl border border-dashed border-sage/25 bg-cream-50/70 p-3.5 space-y-2">
+            <div className="rounded-xl border border-dashed border-sage/25 bg-cream-50/70 p-3.5 space-y-2.5">
               <label
                 htmlFor="receipt-upload"
                 className="flex items-center justify-center gap-2 text-xs font-semibold text-sage-800 cursor-pointer py-1"
               >
-                <Upload className="h-4 w-4 text-terracotta" />
+                {compressing ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+                ) : (
+                  <Upload className="h-4 w-4 text-terracotta" />
+                )}
                 <span>
-                  {selectedFile
-                    ? selectedFile.name
-                    : existingReceiptPath
-                      ? "Ganti file bukti bayar"
-                      : "Pilih foto struk / PDF (kompresi otomatis)"}
+                  {compressing
+                    ? "Mengompresi gambar..."
+                    : selectedFile
+                      ? selectedFile.name
+                      : existingReceiptPath
+                        ? "Ganti file bukti bayar"
+                        : "Pilih foto struk / PDF (kompresi otomatis)"}
                 </span>
               </label>
               <input
+                ref={fileInputRef}
                 id="receipt-upload"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,application/pdf"
                 className="sr-only"
+                disabled={compressing || saving}
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null;
-                  setSelectedFile(file);
+                  e.target.value = "";
+                  void handleFileChange(file);
                 }}
               />
 
               {(selectedFile || existingReceiptPath) && (
-                <div className="flex items-center justify-between rounded-lg bg-white border border-sage/10 px-2.5 py-1.5 text-xs text-sage-700">
-                  <span className="inline-flex items-center gap-1.5 truncate">
-                    <FileCheck2 className="h-3.5 w-3.5 text-sage shrink-0" />
-                    <span className="truncate">
-                      {selectedFile
-                        ? `Siap diunggah: ${selectedFile.name}`
-                        : "Bukti bayar tersimpan di Supabase Storage"}
-                    </span>
-                  </span>
+                <div className="flex items-center justify-between gap-2.5 rounded-lg bg-white border border-sage/10 px-2.5 py-2 text-xs text-sage-700">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {previewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={previewUrl}
+                        alt="Pratinjau bukti bayar"
+                        className="h-10 w-10 rounded-lg object-cover border border-sage/15 shrink-0"
+                      />
+                    ) : (
+                      <FileCheck2 className="h-4 w-4 text-sage shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-sage-900">
+                        {selectedFile
+                          ? selectedFile.name
+                          : "Bukti bayar tersimpan di Supabase Storage"}
+                      </p>
+                      {compressedFile && (
+                        <p className="text-[11px] text-sage-600">
+                          {compressedFile.wasCompressed &&
+                          compressedFile.savedPercent > 0 ? (
+                            <>
+                              {formatFileSize(compressedFile.originalSize)} →{" "}
+                              <strong className="text-emerald-700">
+                                {formatFileSize(compressedFile.compressedSize)}
+                              </strong>{" "}
+                              <span className="text-emerald-700 font-semibold">
+                                (Hemat {compressedFile.savedPercent}%)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              Ukuran siap unggah:{" "}
+                              <strong>
+                                {formatFileSize(compressedFile.compressedSize)}
+                              </strong>
+                            </>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedFile(null);
+                      clearSelectedAttachment();
                       setExistingReceiptPath(null);
                     }}
-                    className="text-sage-500 hover:text-terracotta p-0.5"
+                    className="text-sage-500 hover:text-terracotta p-1 shrink-0"
                     aria-label="Hapus lampiran"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -445,7 +540,10 @@ export function PaymentDialog({
             >
               Batal
             </Button>
-            <Button type="submit" disabled={saving || deleting || !label.trim()}>
+            <Button
+              type="submit"
+              disabled={saving || deleting || compressing || !label.trim()}
+            >
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
