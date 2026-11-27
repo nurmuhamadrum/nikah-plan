@@ -16,6 +16,61 @@ export type InvitationTheme =
   | "POLAROID_SCRAPBOOK"
   | "SAKURA_BLUSH";
 export type RsvpAttendance = "HADIR" | "TIDAK_HADIR" | "RAGU";
+export type FeedbackCategory = "BUG" | "FEATURE" | "SUGGESTION" | "PRAISE";
+export type FeedbackStatus = "NEW" | "REVIEWED" | "RESOLVED";
+export type SupportTopic =
+  | "PEMBAYARAN"
+  | "AKUN_PASANGAN"
+  | "UNDANGAN"
+  | "TEKNIS"
+  | "LAINNYA";
+export type SupportTicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED";
+export type SupportSenderRole = "USER" | "ADMIN";
+
+export type CustomerFeedbackRow = {
+  id: string;
+  user_id: string | null;
+  workspace_id: string | null;
+  sender_name: string;
+  sender_email: string | null;
+  category: FeedbackCategory;
+  rating: number | null;
+  page_path: string | null;
+  message: string;
+  status: FeedbackStatus;
+  admin_reply: string | null;
+  is_public_testimonial: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupportTicketRow = {
+  id: string;
+  ticket_code: string;
+  user_id: string | null;
+  workspace_id: string | null;
+  requester_name: string;
+  requester_email: string | null;
+  topic: SupportTopic;
+  subject: string;
+  status: SupportTicketStatus;
+  last_message_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupportMessageRow = {
+  id: string;
+  ticket_id: string;
+  sender_role: SupportSenderRole;
+  sender_name: string;
+  message: string;
+  created_at: string;
+};
+
+export type SupportTicketWithMessages = SupportTicketRow & {
+  messages: SupportMessageRow[];
+};
 
 export type Profile = {
   id: string;
@@ -356,6 +411,27 @@ export type Database = {
             "invitation_id" | "workspace_id" | "guest_name" | "attendance"
           >;
         Update: Partial<InvitationRsvp>;
+        Relationships: [];
+      };
+      customer_feedbacks: {
+        Row: CustomerFeedbackRow;
+        Insert: Partial<CustomerFeedbackRow> &
+          Pick<CustomerFeedbackRow, "message">;
+        Update: Partial<CustomerFeedbackRow>;
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: SupportTicketRow;
+        Insert: Partial<SupportTicketRow> &
+          Pick<SupportTicketRow, "ticket_code" | "subject">;
+        Update: Partial<SupportTicketRow>;
+        Relationships: [];
+      };
+      support_messages: {
+        Row: SupportMessageRow;
+        Insert: Partial<SupportMessageRow> &
+          Pick<SupportMessageRow, "ticket_id" | "sender_role" | "message">;
+        Update: Partial<SupportMessageRow>;
         Relationships: [];
       };
     };

@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   FileText,
   HardDrive,
+  Headphones,
   HeartHandshake,
   Loader2,
   LogOut,
@@ -45,6 +46,7 @@ import {
 } from "@/lib/export-reports";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { PushNotificationCard } from "@/components/settings/push-notification-card";
+import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
@@ -99,6 +101,7 @@ export function SettingsClient({
   const { workspace } = bundle;
 
   const [copied, setCopied] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Currency settings state
   const [currency, setCurrency] = useState(workspace.honeymoon_currency || "JPY");
@@ -327,6 +330,15 @@ export function SettingsClient({
                 <FileText className="h-3.5 w-3.5" />
                 User Guide Aplikasi
               </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSupportOpen(true)}
+            >
+              <Headphones className="h-3.5 w-3.5" />
+              Bantuan CS &amp; Masukan
             </Button>
             <form action="/auth/signout" method="post">
               <Button
@@ -624,6 +636,11 @@ export function SettingsClient({
           )}
         </CardContent>
       </Card>
+
+      <SupportFeedbackDialog
+        open={supportOpen}
+        onOpenChange={setSupportOpen}
+      />
     </div>
   );
 }

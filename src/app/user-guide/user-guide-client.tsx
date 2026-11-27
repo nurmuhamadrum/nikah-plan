@@ -11,6 +11,7 @@ import {
   ChevronUp,
   Compass,
   Gift,
+  Headphones,
   HelpCircle,
   LayoutDashboard,
   Lightbulb,
@@ -36,6 +37,7 @@ import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { ScrollHeader } from "@/components/landing/scroll-header";
+import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +73,7 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [openFaqId, setOpenFaqId] = useState<string | null>(
     USER_GUIDE_FAQS[0]?.id ?? null
   );
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -488,14 +491,26 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
               id="faq-user-guide"
               className="scroll-mt-20 rounded-3xl border border-sage/12 bg-white/90 p-5 shadow-card backdrop-blur-sm sm:p-7 space-y-4"
             >
-              <div className="space-y-1">
-                <Badge variant="softSage" className="text-[11px]">
-                  <HelpCircle className="h-3 w-3" />
-                  Tanya Jawab &amp; Solusi Cepat
-                </Badge>
-                <h2 className="font-display text-xl font-semibold text-sage-900 sm:text-2xl">
-                  Pertanyaan yang Sering Diajukan (FAQ)
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <Badge variant="softSage" className="text-[11px]">
+                    <HelpCircle className="h-3 w-3" />
+                    Tanya Jawab &amp; Solusi Cepat
+                  </Badge>
+                  <h2 className="font-display text-xl font-semibold text-sage-900 sm:text-2xl">
+                    Pertanyaan yang Sering Diajukan (FAQ)
+                  </h2>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="sage"
+                  onClick={() => setSupportOpen(true)}
+                  className="self-start sm:self-auto"
+                >
+                  <Headphones className="h-3.5 w-3.5" />
+                  Hubungi CS / Kirim Masukan
+                </Button>
               </div>
 
               {filteredFaqs.length === 0 ? (
@@ -608,6 +623,11 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           </p>
         </div>
       </footer>
+
+      <SupportFeedbackDialog
+        open={supportOpen}
+        onOpenChange={setSupportOpen}
+      />
     </div>
   );
 }

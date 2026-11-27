@@ -169,6 +169,9 @@ async function runDiagnostics() {
     { name: "push_subscriptions", desc: "Langganan Web Push reminder termin" },
     { name: "wedding_invitations", desc: "Undangan digital online (Complete Pass)" },
     { name: "invitation_rsvps", desc: "Konfirmasi kehadiran & ucapan tamu undangan" },
+    { name: "customer_feedbacks", desc: "Masukan, saran, bug & ulasan rating pengguna" },
+    { name: "support_tickets", desc: "Tiket bantuan Customer Service" },
+    { name: "support_messages", desc: "Percakapan 2 arah tiket Customer Service" },
   ];
 
   let missingTables = 0;

@@ -5,7 +5,12 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const updateContentSchema = z.object({
-  key: z.enum(["hero", "announcement", "default_exchange_rates"]),
+  key: z.enum([
+    "hero",
+    "announcement",
+    "default_exchange_rates",
+    "support_contact",
+  ]),
   value: z.record(z.unknown()),
 });
 

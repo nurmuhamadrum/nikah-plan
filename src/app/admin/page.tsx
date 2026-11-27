@@ -8,7 +8,13 @@ import {
   getDynamicPricingPlans,
   getDynamicSiteContents,
 } from "@/lib/dynamic-config";
-import type { PromoCodeRow } from "@/types/database";
+import type {
+  CustomerFeedbackRow,
+  PromoCodeRow,
+  SupportMessageRow,
+  SupportTicketRow,
+  SupportTicketWithMessages,
+} from "@/types/database";
 import { AdminClient, type AdminTransactionItem } from "./admin-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +81,9 @@ export default async function AdminPage() {
     promosRes,
     pushCountRes,
     dueCountRes,
+    feedbacksRes,
+    ticketsRes,
+    ticketMessagesRes,
   ] = await Promise.all([
     admin.from("profiles").select("id", { count: "exact", head: true }),
     admin
@@ -99,7 +108,46 @@ export default async function AdminPage() {
       .eq("is_paid", false)
       .gte("due_date", startStr)
       .lte("due_date", endStr),
+    admin
+      .from("customer_feedbacks")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    admin
+      .from("support_tickets")
+      .select("*")
+      .order("last_message_at", { ascending: false })
+      .limit(100),
+    admin
+      .from("support_messages")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(500),
   ]);
+
+  const initialFeedbacks: CustomerFeedbackRow[] = feedbacksRes.error
+    ? []
+    : ((feedbacksRes.data as CustomerFeedbackRow[] | null) ?? []);
+
+  const rawTickets: SupportTicketRow[] = ticketsRes.error
+    ? []
+    : ((ticketsRes.data as SupportTicketRow[] | null) ?? []);
+
+  const rawMessages: SupportMessageRow[] = ticketMessagesRes.error
+    ? []
+    : ((ticketMessagesRes.data as SupportMessageRow[] | null) ?? []);
+
+  const messagesByTicket = new Map<string, SupportMessageRow[]>();
+  for (const m of rawMessages) {
+    const list = messagesByTicket.get(m.ticket_id) ?? [];
+    list.push(m);
+    messagesByTicket.set(m.ticket_id, list);
+  }
+
+  const initialTickets: SupportTicketWithMessages[] = rawTickets.map((t) => ({
+    ...t,
+    messages: messagesByTicket.get(t.id) ?? [],
+  }));
 
   const recentSubs = recentSubsRes.data ?? [];
   const subUserIds = Array.from(new Set(recentSubs.map((s) => s.user_id)));
@@ -144,6 +192,9 @@ export default async function AdminPage() {
       initialHero={contents.hero}
       initialAnnouncement={contents.announcement}
       initialRates={contents.defaultExchangeRates}
+      initialSupportContact={contents.supportContact}
+      initialFeedbacks={initialFeedbacks}
+      initialTickets={initialTickets}
     />
   );
 }

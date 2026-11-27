@@ -4,11 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Home, ReceiptText, Gift, BookOpen, Mail, User } from "lucide-react";
+import {
+  Home,
+  ReceiptText,
+  Gift,
+  BookOpen,
+  Mail,
+  User,
+  Headphones,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
+import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home },
@@ -36,6 +45,7 @@ interface AppShellProps {
 export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
   const pathname = usePathname();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Reset optimistic pending state begitu route tujuan selesai termuat
   useEffect(() => {
@@ -117,11 +127,20 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
           })}
         </nav>
 
+        <button
+          type="button"
+          onClick={() => setSupportOpen(true)}
+          className="relative z-10 mt-auto mb-2.5 flex items-center gap-2.5 rounded-2xl border border-sage/15 bg-sage-50/80 px-3.5 py-2.5 text-left text-xs font-semibold text-sage-800 hover:bg-sage-100/80 hover:border-sage/30 transition-all"
+        >
+          <Headphones className="h-4 w-4 shrink-0 text-sage" />
+          <span className="truncate">Bantuan CS &amp; Masukan</span>
+        </button>
+
         <Link
           href="/settings"
           prefetch={true}
           onClick={() => handleNavClick("/settings")}
-          className="relative z-10 mt-auto flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-3 hover:border-sage/25 hover:bg-white transition-all shadow-sm"
+          className="relative z-10 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-3 hover:border-sage/25 hover:bg-white transition-all shadow-sm"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -197,6 +216,10 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
           })}
         </div>
       </nav>
+      <SupportFeedbackDialog
+        open={supportOpen}
+        onOpenChange={setSupportOpen}
+      />
     </div>
   );
 }

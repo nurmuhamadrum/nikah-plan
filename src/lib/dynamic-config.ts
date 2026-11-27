@@ -18,10 +18,18 @@ export interface AnnouncementContent {
   promoCode: string;
 }
 
+export interface SupportContactContent {
+  whatsappNumber: string;
+  email: string;
+  operationalHours: string;
+  responseEstimate: string;
+}
+
 export interface SiteContentsBundle {
   hero: HeroContent;
   announcement: AnnouncementContent;
   defaultExchangeRates: Record<string, number>;
+  supportContact: SupportContactContent;
 }
 
 export const DEFAULT_HERO_CONTENT: HeroContent = {
@@ -50,6 +58,13 @@ export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
   EUR: 17200,
   USD: 16000,
   AUD: 10500,
+};
+
+export const DEFAULT_SUPPORT_CONTACT: SupportContactContent = {
+  whatsappNumber: "6281234567890",
+  email: "support@nikahplan.id",
+  operationalHours: "Senin–Minggu, 09.00–21.00 WIB",
+  responseEstimate: "Rata-rata balas < 15 menit pada jam operasional",
 };
 
 /**
@@ -116,6 +131,7 @@ export async function getDynamicSiteContents(): Promise<SiteContentsBundle> {
     hero: { ...DEFAULT_HERO_CONTENT },
     announcement: { ...DEFAULT_ANNOUNCEMENT_CONTENT },
     defaultExchangeRates: { ...DEFAULT_EXCHANGE_RATES },
+    supportContact: { ...DEFAULT_SUPPORT_CONTACT },
   };
 
   if (
@@ -140,6 +156,9 @@ export async function getDynamicSiteContents(): Promise<SiteContentsBundle> {
     const ratesRaw = map.get("default_exchange_rates") as
       | Record<string, number>
       | undefined;
+    const supportRaw = map.get("support_contact") as
+      | Partial<SupportContactContent>
+      | undefined;
 
     return {
       hero: heroRaw ? { ...fallback.hero, ...heroRaw } : fallback.hero,
@@ -149,6 +168,9 @@ export async function getDynamicSiteContents(): Promise<SiteContentsBundle> {
       defaultExchangeRates: ratesRaw
         ? { ...fallback.defaultExchangeRates, ...ratesRaw }
         : fallback.defaultExchangeRates,
+      supportContact: supportRaw
+        ? { ...fallback.supportContact, ...supportRaw }
+        : fallback.supportContact,
     };
   } catch {
     return fallback;
