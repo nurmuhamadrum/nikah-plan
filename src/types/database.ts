@@ -252,6 +252,14 @@ export type GiftAccountItem = {
   accountHolder: string;
 };
 
+export type InvitationMusicPreset =
+  | "OFF"
+  | "ROMANTIC_PIANO"
+  | "MUSIC_BOX"
+  | "HARP_GARDEN"
+  | "JAVANESE_AMBIENT"
+  | "CUSTOM";
+
 export type WeddingInvitation = {
   id: string;
   workspace_id: string;
@@ -286,6 +294,8 @@ export type WeddingInvitation = {
   show_rsvp: boolean;
   show_gift: boolean;
   closing_message: string;
+  music_preset?: InvitationMusicPreset;
+  music_url?: string | null;
   created_at: string;
   updated_at: string;
 };

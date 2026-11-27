@@ -1,41 +1,55 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   AlertCircle,
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Copy,
   ExternalLink,
   Eye,
   Gift,
   Globe,
   Heart,
+  HelpCircle,
   ImagePlus,
   Loader2,
   Lock,
   Mail,
   MessageCircle,
+  Music2,
   Palette,
+  Pause,
+  Play,
   Plus,
   Save,
   Send,
   Sparkles,
   Trash2,
   Users,
+  Wand2,
   X,
 } from "lucide-react";
 import type {
   GiftAccountItem,
+  InvitationMusicPreset,
   InvitationRsvp,
   InvitationTheme,
   LoveStoryItem,
   WeddingInvitation,
   Workspace,
 } from "@/types/database";
+import {
+  AmbientMusicPlayer,
+  INVITATION_MUSIC_PRESETS,
+  getMusicPresetMeta,
+  inspectDirectAudioUrl,
+} from "@/lib/ambient-music";
 import { createClient } from "@/lib/supabase/client";
 import {
   compressImage,
@@ -46,6 +60,7 @@ import {
   DEFAULT_CLOSING_MESSAGE,
   DEFAULT_OPENING_QUOTE,
   DEFAULT_QUOTE_SOURCE,
+  INVITATION_THEMES,
   INVITATION_THEME_LIST,
   buildGuestWhatsAppMessage,
   slugifyInvitation,
@@ -202,6 +217,51 @@ export function UndanganClient({
   const [closingMessage, setClosingMessage] = useState(
     initialInvitation?.closing_message ?? DEFAULT_CLOSING_MESSAGE
   );
+  const [musicPreset, setMusicPreset] = useState<InvitationMusicPreset>(
+    initialInvitation?.music_preset ?? "ROMANTIC_PIANO"
+  );
+  const [musicUrl, setMusicUrl] = useState(initialInvitation?.music_url || "");
+  const [openThemeAccordion, setOpenThemeAccordion] = useState(false);
+  const [openMusicAccordion, setOpenMusicAccordion] = useState(false);
+  const [showAudioUrlGuide, setShowAudioUrlGuide] = useState(false);
+  const activeThemeMeta =
+    INVITATION_THEMES[theme] ?? INVITATION_THEMES.BOTANICAL_SAGE;
+  const activeMusicMeta = getMusicPresetMeta(musicPreset);
+  const audioUrlInspection = useMemo(
+    () => inspectDirectAudioUrl(musicUrl),
+    [musicUrl]
+  );
+  const previewPlayerRef = useRef<AmbientMusicPlayer | null>(null);
+  const [previewPlayingPreset, setPreviewPlayingPreset] =
+    useState<InvitationMusicPreset | null>(null);
+
+  useEffect(() => {
+    return () => {
+      previewPlayerRef.current?.destroy();
+      previewPlayerRef.current = null;
+    };
+  }, []);
+
+  const handleTogglePreviewMusic = async (preset: InvitationMusicPreset) => {
+    if (preset === "OFF") {
+      previewPlayerRef.current?.stop();
+      setPreviewPlayingPreset(null);
+      return;
+    }
+    if (!previewPlayerRef.current) {
+      previewPlayerRef.current = new AmbientMusicPlayer();
+    }
+    if (previewPlayingPreset === preset) {
+      previewPlayerRef.current.stop();
+      setPreviewPlayingPreset(null);
+      return;
+    }
+    const ok = await previewPlayerRef.current.start(
+      preset,
+      preset === "CUSTOM" ? musicUrl : null
+    );
+    setPreviewPlayingPreset(ok ? preset : null);
+  };
 
   // UI & upload states
   const [saving, setSaving] = useState(false);
@@ -272,6 +332,8 @@ export function UndanganClient({
       show_rsvp: showRsvp,
       show_gift: showGift,
       closing_message: closingMessage.trim(),
+      music_preset: musicPreset,
+      music_url: musicUrl.trim() || null,
       created_at: savedInvitation?.created_at || "",
       updated_at: savedInvitation?.updated_at || "",
     }),
@@ -309,6 +371,8 @@ export function UndanganClient({
       showRsvp,
       showGift,
       closingMessage,
+      musicPreset,
+      musicUrl,
     ]
   );
 
@@ -489,6 +553,8 @@ export function UndanganClient({
           show_rsvp: showRsvp,
           show_gift: showGift,
           closing_message: closingMessage,
+          music_preset: musicPreset,
+          music_url: musicUrl.trim() || null,
         }),
       });
 
@@ -882,58 +948,437 @@ export function UndanganClient({
                 </p>
               </div>
 
-              {/* Pemilih 8 Tema Beragam Layout */}
-              <div className="space-y-2.5 pt-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label>Pilih Tema Undangan (8 Desain &amp; Gaya Layout)</Label>
-                  <span className="text-[11px] text-sage-500">
-                    Klik tema untuk melihat pratinjau langsung
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {INVITATION_THEME_LIST.map((item) => {
-                    const selected = theme === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setTheme(item.id)}
-                        className={`rounded-2xl border-2 p-3.5 text-left transition-all flex items-start gap-3 ${
-                          selected
-                            ? "border-sage bg-white shadow-soft ring-2 ring-sage/10"
-                            : "border-sage/12 bg-white/80 hover:border-sage/35"
-                        }`}
+              {/* Pemilih 8 Tema Beragam Layout (Accordion, Default Tertutup) */}
+              <div className="pt-1">
+                <div className="rounded-2xl border border-sage/15 bg-white/85 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenThemeAccordion((v) => !v)}
+                    aria-expanded={openThemeAccordion}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-cream-50/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex -space-x-1.5 shrink-0">
+                        {activeThemeMeta.swatches.map((hex) => (
+                          <span
+                            key={hex}
+                            className="h-5 w-5 rounded-full border-2 border-white shadow-sm"
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-sage-900 leading-tight">
+                          Pilih Tema Undangan (8 Desain)
+                        </p>
+                        <p className="text-[11px] text-sage-600 truncate mt-0.5">
+                          Aktif:{" "}
+                          <strong className="text-sage-800">
+                            {activeThemeMeta.name}
+                          </strong>{" "}
+                          &bull; {activeThemeMeta.styleLabel}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cream-100 text-sage-700">
+                      {openThemeAccordion ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </span>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {openThemeAccordion && (
+                      <motion.div
+                        key="theme-accordion-body"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
                       >
-                        <div className="flex -space-x-1.5 shrink-0 pt-0.5">
-                          {item.swatches.map((hex) => (
-                            <span
-                              key={hex}
-                              className="h-6 w-6 rounded-full border-2 border-white shadow-sm"
-                              style={{ backgroundColor: hex }}
-                            />
-                          ))}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1.5">
-                            <p className="text-sm font-bold text-sage-900 truncate">
-                              {item.name}
-                            </p>
-                            {selected && (
-                              <CheckCircle2 className="h-4 w-4 text-sage shrink-0" />
-                            )}
-                          </div>
-                          <span className="mt-1 inline-block rounded-full bg-cream-100 border border-sage/15 px-2 py-0.5 text-[10px] font-semibold text-sage-700">
-                            {item.styleLabel}
-                          </span>
-                          <p className="text-[11px] text-sage-600 line-clamp-2 mt-1 leading-snug">
-                            {item.tagline}
+                        <div className="border-t border-sage/10 p-3.5 space-y-2.5 bg-cream-50/40">
+                          <p className="text-[11px] text-sage-500">
+                            Klik salah satu tema di bawah untuk melihat pratinjau
+                            langsung:
                           </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {INVITATION_THEME_LIST.map((item) => {
+                              const selected = theme === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => setTheme(item.id)}
+                                  className={`rounded-2xl border-2 p-3.5 text-left transition-all flex items-start gap-3 ${
+                                    selected
+                                      ? "border-sage bg-white shadow-soft ring-2 ring-sage/10"
+                                      : "border-sage/12 bg-white/80 hover:border-sage/35"
+                                  }`}
+                                >
+                                  <div className="flex -space-x-1.5 shrink-0 pt-0.5">
+                                    {item.swatches.map((hex) => (
+                                      <span
+                                        key={hex}
+                                        className="h-6 w-6 rounded-full border-2 border-white shadow-sm"
+                                        style={{ backgroundColor: hex }}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-1.5">
+                                      <p className="text-sm font-bold text-sage-900 truncate">
+                                        {item.name}
+                                      </p>
+                                      {selected && (
+                                        <CheckCircle2 className="h-4 w-4 text-sage shrink-0" />
+                                      )}
+                                    </div>
+                                    <span className="mt-1 inline-block rounded-full bg-cream-100 border border-sage/15 px-2 py-0.5 text-[10px] font-semibold text-sage-700">
+                                      {item.styleLabel}
+                                    </span>
+                                    <p className="text-[11px] text-sage-600 line-clamp-2 mt-1 leading-snug">
+                                      {item.tagline}
+                                    </p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </button>
-                    );
-                  })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Pemilih Musik Ambient Pernikahan (Accordion, Default Tertutup) */}
+          <Card className="glass-strong rounded-3xl shadow-card overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between gap-2 px-5 py-4 sm:px-6">
+                <button
+                  type="button"
+                  onClick={() => setOpenMusicAccordion((v) => !v)}
+                  aria-expanded={openMusicAccordion}
+                  className="flex flex-1 items-center justify-between gap-3 text-left min-w-0"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+                      <Music2 className="h-4.5 w-4.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="font-display text-base sm:text-lg font-semibold text-sage-900 leading-tight">
+                        Musik Ambient Undangan
+                      </h2>
+                      <p className="text-[11.5px] text-sage-600 truncate mt-0.5">
+                        Aktif:{" "}
+                        <strong className="text-sage-800">
+                          {activeMusicMeta.name}
+                        </strong>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cream-100 text-sage-700">
+                    {openMusicAccordion ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </span>
+                </button>
+
+                {previewPlayingPreset && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs shrink-0"
+                    onClick={() => {
+                      previewPlayerRef.current?.stop();
+                      setPreviewPlayingPreset(null);
+                    }}
+                  >
+                    <Pause className="h-3.5 w-3.5" />
+                    Stop
+                  </Button>
+                )}
+              </div>
+
+              <AnimatePresence initial={false}>
+                {openMusicAccordion && (
+                  <motion.div
+                    key="music-accordion-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-sage/10 px-5 py-4 sm:px-6 space-y-4">
+                      <p className="text-xs text-sage-600">
+                        Otomatis berputar lembut saat tamu menekan tombol{" "}
+                        <strong>Buka Undangan</strong>. Klik ikon putar untuk
+                        mendengar pratinjau.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {INVITATION_MUSIC_PRESETS.map((item) => {
+                          const selected = musicPreset === item.id;
+                          const isPreviewing = previewPlayingPreset === item.id;
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => {
+                                setMusicPreset(item.id);
+                                if (item.id === "OFF") {
+                                  previewPlayerRef.current?.stop();
+                                  setPreviewPlayingPreset(null);
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setMusicPreset(item.id);
+                                }
+                              }}
+                              className={`cursor-pointer rounded-2xl border-2 p-3.5 transition-all flex items-start justify-between gap-2.5 ${
+                                selected
+                                  ? "border-sage bg-white shadow-soft ring-2 ring-sage/10"
+                                  : "border-sage/12 bg-white/80 hover:border-sage/35"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1 space-y-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs sm:text-sm font-bold text-sage-900 truncate">
+                                    {item.name}
+                                  </p>
+                                  {selected && (
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-sage shrink-0" />
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-sage-600 leading-snug">
+                                  {item.subtitle}
+                                </p>
+                                <span className="inline-block pt-0.5 text-[10px] font-semibold text-terracotta">
+                                  {item.mood}
+                                </span>
+                              </div>
+
+                              {item.id !== "OFF" && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMusicPreset(item.id);
+                                    handleTogglePreviewMusic(item.id);
+                                  }}
+                                  aria-label={
+                                    isPreviewing
+                                      ? `Hentikan preview ${item.name}`
+                                      : `Dengar preview ${item.name}`
+                                  }
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all ${
+                                    isPreviewing
+                                      ? "border-terracotta bg-terracotta text-cream-50 shadow-sm"
+                                      : "border-sage/20 bg-cream-50 text-sage-800 hover:bg-sage hover:text-cream-50"
+                                  }`}
+                                >
+                                  {isPreviewing ? (
+                                    <Pause className="h-3.5 w-3.5" />
+                                  ) : (
+                                    <Play className="h-3.5 w-3.5 translate-x-[0.5px]" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {musicPreset === "CUSTOM" && (
+                        <div className="space-y-3 rounded-2xl border border-sage/15 bg-cream-50/75 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor="inv-music-url" className="text-xs font-bold">
+                              Tautan Langsung File Audio (.mp3 / .m4a / .ogg)
+                            </Label>
+                            <button
+                              type="button"
+                              onClick={() => setShowAudioUrlGuide((v) => !v)}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-terracotta hover:underline"
+                            >
+                              <HelpCircle className="h-3.5 w-3.5" />
+                              Cara Membuat Tautan Audio
+                              {showAudioUrlGuide ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Input
+                              id="inv-music-url"
+                              type="url"
+                              value={musicUrl}
+                              onChange={(e) => setMusicUrl(e.target.value)}
+                              placeholder="https://files.catbox.moe/lagu-anda.mp3"
+                              className="text-xs bg-white flex-1"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={
+                                previewPlayingPreset === "CUSTOM" ? "default" : "outline"
+                              }
+                              disabled={
+                                !musicUrl.trim() ||
+                                audioUrlInspection.status === "unsupported"
+                              }
+                              onClick={() => handleTogglePreviewMusic("CUSTOM")}
+                              className="shrink-0 h-10 px-3.5 text-xs bg-white"
+                            >
+                              {previewPlayingPreset === "CUSTOM" ? (
+                                <>
+                                  <Pause className="h-3.5 w-3.5" />
+                                  Stop Uji
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-3.5 w-3.5" />
+                                  Uji Putar
+                                </>
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Deteksi Otomatis Link Dropbox / Google Drive */}
+                          {audioUrlInspection.status === "convertible" &&
+                            audioUrlInspection.convertedUrl && (
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-amberwarm/45 bg-amberwarm-light/55 px-3 py-2.5 text-[11.5px] text-sage-900">
+                                <span className="leading-snug">
+                                  <strong>{audioUrlInspection.provider}:</strong>{" "}
+                                  {audioUrlInspection.message}
+                                </span>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="sage"
+                                  className="h-7 text-[11px] shrink-0 self-start sm:self-auto"
+                                  onClick={() => {
+                                    if (audioUrlInspection.convertedUrl) {
+                                      setMusicUrl(audioUrlInspection.convertedUrl);
+                                      globalToast.success(
+                                        "Tautan dikonversi!",
+                                        "Klik 'Uji Putar' untuk memastikan audio berbunyi."
+                                      );
+                                    }
+                                  }}
+                                >
+                                  <Wand2 className="h-3 w-3" />
+                                  Ubah ke Tautan Langsung
+                                </Button>
+                              </div>
+                            )}
+
+                          {/* Peringatan Link YouTube / Spotify */}
+                          {audioUrlInspection.status === "unsupported" && (
+                            <div className="flex items-start gap-2 rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2.5 text-[11.5px] text-terracotta-800">
+                              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-terracotta" />
+                              <span className="leading-snug">
+                                {audioUrlInspection.message}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Panduan Interaktif Cara Membuat Tautan Langsung Audio */}
+                          {showAudioUrlGuide && (
+                            <div className="rounded-2xl border border-sage/15 bg-white p-3.5 space-y-3 text-xs text-sage-800">
+                              <p className="font-bold text-sage-900">
+                                Panduan Membuat Tautan Langsung File Audio (Gratis):
+                              </p>
+
+                              <ol className="space-y-2.5 text-[11.5px] leading-relaxed">
+                                <li className="rounded-xl bg-cream-50/80 border border-sage/10 p-2.5">
+                                  <strong className="text-sage-900">
+                                    1. Catbox.moe (Paling Cepat &amp; Tanpa Login)
+                                  </strong>
+                                  <p className="text-sage-700 mt-0.5">
+                                    Buka{" "}
+                                    <span className="font-mono font-semibold text-sage-900">
+                                      catbox.moe
+                                    </span>
+                                    , unggah file <span className="font-mono">.mp3</span>{" "}
+                                    Anda, lalu salin tautan yang muncul (contoh:{" "}
+                                    <span className="font-mono text-[10.5px]">
+                                      https://files.catbox.moe/abc123.mp3
+                                    </span>
+                                    ) dan tempel ke kolom di atas.
+                                  </p>
+                                </li>
+
+                                <li className="rounded-xl bg-cream-50/80 border border-sage/10 p-2.5">
+                                  <strong className="text-sage-900">
+                                    2. Dropbox (Stabil di Semua HP)
+                                  </strong>
+                                  <p className="text-sage-700 mt-0.5">
+                                    Unggah file <span className="font-mono">.mp3</span>{" "}
+                                    ke Dropbox → klik <strong>Share / Bagikan</strong> →{" "}
+                                    <strong>Copy link</strong> → tempel ke kolom di atas
+                                    (atau ubah akhiran{" "}
+                                    <span className="font-mono">?dl=0</span> menjadi{" "}
+                                    <span className="font-mono">?raw=1</span>). Aplikasi
+                                    ini akan mendeteksi dan menawarkan tombol konversi
+                                    1-klik secara otomatis.
+                                  </p>
+                                </li>
+
+                                <li className="rounded-xl bg-cream-50/80 border border-sage/10 p-2.5">
+                                  <strong className="text-sage-900">
+                                    3. Google Drive
+                                  </strong>
+                                  <p className="text-sage-700 mt-0.5">
+                                    Unggah <span className="font-mono">.mp3</span> → klik
+                                    kanan <strong>Bagikan</strong> → ubah akses menjadi{" "}
+                                    <strong>Siapa saja yang memiliki tautan</strong> →
+                                    salin link lalu tempel di kolom atas untuk dikonversi
+                                    otomatis.{" "}
+                                    <em className="text-sage-600">
+                                      (Catatan: sebagian browser iOS/Safari kadang
+                                      membatasi streaming Google Drive; Dropbox/Catbox
+                                      lebih disarankan.)
+                                    </em>
+                                  </p>
+                                </li>
+                              </ol>
+
+                              <p className="text-[11px] text-sage-600 border-t border-sage/10 pt-2">
+                                <strong>Tips:</strong> Link YouTube/Spotify tidak bisa
+                                dipakai langsung. Gunakan file{" "}
+                                <span className="font-mono">.mp3</span> berukuran ringan
+                                (disarankan &le; 5 MB) agar langsung berputar cepat saat
+                                tamu menekan <strong>Buka Undangan</strong>.
+                              </p>
+                            </div>
+                          )}
+
+                          <p className="text-[11px] text-sage-500">
+                            Jika tautan kustom gagal dimuat di perangkat tamu, sistem
+                            otomatis memutar <em>Romantic Piano &amp; Pad</em> sebagai
+                            cadangan.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
 
@@ -1818,14 +2263,14 @@ export function UndanganClient({
       {/* Modal Pratinjau Live untuk Mobile & Tablet (< lg) */}
       {showMobilePreview && (
         <div
-          className="fixed inset-0 z-50 lg:hidden flex items-center justify-center bg-sage-950/75 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 lg:hidden flex items-center justify-center bg-black/75 p-2.5 sm:p-4 backdrop-blur-sm"
           onClick={() => setShowMobilePreview(false)}
         >
           <div
-            className="relative w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-cream-50 p-4 shadow-2xl"
+            className="relative w-full max-w-md max-h-[94vh] overflow-y-auto rounded-3xl bg-cream-50 p-3 sm:p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3">
+            <div className="flex items-center justify-between pb-2.5">
               <p className="font-display text-base font-semibold text-sage-900">
                 Pratinjau Undangan Live
               </p>
@@ -1842,7 +2287,7 @@ export function UndanganClient({
               invitation={draftInvitation}
               rsvps={rsvps}
               savedSlug={savedInvitation?.slug}
-              viewportHeightClass="h-[62vh]"
+              viewportHeightClass="h-[74vh] sm:aspect-[9/19.5] sm:h-auto sm:max-h-[76vh]"
             />
           </div>
         </div>

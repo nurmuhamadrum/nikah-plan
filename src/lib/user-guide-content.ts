@@ -641,6 +641,24 @@ export const USER_GUIDE_FAQS: UserGuideFaq[] = [
     keywords: ["offline", "sinyal", "internet", "antrean", "sinkronisasi", "indexeddb"],
   },
   {
+    id: "faq-musik-undangan",
+    question: "Bagaimana cara membuat Tautan Langsung File Audio (.mp3) untuk musik kustom di Undangan Online?",
+    answer:
+      "Selain 4 preset musik ambient bawaan (Romantic Piano, Celesta Music Box, Botanical Harp, Soft Pelog Heritage), Anda bisa memakai lagu sendiri dengan cara mengunggah file .mp3 (disarankan ≤ 5 MB) ke catbox.moe (gratis tanpa login, langsung mendapat link https://files.catbox.moe/xxxx.mp3) atau ke Dropbox lalu salin tautan Share-nya (tempel di kolom URL Audio Kustom lalu klik tombol konversi 1-klik untuk mengubah ?dl=0 menjadi ?raw=1). Hindari link halaman YouTube atau Spotify karena tidak bisa diputar langsung oleh pemutar audio browser.",
+    keywords: [
+      "musik",
+      "audio",
+      "mp3",
+      "backsound",
+      "lagu",
+      "tautan",
+      "dropbox",
+      "catbox",
+      "google drive",
+      "undangan",
+    ],
+  },
+  {
     id: "faq-reset-budget",
     question: "Apakah menerapkan Skenario di /panduan akan menghapus data vendor saya?",
     answer:

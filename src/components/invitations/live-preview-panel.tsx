@@ -19,7 +19,7 @@ export function LivePreviewPanel({
   invitation,
   rsvps,
   savedSlug,
-  viewportHeightClass = "h-[600px]",
+  viewportHeightClass = "aspect-[9/19.5]",
 }: LivePreviewPanelProps) {
   const [opened, setOpened] = useState(false);
   const [sampleGuest, setSampleGuest] = useState("Budi Santoso & Keluarga");
@@ -109,30 +109,40 @@ export function LivePreviewPanel({
         </div>
       </div>
 
-      {/* Smartphone Mockup Frame */}
-      <div className="mx-auto w-full max-w-[380px] rounded-[2.6rem] border-[7px] border-sage-900 bg-sage-900 shadow-lift overflow-hidden">
-        {/* Top Notch / Status Bar */}
-        <div className="relative flex items-center justify-between bg-sage-900 px-5 py-2 text-[10px] font-semibold text-cream-200/80 select-none">
+      {/* Smartphone Mockup Frame (bezel hitam solid & proporsi layar modern) */}
+      <div className="mx-auto w-full max-w-[368px] lg:max-w-[356px] rounded-[2.75rem] border-[8px] border-[#111111] bg-[#111111] shadow-lift ring-1 ring-black/20 overflow-hidden">
+        {/* Top Status Bar & Dynamic Island */}
+        <div className="relative flex items-center justify-between bg-[#111111] px-5 pt-2 pb-1.5 text-[10px] font-semibold text-white/85 select-none">
           <span>09:41</span>
-          <span className="h-3.5 w-20 rounded-full bg-black/55" />
-          <span>5G</span>
+          <span className="h-4 w-24 rounded-full bg-black ring-1 ring-white/15" />
+          <span className="tracking-tight">5G</span>
         </div>
 
         {/* Scrollable Embedded Invitation Screen */}
-        <div
-          ref={scrollContainerRef}
-          className={`relative w-full ${viewportHeightClass} ${
-            opened ? "overflow-y-auto" : "overflow-hidden"
-          } bg-white rounded-b-[2.1rem]`}
-        >
-          <InvitationRenderer
-            invitation={invitation}
-            initialRsvps={rsvps}
-            guestNameParam={sampleGuest}
-            mode="embedded"
-            controlledOpened={opened}
-            onToggleOpened={setOpened}
-          />
+        <div className="relative overflow-hidden rounded-b-[2.25rem] bg-white">
+          <div
+            ref={scrollContainerRef}
+            className={`relative w-full ${viewportHeightClass} ${
+              opened ? "overflow-y-auto" : "overflow-hidden"
+            }`}
+          >
+            <InvitationRenderer
+              invitation={invitation}
+              initialRsvps={rsvps}
+              guestNameParam={sampleGuest}
+              mode="embedded"
+              controlledOpened={opened}
+              onToggleOpened={setOpened}
+            />
+          </div>
+
+          {/* Bottom Home Indicator Bar */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-1.5 z-30 flex justify-center"
+          >
+            <span className="h-1 w-28 rounded-full bg-black/25 backdrop-blur-sm" />
+          </div>
         </div>
       </div>
 

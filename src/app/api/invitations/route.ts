@@ -56,6 +56,17 @@ const saveInvitationSchema = z.object({
   show_rsvp: z.boolean().default(true),
   show_gift: z.boolean().default(true),
   closing_message: z.string().trim().max(500).default(""),
+  music_preset: z
+    .enum([
+      "OFF",
+      "ROMANTIC_PIANO",
+      "MUSIC_BOX",
+      "HARP_GARDEN",
+      "JAVANESE_AMBIENT",
+      "CUSTOM",
+    ])
+    .default("ROMANTIC_PIANO"),
+  music_url: z.string().trim().max(500).nullable().optional(),
 });
 
 /**
@@ -177,13 +188,35 @@ export async function PUT(request: Request) {
       show_rsvp: input.show_rsvp,
       show_gift: input.show_gift,
       closing_message: input.closing_message,
+      music_preset: input.music_preset,
+      music_url: input.music_url || null,
     };
 
-    const { data: saved, error: upsertErr } = await supabase
+    let { data: saved, error: upsertErr } = await supabase
       .from("wedding_invitations")
       .upsert(payload, { onConflict: "workspace_id" })
       .select("*")
       .single();
+
+    // Fallback aman jika Migration 007 (music_preset/music_url) belum dijalankan di Supabase
+    if (
+      upsertErr &&
+      (upsertErr.code === "42703" ||
+        upsertErr.code === "PGRST204" ||
+        (upsertErr.message ?? "").includes("music_preset") ||
+        (upsertErr.message ?? "").includes("music_url"))
+    ) {
+      const { music_preset: _mp, music_url: _mu, ...legacyPayload } = payload;
+      void _mp;
+      void _mu;
+      const retry = await supabase
+        .from("wedding_invitations")
+        .upsert(legacyPayload, { onConflict: "workspace_id" })
+        .select("*")
+        .single();
+      saved = retry.data;
+      upsertErr = retry.error;
+    }
 
     if (upsertErr) {
       const hint =

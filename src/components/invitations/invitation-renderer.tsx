@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -9,14 +9,19 @@ import {
   Check,
   Clock,
   Copy,
+  Disc3,
   Gift,
   Heart,
   Instagram,
   Loader2,
   MailOpen,
   MapPin,
+  Music2,
+  Pause,
+  Play,
   Send,
   Sparkles,
+  VolumeX,
   X,
 } from "lucide-react";
 import type {
@@ -29,7 +34,12 @@ import {
   buildGoogleCalendarUrl,
   getCoupleInitials,
 } from "@/lib/invitation-themes";
+import {
+  AmbientMusicPlayer,
+  getMusicPresetMeta,
+} from "@/lib/ambient-music";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { InvitationAmbientParticles } from "@/components/invitations/ambient-particles";
 import {
   BohoSunDivider,
   DotPaperBackdrop,
@@ -125,6 +135,94 @@ export function InvitationRenderer({
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [copiedBankIdx, setCopiedBankIdx] = useState<number | null>(null);
+
+  // Ambient Wedding Music state
+  const musicPreset = invitation.music_preset ?? "ROMANTIC_PIANO";
+  const musicUrl = invitation.music_url ?? null;
+  const hasMusic = musicPreset !== "OFF";
+  const musicMeta = getMusicPresetMeta(musicPreset);
+  const musicPlayerRef = useRef<AmbientMusicPlayer | null>(null);
+  const wasPlayingBeforeHideRef = useRef(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+
+  const ensurePlayer = () => {
+    if (!musicPlayerRef.current) {
+      musicPlayerRef.current = new AmbientMusicPlayer();
+    }
+    return musicPlayerRef.current;
+  };
+
+  const handleOpenInvitation = () => {
+    setOpened(true);
+    if (!isEmbedded && hasMusic) {
+      const player = ensurePlayer();
+      player.start(musicPreset, musicUrl).then((ok) => {
+        setMusicPlaying(ok);
+      });
+    }
+  };
+
+  const handleToggleMusic = async () => {
+    if (!hasMusic) return;
+    const player = ensurePlayer();
+    if (musicPlaying) {
+      player.stop();
+      setMusicPlaying(false);
+    } else {
+      const ok = await player.start(musicPreset, musicUrl);
+      setMusicPlaying(ok);
+    }
+  };
+
+  // Cleanup musik saat komponen unmount
+  useEffect(() => {
+    return () => {
+      musicPlayerRef.current?.destroy();
+      musicPlayerRef.current = null;
+    };
+  }, []);
+
+  // Sinkronkan preset/URL musik jika berubah saat sedang berputar
+  useEffect(() => {
+    if (!musicPlaying) return;
+    if (!hasMusic) {
+      musicPlayerRef.current?.stop();
+      setMusicPlaying(false);
+      return;
+    }
+    musicPlayerRef.current?.start(musicPreset, musicUrl).then((ok) => {
+      setMusicPlaying(ok);
+    });
+  }, [musicPreset, musicUrl, hasMusic, musicPlaying]);
+
+  // Otomatis pause saat tab browser tidak aktif, lanjutkan saat kembali
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        if (musicPlayerRef.current?.isPlaying()) {
+          wasPlayingBeforeHideRef.current = true;
+          musicPlayerRef.current.stop();
+          setMusicPlaying(false);
+        }
+      } else if (wasPlayingBeforeHideRef.current && hasMusic) {
+        wasPlayingBeforeHideRef.current = false;
+        musicPlayerRef.current?.start(musicPreset, musicUrl).then((ok) => {
+          setMusicPlaying(ok);
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [hasMusic, musicPreset, musicUrl]);
+
+  const EASE_ROMANTIC = [0.22, 1, 0.36, 1] as const;
+  const sectionReveal = {
+    initial: { opacity: 0, y: 26 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: "some" as const },
+    transition: { duration: 0.65, ease: EASE_ROMANTIC },
+  };
 
   // Kunci scroll halaman di belakang Cover Gate hanya untuk mode publik penuh
   useEffect(() => {
@@ -532,10 +630,13 @@ export function InvitationRenderer({
           : "min-h-screen"
       } ${theme.pageBg} relative overflow-x-clip`}
     >
-      {/* Tekstur latar halaman khas per tema */}
+      {/* Tekstur latar halaman khas per tema + partikel ambient melayang */}
       {isJavanese && <KawungPatternBackdrop className="opacity-45" />}
       {isPolaroid && <DotPaperBackdrop className="opacity-65" />}
       {isStarlight && <StarlightGlow className="opacity-60" />}
+      {opened && (
+        <InvitationAmbientParticles layout={layout} embedded={isEmbedded} />
+      )}
 
       {/* Draft Preview Ribbon (hanya halaman publik) */}
       {!isEmbedded && isOwnerPreview && (
@@ -560,9 +661,9 @@ export function InvitationRenderer({
         {!opened && (
           <motion.div
             key="cover-gate"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -28 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "-100%", scale: 1.02 }}
+            transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
             style={{ backgroundColor: theme.coverFallbackBg }}
             className={`${
               isEmbedded
@@ -753,17 +854,35 @@ export function InvitationRenderer({
                 </div>
               )}
 
-              <div className="pt-1">
-                <button
+              <div className="pt-1 space-y-2.5">
+                <motion.button
                   type="button"
-                  onClick={() => setOpened(true)}
+                  onClick={handleOpenInvitation}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  animate={{
+                    boxShadow: [
+                      "0 8px 24px rgba(0,0,0,0.18)",
+                      "0 10px 30px rgba(255,255,255,0.22)",
+                      "0 8px 24px rgba(0,0,0,0.18)",
+                    ],
+                  }}
+                  transition={{
+                    boxShadow: { duration: 2.6, repeat: Infinity, ease: "easeInOut" },
+                  }}
                   className={`inline-flex items-center gap-2 ${
                     isEmbedded ? "px-5 py-2.5 text-xs" : "px-6 py-3 text-xs sm:text-sm"
-                  } font-bold shadow-lift transition-transform hover:scale-105 active:scale-95 ${buttonRadiusClass} ${theme.coverBtn}`}
+                  } font-bold shadow-lift ${buttonRadiusClass} ${theme.coverBtn}`}
                 >
                   <MailOpen className="h-4 w-4" />
                   Buka Undangan
-                </button>
+                </motion.button>
+                {hasMusic && (
+                  <p className="flex items-center justify-center gap-1.5 text-[10.5px] opacity-75">
+                    <Music2 className="h-3 w-3" />
+                    <span>Dilengkapi musik ambient romantis</span>
+                  </p>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -781,7 +900,16 @@ export function InvitationRenderer({
         } ${!opened ? "pointer-events-none select-none" : ""}`}
       >
         {/* 1. Hero & Countdown */}
-        <section className={`${sectionCardClass} text-center space-y-4`}>
+        <motion.section
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={
+            opened
+              ? { opacity: 1, y: 0, scale: 1 }
+              : { opacity: 0, y: 24, scale: 0.98 }
+          }
+          transition={{ duration: 0.75, delay: 0.12, ease: EASE_ROMANTIC }}
+          className={`${sectionCardClass} text-center space-y-4`}
+        >
           {renderSectionOrnaments()}
 
           {isEditorial && (
@@ -841,11 +969,14 @@ export function InvitationRenderer({
               </a>
             </div>
           )}
-        </section>
+        </motion.section>
 
         {/* 2. Ayat / Kutipan Cinta */}
         {invitation.opening_quote && (
-          <section className={`${sectionCardClass} text-center space-y-3`}>
+          <motion.section
+            {...sectionReveal}
+            className={`${sectionCardClass} text-center space-y-3`}
+          >
             {isEditorial && (
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#6B665E]">
                 NOTE &amp; BLESSING
@@ -863,11 +994,14 @@ export function InvitationRenderer({
                 &mdash; {invitation.quote_source}
               </p>
             )}
-          </section>
+          </motion.section>
         )}
 
         {/* 3. Profil Kedua Mempelai */}
-        <section className={`${sectionCardClass} text-center space-y-5`}>
+        <motion.section
+          {...sectionReveal}
+          className={`${sectionCardClass} text-center space-y-5`}
+        >
           {isRoyal && <RoyalCornerOrnaments />}
           <div className="relative z-10 space-y-1">
             <p
@@ -882,7 +1016,13 @@ export function InvitationRenderer({
 
           <div className="relative z-10 space-y-5">
             {/* Mempelai Pria */}
-            <div className="space-y-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: "some" }}
+              transition={{ duration: 0.6, ease: EASE_ROMANTIC }}
+              className="space-y-1"
+            >
               <p
                 className={`${
                   isEditorial
@@ -913,29 +1053,40 @@ export function InvitationRenderer({
                   {invitation.groom_instagram}
                 </a>
               )}
-            </div>
+            </motion.div>
 
             {/* Pembatas Khas Tema */}
-            {isBoho ? (
-              <BohoSunDivider className={theme.accentText} />
-            ) : isJavanese ? (
-              <div className="flex items-center justify-center gap-3">
-                <span className={`h-px w-12 border-t ${theme.dividerColor}`} />
-                <JavaneseGunungan className="h-7 w-7 text-[#C69C4D]" />
-                <span className={`h-px w-12 border-t ${theme.dividerColor}`} />
-              </div>
-            ) : isEditorial ? (
-              <p className="font-display italic text-2xl text-[#8A7968]">&amp;</p>
-            ) : (
-              <div className="flex items-center justify-center gap-3">
-                <span className={`h-px w-14 border-t ${theme.dividerColor}`} />
-                <Heart className={`h-4 w-4 ${theme.accentText}`} />
-                <span className={`h-px w-14 border-t ${theme.dividerColor}`} />
-              </div>
-            )}
+            <motion.div
+              animate={{ scale: [1, 1.07, 1] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              {isBoho ? (
+                <BohoSunDivider className={theme.accentText} />
+              ) : isJavanese ? (
+                <div className="flex items-center justify-center gap-3">
+                  <span className={`h-px w-12 border-t ${theme.dividerColor}`} />
+                  <JavaneseGunungan className="h-7 w-7 text-[#C69C4D]" />
+                  <span className={`h-px w-12 border-t ${theme.dividerColor}`} />
+                </div>
+              ) : isEditorial ? (
+                <p className="font-display italic text-2xl text-[#8A7968]">&amp;</p>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  <span className={`h-px w-14 border-t ${theme.dividerColor}`} />
+                  <Heart className={`h-4 w-4 ${theme.accentText}`} />
+                  <span className={`h-px w-14 border-t ${theme.dividerColor}`} />
+                </div>
+              )}
+            </motion.div>
 
             {/* Mempelai Wanita */}
-            <div className="space-y-1">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: "some" }}
+              transition={{ duration: 0.6, delay: 0.1, ease: EASE_ROMANTIC }}
+              className="space-y-1"
+            >
               <p
                 className={`${
                   isEditorial
@@ -966,12 +1117,12 @@ export function InvitationRenderer({
                   {invitation.bride_instagram}
                 </a>
               )}
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 4. Rangkaian Acara (Akad & Resepsi) */}
-        <section className="space-y-4">
+        <motion.section {...sectionReveal} className="space-y-4">
           <div className="text-center space-y-1">
             <p
               className={`${
@@ -1007,9 +1158,17 @@ export function InvitationRenderer({
               },
             ]
               .filter((ev) => ev.date || ev.venue || ev.address)
-              .map((ev) => (
-                <div
+              .map((ev, evIdx) => (
+                <motion.div
                   key={ev.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: "some" }}
+                  transition={{
+                    duration: 0.55,
+                    delay: evIdx * 0.12,
+                    ease: EASE_ROMANTIC,
+                  }}
                   className={`${
                     isPolaroid
                       ? "rounded-2xl border-2 border-dashed border-[#8B7765]/40 bg-[#FFFDF9] p-5 text-center space-y-2.5 shadow-sm"
@@ -1072,14 +1231,17 @@ export function InvitationRenderer({
                       </a>
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* 5. Kisah Cinta (Love Story) */}
         {loveStories.length > 0 && (
-          <section className={`${sectionCardClass} space-y-5`}>
+          <motion.section
+            {...sectionReveal}
+            className={`${sectionCardClass} space-y-5`}
+          >
             <div className="text-center space-y-1">
               <p
                 className={`${
@@ -1097,8 +1259,16 @@ export function InvitationRenderer({
 
             <div className="space-y-4">
               {loveStories.map((story, idx) => (
-                <div
+                <motion.div
                   key={idx}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: "some" }}
+                  transition={{
+                    duration: 0.5,
+                    delay: idx * 0.09,
+                    ease: EASE_ROMANTIC,
+                  }}
                   className={`relative pl-5 border-l-2 ${theme.dividerColor}`}
                 >
                   <span
@@ -1121,15 +1291,15 @@ export function InvitationRenderer({
                       {story.description}
                     </p>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* 6. Galeri Foto Prewedding */}
         {galleryUrls.length > 0 && (
-          <section className="space-y-4">
+          <motion.section {...sectionReveal} className="space-y-4">
             <div className="text-center space-y-1">
               <p
                 className={`${
@@ -1151,16 +1321,26 @@ export function InvitationRenderer({
               } gap-3`}
             >
               {galleryUrls.map((url, idx) => (
-                <button
+                <motion.button
                   key={`${url}-${idx}`}
                   type="button"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, amount: "some" }}
+                  transition={{
+                    duration: 0.45,
+                    delay: idx * 0.07,
+                    ease: EASE_ROMANTIC,
+                  }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setLightboxUrl(url)}
                   className={
                     isPolaroid
-                      ? `bg-white p-1.5 pb-5 border border-[#8B7765]/25 shadow-md transition-transform hover:scale-[1.03] ${
+                      ? `bg-white p-1.5 pb-5 border border-[#8B7765]/25 shadow-md ${
                           idx % 2 === 0 ? "-rotate-1" : "rotate-1"
                         }`
-                      : `aspect-[4/5] overflow-hidden border border-white/40 shadow-sm transition-transform hover:scale-[1.02] ${
+                      : `aspect-[4/5] overflow-hidden border border-white/40 shadow-sm ${
                           isEditorial
                             ? "rounded-none border-[#171717]/20"
                             : isRoyal || isJavanese
@@ -1177,16 +1357,19 @@ export function InvitationRenderer({
                       isPolaroid ? "aspect-[4/4]" : "h-full"
                     } w-full object-cover ${isEditorial ? "grayscale-[10%]" : ""}`}
                   />
-                </button>
+                </motion.button>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* 7. Amplop Digital (Wedding Gift) */}
         {invitation.show_gift &&
           (giftAccounts.length > 0 || invitation.gift_address) && (
-            <section className={`${sectionCardClass} text-center space-y-4`}>
+            <motion.section
+              {...sectionReveal}
+              className={`${sectionCardClass} text-center space-y-4`}
+            >
               <div className="space-y-1">
                 <span
                   className={`mx-auto inline-flex h-10 w-10 items-center justify-center border ${
@@ -1264,12 +1447,15 @@ export function InvitationRenderer({
                   {invitation.gift_address}
                 </div>
               )}
-            </section>
+            </motion.section>
           )}
 
         {/* 8. RSVP & Dinding Ucapan Doa */}
         {invitation.show_rsvp && (
-          <section className={`${sectionCardClass} space-y-5`}>
+          <motion.section
+            {...sectionReveal}
+            className={`${sectionCardClass} space-y-5`}
+          >
             <div className="text-center space-y-1">
               <p
                 className={`${
@@ -1388,8 +1574,11 @@ export function InvitationRenderer({
             {rsvps.length > 0 && (
               <div className="space-y-2.5 pt-3 border-t border-current/10 max-h-72 overflow-y-auto pr-1">
                 {rsvps.map((item) => (
-                  <div
+                  <motion.div
                     key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: EASE_ROMANTIC }}
                     className={`border p-3 space-y-1 ${
                       isEditorial ? "rounded-none" : "rounded-2xl"
                     } ${theme.dividerColor} ${
@@ -1415,15 +1604,18 @@ export function InvitationRenderer({
                         {item.message}
                       </p>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </section>
+          </motion.section>
         )}
 
         {/* 9. Penutup & Credit */}
-        <footer className="text-center space-y-3 pt-2 pb-6">
+        <motion.footer
+          {...sectionReveal}
+          className="text-center space-y-3 pt-2 pb-10"
+        >
           {invitation.closing_message && (
             <p className={`text-xs leading-relaxed max-w-md mx-auto ${theme.mutedText}`}>
               {invitation.closing_message}
@@ -1444,35 +1636,87 @@ export function InvitationRenderer({
               NikahPlan
             </Link>
           </p>
-        </footer>
+        </motion.footer>
       </div>
       )}
 
-      {/* Lightbox Foto Galeri */}
-      {lightboxUrl && (
-        <div
-          className={`${
-            isEmbedded ? "absolute" : "fixed"
-          } inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm`}
-          onClick={() => setLightboxUrl(null)}
-        >
-          <button
+      {/* Tombol Piringan Musik Ambient Melayang (Pojok Kanan Bawah) */}
+      <AnimatePresence>
+        {opened && hasMusic && (
+          <motion.button
+            key="floating-music-btn"
             type="button"
-            aria-label="Tutup foto"
-            className="absolute right-4 top-4 rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
+            initial={{ opacity: 0, scale: 0.7, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.7, y: 20 }}
+            transition={{ duration: 0.35, ease: EASE_ROMANTIC }}
+            onClick={handleToggleMusic}
+            aria-label={
+              musicPlaying
+                ? "Jeda musik ambient undangan"
+                : "Putar musik ambient undangan"
+            }
+            title={`${musicPlaying ? "Jeda" : "Putar"}: ${musicMeta.name}`}
+            className={`${
+              isEmbedded ? "sticky float-right bottom-3 mr-3" : "fixed bottom-5 right-5"
+            } z-40 inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-2 shadow-lift backdrop-blur-md transition-transform hover:scale-105 active:scale-95 ${theme.primaryBtn}`}
+          >
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+              {musicPlaying ? (
+                <Disc3 className="h-4 w-4 animate-[spin_5s_linear_infinite]" />
+              ) : (
+                <VolumeX className="h-4 w-4 opacity-85" />
+              )}
+            </span>
+            <span className="hidden sm:inline max-w-[120px] truncate text-[11px] font-semibold">
+              {musicPlaying ? musicMeta.name : "Putar Musik"}
+            </span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
+              {musicPlaying ? (
+                <Pause className="h-2.5 w-2.5" />
+              ) : (
+                <Play className="h-2.5 w-2.5 translate-x-[0.5px]" />
+              )}
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox Foto Galeri (AnimatePresence) */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            key="gallery-lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className={`${
+              isEmbedded ? "absolute" : "fixed"
+            } inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm`}
             onClick={() => setLightboxUrl(null)}
           >
-            <X className="h-5 w-5" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxUrl}
-            alt="Pratinjau Galeri"
-            className="max-h-[85%] max-w-full rounded-2xl object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+            <button
+              type="button"
+              aria-label="Tutup foto"
+              className="absolute right-4 top-4 rounded-full bg-white/15 p-2 text-white hover:bg-white/25 transition-colors"
+              onClick={() => setLightboxUrl(null)}
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <motion.img
+              src={lightboxUrl}
+              alt="Pratinjau Galeri"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.28, ease: EASE_ROMANTIC }}
+              className="max-h-[85%] max-w-full rounded-2xl object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
