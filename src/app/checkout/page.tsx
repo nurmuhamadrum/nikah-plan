@@ -70,7 +70,7 @@ export default async function CheckoutPage({
       isUpgrade={isUpgradeRequested && Boolean(profile?.has_paid)}
       upgradePrice={upgradePrice}
       snapJsUrl={MIDTRANS_SNAP_JS_URL}
-      midtransClientKey={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
+      midtransClientKey={process.env.MIDTRANS_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
       callbackOrderId={params.order_id}
     />
   );
