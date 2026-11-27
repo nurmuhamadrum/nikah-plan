@@ -71,8 +71,12 @@ export default function RootLayout({
     <html
       lang="id"
       className={`${manrope.variable} ${fraunces.variable} ${allura.variable}`}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen bg-canvas text-foreground">
+      <body
+        className="min-h-screen bg-canvas text-foreground"
+        suppressHydrationWarning
+      >
         <BackgroundDecor />
         <AppProviders>{children}</AppProviders>
       </body>

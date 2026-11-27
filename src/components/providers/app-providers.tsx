@@ -68,6 +68,31 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       })
   );
 
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().catch(() => {});
+        }
+      })
+      .catch(() => {});
+
+    if ("caches" in window) {
+      caches
+        .keys()
+        .then((keys) => {
+          for (const key of keys) {
+            caches.delete(key).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
