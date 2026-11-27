@@ -30,6 +30,7 @@ import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -625,16 +626,13 @@ export function AdminClient({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
                             <Label>Harga Jual (IDR)</Label>
-                            <Input
-                              type="number"
-                              min={10000}
-                              step={1000}
+                            <CurrencyInput
                               value={plan.price}
-                              onChange={(e) =>
+                              onValueChange={(raw) =>
                                 updatePlanField(
                                   planKey,
                                   "price",
-                                  Number(e.target.value) || 0
+                                  Number(raw) || 0
                                 )
                               }
                               className="font-bold"
@@ -642,16 +640,13 @@ export function AdminClient({
                           </div>
                           <div className="space-y-2">
                             <Label>Harga Coret (IDR)</Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={1000}
+                            <CurrencyInput
                               value={plan.originalPrice}
-                              onChange={(e) =>
+                              onValueChange={(raw) =>
                                 updatePlanField(
                                   planKey,
                                   "originalPrice",
-                                  Number(e.target.value) || 0
+                                  Number(raw) || 0
                                 )
                               }
                             />
@@ -844,15 +839,25 @@ export function AdminClient({
                       <Label htmlFor="promo-val">
                         Nilai ({newDiscountType === "PERCENT" ? "%" : "IDR"})
                       </Label>
-                      <Input
-                        id="promo-val"
-                        type="number"
-                        required
-                        min={1}
-                        max={newDiscountType === "PERCENT" ? 90 : 1000000}
-                        value={newDiscountValue}
-                        onChange={(e) => setNewDiscountValue(e.target.value)}
-                      />
+                      {newDiscountType === "FIXED" ? (
+                        <CurrencyInput
+                          id="promo-val"
+                          required
+                          placeholder="20.000"
+                          value={newDiscountValue}
+                          onValueChange={setNewDiscountValue}
+                        />
+                      ) : (
+                        <Input
+                          id="promo-val"
+                          type="number"
+                          required
+                          min={1}
+                          max={90}
+                          value={newDiscountValue}
+                          onChange={(e) => setNewDiscountValue(e.target.value)}
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -1161,14 +1166,13 @@ export function AdminClient({
                     {Object.entries(rates).map(([code, val]) => (
                       <div key={code} className="space-y-1">
                         <Label className="text-xs font-mono">1 {code}</Label>
-                        <Input
-                          type="number"
-                          step="0.5"
+                        <CurrencyInput
+                          allowDecimal
                           value={val}
-                          onChange={(e) =>
+                          onValueChange={(raw) =>
                             setRates((prev) => ({
                               ...prev,
-                              [code]: Number(e.target.value) || 0,
+                              [code]: Number(raw) || 0,
                             }))
                           }
                           className="h-9 text-xs font-bold"

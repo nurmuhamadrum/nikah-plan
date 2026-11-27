@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 type HoneymoonPhase = "HONEYMOON_PRE" | "HONEYMOON_ONTRIP";
@@ -420,15 +421,13 @@ export function HoneymoonExpenseDialog({
               <Label htmlFor="hm-exp-amount">
                 Nominal ({getCurrencyOption(currency).symbol})
               </Label>
-              <Input
+              <CurrencyInput
                 id="hm-exp-amount"
-                type="number"
                 required
-                min={0}
-                step="any"
-                placeholder={currency === "IDR" ? "1500000" : "15000"}
+                allowDecimal={currency !== "IDR"}
+                placeholder={currency === "IDR" ? "1.500.000" : "15.000"}
                 value={inputAmount}
-                onChange={(e) => setInputAmount(e.target.value)}
+                onValueChange={setInputAmount}
                 className="font-bold"
               />
             </div>
@@ -445,13 +444,11 @@ export function HoneymoonExpenseDialog({
                   <ArrowRightLeft className="h-3.5 w-3.5 text-sage" />
                   Kurs tersimpan (1 {currency} → IDR)
                 </Label>
-                <Input
+                <CurrencyInput
                   id="hm-exp-rate"
-                  type="number"
-                  step="0.5"
-                  min={1}
+                  allowDecimal
                   value={exchangeRate}
-                  onChange={(e) => setExchangeRate(e.target.value)}
+                  onValueChange={setExchangeRate}
                   className="w-28 h-8 text-right text-xs font-bold bg-white"
                 />
               </div>

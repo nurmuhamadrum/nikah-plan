@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 interface CategoryDialogProps {
@@ -205,13 +206,11 @@ export function CategoryDialog({
 
           <div className="space-y-2">
             <Label htmlFor="cat-alloc">Alokasi Target (IDR)</Label>
-            <Input
+            <CurrencyInput
               id="cat-alloc"
-              type="number"
-              min={0}
-              step={500000}
+              placeholder="10.000.000"
               value={allocatedAmount}
-              onChange={(e) => setAllocatedAmount(e.target.value)}
+              onValueChange={setAllocatedAmount}
             />
           </div>
 

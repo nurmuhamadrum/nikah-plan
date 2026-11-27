@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 const AMOUNT_PRESETS = [100000, 200000, 500000, 1000000, 2000000];
@@ -257,13 +258,11 @@ export function GiftDialog({
                 ? "Estimasi Nilai Kado (Opsional, IDR)"
                 : "Nominal Angpao (IDR)"}
             </Label>
-            <Input
+            <CurrencyInput
               id="gift-amount"
-              type="number"
-              min={0}
-              step={10000}
+              placeholder="200.000"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onValueChange={setAmount}
             />
             {giftType !== "PHYSICAL" && (
               <div className="flex flex-wrap gap-1.5">

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 interface HoneymoonSettingsDialogProps {
@@ -251,27 +252,23 @@ export function HoneymoonSettingsDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="hm-set-rate">Kurs ke IDR (1 {currency})</Label>
-              <Input
+              <CurrencyInput
                 id="hm-set-rate"
-                type="number"
-                step="0.5"
-                min={1}
+                allowDecimal
                 disabled={currency === "IDR"}
                 value={currency === "IDR" ? "1" : exchangeRate}
-                onChange={(e) => setExchangeRate(e.target.value)}
+                onValueChange={setExchangeRate}
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="hm-set-budget">Target Dana Awal Honeymoon (IDR)</Label>
-            <Input
+            <CurrencyInput
               id="hm-set-budget"
-              type="number"
-              min={0}
-              step={1000000}
+              placeholder="35.000.000"
               value={budgetTarget}
-              onChange={(e) => setBudgetTarget(e.target.value)}
+              onValueChange={setBudgetTarget}
             />
             {tripDays > 0 && budgetNum > 0 && (
               <p className="text-xs text-sage-600">

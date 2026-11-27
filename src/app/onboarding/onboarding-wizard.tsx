@@ -36,6 +36,7 @@ import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -455,14 +456,12 @@ export function OnboardingWizard({
 
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-sage-700">Rp</span>
-                    <Input
+                    <CurrencyInput
                       id="budget-input"
-                      type="number"
-                      min={10000000}
-                      step={5000000}
+                      placeholder="150.000.000"
                       value={budgetTarget}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
+                      onValueChange={(raw) => {
+                        const val = Number(raw);
                         if (!Number.isNaN(val) && val >= 0) {
                           setBudgetTarget(val);
                         }
@@ -761,14 +760,12 @@ export function OnboardingWizard({
                         <Label htmlFor="hm-rate">
                           Kurs ke IDR (1 {hmCurrency})
                         </Label>
-                        <Input
+                        <CurrencyInput
                           id="hm-rate"
-                          type="number"
-                          step="0.5"
-                          min={1}
+                          allowDecimal
                           value={hmExchangeRate}
-                          onChange={(e) =>
-                            setHmExchangeRate(Number(e.target.value) || 1)
+                          onValueChange={(raw) =>
+                            setHmExchangeRate(Number(raw) || 1)
                           }
                         />
                       </div>
@@ -780,14 +777,12 @@ export function OnboardingWizard({
                       </Label>
                       <div className="relative">
                         <Wallet className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
-                        <Input
+                        <CurrencyInput
                           id="hm-budget"
-                          type="number"
-                          step={1000000}
-                          min={0}
+                          placeholder="35.000.000"
                           value={hmBudget}
-                          onChange={(e) =>
-                            setHmBudget(Number(e.target.value) || 0)
+                          onValueChange={(raw) =>
+                            setHmBudget(Number(raw) || 0)
                           }
                           className="pl-10 font-bold"
                         />

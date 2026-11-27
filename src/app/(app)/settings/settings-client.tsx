@@ -48,7 +48,7 @@ import { PushNotificationCard } from "@/components/settings/push-notification-ca
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -448,14 +448,12 @@ export function SettingsClient({
                 <Label htmlFor="settings-rate">
                   Kurs Tersimpan (1 {currency} → IDR)
                 </Label>
-                <Input
+                <CurrencyInput
                   id="settings-rate"
-                  type="number"
-                  step="0.5"
-                  min={1}
+                  allowDecimal
                   disabled={currency === "IDR"}
                   value={currency === "IDR" ? "1" : exchangeRate}
-                  onChange={(e) => setExchangeRate(e.target.value)}
+                  onValueChange={setExchangeRate}
                 />
               </div>
             </div>

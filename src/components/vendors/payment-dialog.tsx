@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 const TERMIN_PRESETS = ["Booking Fee", "DP 30%", "Termin 2", "Pelunasan H-14"];
@@ -379,14 +380,12 @@ export function PaymentDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="termin-amount">Nominal (IDR)</Label>
-              <Input
+              <CurrencyInput
                 id="termin-amount"
-                type="number"
                 required
-                min={0}
-                step={50000}
+                placeholder="5.000.000"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onValueChange={setAmount}
               />
             </div>
 

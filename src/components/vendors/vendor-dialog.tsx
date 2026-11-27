@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
 interface VendorDialogProps {
@@ -249,24 +250,20 @@ export function VendorDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="est-cost">Estimasi Awal (IDR)</Label>
-              <Input
+              <CurrencyInput
                 id="est-cost"
-                type="number"
-                min={0}
-                step={100000}
+                placeholder="0"
                 value={estimatedCost}
-                onChange={(e) => setEstimatedCost(e.target.value)}
+                onValueChange={setEstimatedCost}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="deal-cost">Harga Deal Vendor (IDR)</Label>
-              <Input
+              <CurrencyInput
                 id="deal-cost"
-                type="number"
-                min={0}
-                step={100000}
+                placeholder="0"
                 value={dealCost}
-                onChange={(e) => setDealCost(e.target.value)}
+                onValueChange={setDealCost}
               />
             </div>
           </div>
