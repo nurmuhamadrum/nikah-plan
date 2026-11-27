@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Manrope, Pinyon_Script } from "next/font/google";
+import { Allura, Fraunces, Manrope } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { BackgroundDecor } from "@/components/brand/background-decor";
 import "./globals.css";
@@ -17,10 +17,10 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const pinyon = Pinyon_Script({
+const allura = Allura({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-pinyon",
+  variable: "--font-script",
   display: "swap",
 });
 
@@ -70,7 +70,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${manrope.variable} ${fraunces.variable} ${pinyon.variable}`}
+      className={`${manrope.variable} ${fraunces.variable} ${allura.variable}`}
     >
       <body className="min-h-screen bg-canvas text-foreground">
         <BackgroundDecor />

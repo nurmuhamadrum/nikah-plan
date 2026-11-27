@@ -143,7 +143,7 @@ export default async function LandingPage() {
             <Badge variant="softSage">Ekosistem Terpadu</Badge>
             <h2 className="font-display text-3xl font-semibold text-sage-900 sm:text-[2.75rem] sm:leading-[1.15]">
               Dirancang Khusus untuk{" "}
-              <span className="font-script text-gradient-warm text-[1.25em] font-normal">
+              <span className="font-script text-gradient-warm text-[1.2em] font-normal">
                 Realita
               </span>{" "}
               Persiapan Nikah di Indonesia

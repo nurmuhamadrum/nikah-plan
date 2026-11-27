@@ -146,7 +146,7 @@ export function HeroSection({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, ease: EASE, delay: accentDelay }}
                 >
-                  <span className="font-script text-gradient-warm inline-block px-1.5 text-[1.3em] leading-[1.12] font-normal">
+                  <span className="font-script text-gradient-warm inline-block px-1.5 text-[1.22em] leading-[1.12] font-normal">
                     {hero.headlineAccent || "Tanpa Drama"}
                   </span>
                 </motion.span>

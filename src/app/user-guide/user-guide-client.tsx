@@ -174,7 +174,7 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
               <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl lg:text-[2.75rem]">
                 Panduan Lengkap Menggunakan{" "}
-                <span className="font-script text-[1.25em] font-normal text-amberwarm">
+                <span className="font-script text-[1.2em] font-normal text-amberwarm">
                   NikahPlan
                 </span>
               </h1>

@@ -108,7 +108,7 @@ const config: Config = {
         sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
         serif: ["var(--font-fraunces)", "Georgia", "serif"],
         display: ["var(--font-fraunces)", "Georgia", "serif"],
-        script: ["var(--font-pinyon)", "cursive"],
+        script: ["var(--font-script)", "cursive"],
       },
       boxShadow: {
         soft: "0 4px 20px -4px rgba(61, 82, 69, 0.08)",

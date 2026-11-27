@@ -32,7 +32,7 @@ export function PricingSection({
           </Badge>
           <h2 className="font-display text-3xl sm:text-[2.75rem] sm:leading-[1.15] font-semibold text-sage-900">
             Pilih Paket{" "}
-            <span className="font-script text-gradient-warm text-[1.25em] font-normal">
+            <span className="font-script text-gradient-warm text-[1.2em] font-normal">
               Couple Pass
             </span>{" "}
             Terbaikmu
