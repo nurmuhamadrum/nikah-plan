@@ -21,6 +21,8 @@ import { formatIDR } from "@/lib/utils";
 import type { PlanType } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +75,8 @@ export function CheckoutClient({
   callbackOrderId,
 }: CheckoutClientProps) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(
     isUpgrade ? "COMPLETE_PASS" : initialPlan
   );
@@ -155,6 +159,10 @@ export function CheckoutClient({
         });
         const data = await res.json();
         if (res.ok && data.status === "PAID") {
+          toast.success(
+            "Pembayaran terverifikasi!",
+            "Akun Couple Pass Anda sudah aktif."
+          );
           router.push(isUpgrade ? "/dashboard" : data.redirectTo || "/onboarding");
           router.refresh();
           return;
@@ -164,24 +172,30 @@ export function CheckoutClient({
             orderId,
             redirectUrl: prev?.redirectUrl,
           }));
-          setErrorMsg(
-            "Pembayaran Anda masih menunggu penyelesaian. Selesaikan pembayaran lalu klik 'Periksa Status Pembayaran'."
-          );
+          const msg =
+            "Pembayaran Anda masih menunggu penyelesaian. Selesaikan pembayaran lalu klik 'Periksa Status Pembayaran'.";
+          setErrorMsg(msg);
+          toast.warning("Pembayaran menunggu", msg);
         } else if (data.status === "FAILED" || data.status === "EXPIRED") {
           setPendingOrder(null);
-          setErrorMsg(
-            "Transaksi dibatalkan atau kedaluwarsa. Silakan buat transaksi baru."
-          );
+          const msg =
+            "Transaksi dibatalkan atau kedaluwarsa. Silakan buat transaksi baru.";
+          setErrorMsg(msg);
+          toast.error("Transaksi gagal / kedaluwarsa", msg);
         } else if (data.error) {
           setErrorMsg(data.error);
+          toast.error("Verifikasi pembayaran gagal", data.error);
         }
       } catch {
-        setErrorMsg("Gagal memeriksa status pembayaran. Coba beberapa saat lagi.");
+        const msg =
+          "Gagal memeriksa status pembayaran. Coba beberapa saat lagi.";
+        setErrorMsg(msg);
+        toast.error("Gagal memeriksa status", msg);
       } finally {
         setVerifying(false);
       }
     },
-    [router, isUpgrade]
+    [router, isUpgrade, toast]
   );
 
   useEffect(() => {
@@ -206,6 +220,15 @@ export function CheckoutClient({
   };
 
   const handleCheckout = async () => {
+    const ok = await confirm({
+      title: isUpgrade
+        ? "Lanjutkan Upgrade ke Complete Couple Pass?"
+        : `Lanjutkan Pembayaran ${planDef.name}?`,
+      description: `Total pembayaran ${formatIDR(finalAmount)} (1x bayar untuk seumur hidup & 2 akun pasangan).`,
+      confirmLabel: "Ya, Lanjut Bayar",
+    });
+    if (!ok) return;
+
     setErrorMsg(null);
     setSubmitting(true);
 

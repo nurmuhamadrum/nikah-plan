@@ -26,6 +26,8 @@ import type {
 import type { PlanType, PromoCodeRow, PromoDiscountType } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +84,8 @@ export function AdminClient({
   initialRates,
 }: AdminClientProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const globalToast = useToast();
+  const confirm = useConfirm();
   const [toast, setToast] = useState<{
     type: "success" | "error";
     text: string;
@@ -131,9 +135,16 @@ export function AdminClient({
   };
 
   const handleSavePlan = async (planId: PlanType) => {
+    const target = plans[planId];
+    const ok = await confirm({
+      title: `Simpan Paket "${target.name}"?`,
+      description: `Harga ${formatIDR(Number(target.price))} akan langsung diterapkan ke Landing Page & halaman Checkout.`,
+      confirmLabel: "Ya, Simpan Paket",
+    });
+    if (!ok) return;
+
     setSavingPlanId(planId);
     try {
-      const target = plans[planId];
       const res = await fetch("/api/admin/plans", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -150,15 +161,18 @@ export function AdminClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast("error", data.error || "Gagal menyimpan paket.");
+        const msg = data.error || "Gagal menyimpan paket.";
+        showToast("error", msg);
+        globalToast.error("Gagal menyimpan paket", msg);
       } else {
-        showToast(
-          "success",
-          `Paket "${target.name}" berhasil diperbarui ke Landing Page & Checkout!`
-        );
+        const msg = `Paket "${target.name}" berhasil diperbarui ke Landing Page & Checkout!`;
+        showToast("success", msg);
+        globalToast.success("Paket harga diperbarui", msg);
       }
     } catch {
-      showToast("error", "Kendala jaringan saat menyimpan paket.");
+      const msg = "Kendala jaringan saat menyimpan paket.";
+      showToast("error", msg);
+      globalToast.error("Gagal menyimpan paket", msg);
     } finally {
       setSavingPlanId(null);
     }
@@ -168,6 +182,13 @@ export function AdminClient({
   const handleCreatePromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCode.trim()) return;
+    const ok = await confirm({
+      title: `Buat Kode Promo "${newCode.trim().toUpperCase()}"?`,
+      description: "Kode promo baru akan langsung aktif dan dapat digunakan calon pengantin di halaman Checkout.",
+      confirmLabel: "Ya, Buat Promo",
+    });
+    if (!ok) return;
+
     setCreatingPromo(true);
     try {
       const res = await fetch("/api/admin/promos", {
@@ -185,17 +206,23 @@ export function AdminClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast("error", data.error || "Gagal membuat kode promo.");
+        const msg = data.error || "Gagal membuat kode promo.";
+        showToast("error", msg);
+        globalToast.error("Gagal membuat kode promo", msg);
       } else {
         setPromos((prev) => [data.promo, ...prev]);
         setNewCode("");
         setNewDescription("");
         setNewMaxUses("");
         setNewExpiresAt("");
-        showToast("success", `Kode promo ${data.promo.code} berhasil dibuat.`);
+        const msg = `Kode promo ${data.promo.code} berhasil dibuat.`;
+        showToast("success", msg);
+        globalToast.success("Kode promo dibuat", msg);
       }
     } catch {
-      showToast("error", "Kendala jaringan saat membuat kode promo.");
+      const msg = "Kendala jaringan saat membuat kode promo.";
+      showToast("error", msg);
+      globalToast.error("Gagal membuat kode promo", msg);
     } finally {
       setCreatingPromo(false);
     }
@@ -213,18 +240,27 @@ export function AdminClient({
         setPromos((prev) =>
           prev.map((p) => (p.id === promo.id ? data.promo : p))
         );
-        showToast(
-          "success",
-          `Promo ${promo.code} ${data.promo.is_active ? "diaktifkan" : "dinonaktifkan"}.`
-        );
+        const msg = `Promo ${promo.code} ${data.promo.is_active ? "diaktifkan" : "dinonaktifkan"}.`;
+        showToast("success", msg);
+        globalToast.success("Status promo diperbarui", msg);
+      } else {
+        globalToast.error("Gagal mengubah status promo");
       }
     } catch {
       showToast("error", "Gagal mengubah status promo.");
+      globalToast.error("Gagal mengubah status promo");
     }
   };
 
   const handleDeletePromo = async (promo: PromoCodeRow) => {
-    if (!window.confirm(`Hapus kode promo "${promo.code}"?`)) return;
+    const ok = await confirm({
+      title: `Hapus Kode Promo "${promo.code}"?`,
+      description: "Kode promo yang dihapus tidak lagi dapat digunakan pada transaksi baru.",
+      confirmLabel: "Ya, Hapus Promo",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
     try {
       const res = await fetch("/api/admin/promos", {
         method: "DELETE",
@@ -234,9 +270,13 @@ export function AdminClient({
       if (res.ok) {
         setPromos((prev) => prev.filter((p) => p.id !== promo.id));
         showToast("success", `Promo ${promo.code} dihapus.`);
+        globalToast.success("Promo dihapus", `Kode ${promo.code} telah dihapus.`);
+      } else {
+        globalToast.error("Gagal menghapus kode promo");
       }
     } catch {
       showToast("error", "Gagal menghapus kode promo.");
+      globalToast.error("Gagal menghapus kode promo");
     }
   };
 
@@ -245,6 +285,13 @@ export function AdminClient({
     key: "hero" | "announcement" | "default_exchange_rates",
     value: unknown
   ) => {
+    const ok = await confirm({
+      title: "Publikasikan Perubahan Konten?",
+      description: "Perubahan konten akan langsung diperbarui pada situs publik.",
+      confirmLabel: "Ya, Publikasikan",
+    });
+    if (!ok) return;
+
     setSavingContentKey(key);
     try {
       const res = await fetch("/api/admin/content", {
@@ -254,12 +301,18 @@ export function AdminClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast("error", data.error || "Gagal menyimpan konten.");
+        const msg = data.error || "Gagal menyimpan konten.";
+        showToast("error", msg);
+        globalToast.error("Gagal menyimpan konten", msg);
       } else {
-        showToast("success", "Perubahan konten berhasil dipublikasikan!");
+        const msg = "Perubahan konten berhasil dipublikasikan!";
+        showToast("success", msg);
+        globalToast.success("Konten dipublikasikan", msg);
       }
     } catch {
-      showToast("error", "Kendala jaringan saat menyimpan konten.");
+      const msg = "Kendala jaringan saat menyimpan konten.";
+      showToast("error", msg);
+      globalToast.error("Gagal menyimpan konten", msg);
     } finally {
       setSavingContentKey(null);
     }
@@ -267,24 +320,37 @@ export function AdminClient({
 
   // --- HANDLER: MANUAL DISPATCH PUSH H-3 ---
   const handleRunPushReminders = async () => {
+    const ok = await confirm({
+      title: "Kirim Pengingat Push H-3 Sekarang?",
+      description:
+        "Sistem akan memeriksa seluruh termin yang jatuh tempo H-3..H-0 dan mengirim notifikasi ke perangkat yang berlangganan.",
+      confirmLabel: "Ya, Kirim Sekarang",
+    });
+    if (!ok) return;
+
     setDispatchingPush(true);
     setPushResult(null);
     try {
       const res = await fetch("/api/cron/due-reminders", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        setPushResult(data.error || "Gagal menjalankan pengiriman push.");
+        const msg = data.error || "Gagal menjalankan pengiriman push.";
+        setPushResult(msg);
+        globalToast.error("Gagal mengirim push reminder", msg);
       } else if (!data.configured) {
-        setPushResult(
-          "VAPID keys belum dikonfigurasi di .env (NEXT_PUBLIC_VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY)."
-        );
+        const msg =
+          "VAPID keys belum dikonfigurasi di .env (NEXT_PUBLIC_VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY).";
+        setPushResult(msg);
+        globalToast.warning("VAPID belum dikonfigurasi", msg);
       } else {
-        setPushResult(
-          `Selesai! Ditemukan ${data.duePaymentsFound} tagihan H-3..H-0, terkirim ${data.notificationsSent} notifikasi (${data.expiredRemoved} subscription kedaluwarsa dibersihkan).`
-        );
+        const msg = `Selesai! Ditemukan ${data.duePaymentsFound} tagihan H-3..H-0, terkirim ${data.notificationsSent} notifikasi (${data.expiredRemoved} subscription kedaluwarsa dibersihkan).`;
+        setPushResult(msg);
+        globalToast.success("Pengingat push selesai dikirim", msg);
       }
     } catch {
-      setPushResult("Kendala jaringan saat memicu pengingat push.");
+      const msg = "Kendala jaringan saat memicu pengingat push.";
+      setPushResult(msg);
+      globalToast.error("Gagal memicu pengingat push", msg);
     } finally {
       setDispatchingPush(false);
     }

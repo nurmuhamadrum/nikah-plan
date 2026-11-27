@@ -53,6 +53,8 @@ import {
 } from "@/lib/invitation-themes";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { LivePreviewPanel } from "@/components/invitations/live-preview-panel";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -217,6 +219,8 @@ export function UndanganClient({
   } | null>(null);
   const [copiedSlug, setCopiedSlug] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const globalToast = useToast();
+  const confirm = useConfirm();
 
   // Guest share generator
   const [guestNamesInput, setGuestNamesInput] = useState(
@@ -430,10 +434,22 @@ export function UndanganClient({
   // HANDLERS (COMPLETE_PASS)
   // =========================================================================
   const handleSave = async (overridePublish?: boolean) => {
-    setSaving(true);
-    setToast(null);
     const nextPublish =
       typeof overridePublish === "boolean" ? overridePublish : isPublished;
+
+    const ok = await confirm({
+      title: nextPublish
+        ? "Simpan & Publikasikan Undangan?"
+        : "Simpan Draft Undangan?",
+      description: nextPublish
+        ? `Undangan "${groomName || "Mempelai Pria"} & ${brideName || "Mempelai Wanita"}" akan live dan dapat diakses publik di /u/${normalizedSlug}.`
+        : `Perubahan undangan akan disimpan sebagai draft di /u/${normalizedSlug} (belum tampil ke publik).`,
+      confirmLabel: nextPublish ? "Ya, Publikasikan" : "Ya, Simpan Draft",
+    });
+    if (!ok) return;
+
+    setSaving(true);
+    setToast(null);
 
     try {
       const res = await fetch("/api/invitations", {
@@ -478,20 +494,21 @@ export function UndanganClient({
 
       const data = await res.json();
       if (!res.ok) {
-        setToast({
-          type: "error",
-          text: data.error || "Gagal menyimpan undangan.",
-        });
+        const msg = data.error || "Gagal menyimpan undangan.";
+        setToast({ type: "error", text: msg });
+        globalToast.error("Gagal menyimpan undangan", msg);
       } else {
         setSavedInvitation(data.invitation as WeddingInvitation);
         setIsPublished(nextPublish);
         setSlug(data.invitation.slug);
-        setToast({
-          type: "success",
-          text: nextPublish
-            ? `Undangan berhasil disimpan & dipublikasikan di /u/${data.invitation.slug}!`
-            : "Draft undangan berhasil disimpan.",
-        });
+        const msg = nextPublish
+          ? `Undangan berhasil disimpan & dipublikasikan di /u/${data.invitation.slug}!`
+          : "Draft undangan berhasil disimpan.";
+        setToast({ type: "success", text: msg });
+        globalToast.success(
+          nextPublish ? "Undangan dipublikasikan!" : "Draft undangan disimpan",
+          `/u/${data.invitation.slug}`
+        );
       }
     } catch {
       setToast({
@@ -600,26 +617,22 @@ export function UndanganClient({
 
       if (kind === "cover" && uploadedUrls[0]) {
         setCoverPhotoUrl(uploadedUrls[0]);
-        setToast({
-          type: "success",
-          text: `Foto cover berhasil diunggah${compressionSummary}! Klik Simpan untuk menerapkan.`,
-        });
+        const msg = `Foto cover berhasil diunggah${compressionSummary}! Klik Simpan untuk menerapkan.`;
+        setToast({ type: "success", text: msg });
+        globalToast.success("Foto cover diunggah", msg);
       } else if (uploadedUrls.length > 0) {
         setGalleryUrls((prev) => [...prev, ...uploadedUrls].slice(0, 6));
-        setToast({
-          type: "success",
-          text: `${uploadedUrls.length} foto galeri ditambahkan${compressionSummary}! Klik Simpan untuk menerapkan.`,
-        });
+        const msg = `${uploadedUrls.length} foto galeri ditambahkan${compressionSummary}! Klik Simpan untuk menerapkan.`;
+        setToast({ type: "success", text: msg });
+        globalToast.success("Foto galeri diunggah", msg);
       }
     } catch (err) {
       if (kind === "gallery" && uploadedUrls.length > 0) {
         setGalleryUrls((prev) => [...prev, ...uploadedUrls].slice(0, 6));
       }
-      setToast({
-        type: "error",
-        text:
-          err instanceof Error ? err.message : "Gagal mengunggah foto.",
-      });
+      const msg = err instanceof Error ? err.message : "Gagal mengunggah foto.";
+      setToast({ type: "error", text: msg });
+      globalToast.error("Gagal mengunggah foto", msg);
     } finally {
       if (kind === "cover") setCoverUploadStatus(null);
       else setGalleryUploadStatus(null);
@@ -627,6 +640,17 @@ export function UndanganClient({
   };
 
   const handleDeleteRsvp = async (id: string) => {
+    const target = rsvps.find((r) => r.id === id);
+    const ok = await confirm({
+      title: "Hapus Ucapan RSVP?",
+      description: target
+        ? `Hapus konfirmasi & ucapan dari "${target.guest_name}"?`
+        : "Hapus ucapan tamu ini dari daftar RSVP?",
+      confirmLabel: "Ya, Hapus Ucapan",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
     setDeletingRsvpId(id);
     try {
       const res = await fetch(`/api/invitations/rsvp/${id}`, {
@@ -634,7 +658,15 @@ export function UndanganClient({
       });
       if (res.ok) {
         setRsvps((prev) => prev.filter((r) => r.id !== id));
+        globalToast.success(
+          "Ucapan RSVP dihapus",
+          target ? `Ucapan dari "${target.guest_name}" telah dihapus.` : undefined
+        );
+      } else {
+        globalToast.error("Gagal menghapus ucapan RSVP");
       }
+    } catch {
+      globalToast.error("Gagal menghapus ucapan RSVP", "Kendala jaringan.");
     } finally {
       setDeletingRsvpId(null);
     }
@@ -644,9 +676,10 @@ export function UndanganClient({
     try {
       await navigator.clipboard.writeText(publicUrl);
       setCopiedSlug(true);
+      globalToast.success("Tautan undangan disalin", publicUrl);
       setTimeout(() => setCopiedSlug(false), 2000);
     } catch {
-      // Ignore
+      globalToast.error("Gagal menyalin tautan");
     }
   };
 

@@ -13,6 +13,8 @@ import {
   HONEYMOON_CURRENCIES,
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +52,8 @@ export function HoneymoonSettingsDialog({
   onSuccess,
 }: HoneymoonSettingsDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -91,6 +95,13 @@ export function HoneymoonSettingsDialog({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!destination.trim()) return;
+
+    const ok = await confirm({
+      title: "Simpan Pengaturan Honeymoon?",
+      description: `Destinasi "${destination.trim()}" dengan target budget ${formatIDR(budgetNum)} (${currency}) akan disimpan.`,
+      confirmLabel: "Ya, Simpan",
+    });
+    if (!ok) return;
 
     setSaving(true);
     setErrorMsg(null);
@@ -146,14 +157,26 @@ export function HoneymoonSettingsDialog({
         }
       }
 
-      if (!queued) await onSuccess();
+      if (!queued) {
+        await onSuccess();
+        toast.success(
+          "Pengaturan Honeymoon disimpan",
+          `Destinasi ${destination.trim()} (${formatIDR(budgetNum)}).`
+        );
+      } else {
+        toast.warning(
+          "Pengaturan disimpan di antrean offline",
+          "Akan disinkronkan otomatis saat kembali online."
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
+      const msg =
         err instanceof Error
           ? err.message
-          : "Gagal menyimpan pengaturan honeymoon."
-      );
+          : "Gagal menyimpan pengaturan honeymoon.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan pengaturan", msg);
     } finally {
       setSaving(false);
     }

@@ -17,6 +17,8 @@ import {
 import type { WorkspaceBundle } from "@/lib/workspace-data";
 import type { BudgetItem, HoneymoonChecklist } from "@/types/database";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   calculateTripDays,
   formatForeignCurrency,
@@ -40,6 +42,8 @@ interface HoneymoonPanelProps {
 
 export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const { workspace, categories, items, gifts, checklists } = bundle;
 
@@ -140,20 +144,44 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
   }, [workspace, gifts, hmItems]);
 
   const handleToggleChecklist = async (item: HoneymoonChecklist) => {
-    const { queued } = await executeOfflineFirstMutation({
-      workspaceId: workspace.id,
-      table: "honeymoon_checklists",
-      operation: "UPDATE",
-      recordId: item.id,
-      payload: { is_completed: !item.is_completed },
-      queryClient,
-    });
-    if (!queued) await onRefresh();
+    try {
+      const nextDone = !item.is_completed;
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId: workspace.id,
+        table: "honeymoon_checklists",
+        operation: "UPDATE",
+        recordId: item.id,
+        payload: { is_completed: nextDone },
+        queryClient,
+      });
+      if (!queued) {
+        await onRefresh();
+        toast.success(
+          nextDone ? "Checklist selesai" : "Checklist dibuka kembali",
+          item.title
+        );
+      } else {
+        toast.warning("Checklist disimpan di antrean offline", item.title);
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal memperbarui checklist",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
+    }
   };
 
   const handleAddChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistTitle.trim()) return;
+    const titleClean = newChecklistTitle.trim();
+    const ok = await confirm({
+      title: "Tambah Item Checklist?",
+      description: `Tambahkan "${titleClean}" ke daftar persiapan bulan madu?`,
+      confirmLabel: "Ya, Tambahkan",
+    });
+    if (!ok) return;
+
     setAddingChecklist(true);
     try {
       const { queued } = await executeOfflineFirstMutation({
@@ -162,7 +190,7 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
         operation: "INSERT",
         payload: {
           workspace_id: workspace.id,
-          title: newChecklistTitle.trim(),
+          title: titleClean,
           category: "PRETRIP",
           is_completed: false,
           linked_item_id: null,
@@ -171,21 +199,54 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
         queryClient,
       });
       setNewChecklistTitle("");
-      if (!queued) await onRefresh();
+      if (!queued) {
+        await onRefresh();
+        toast.success("Checklist ditambahkan", titleClean);
+      } else {
+        toast.warning("Checklist disimpan di antrean offline", titleClean);
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal menambahkan checklist",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
     } finally {
       setAddingChecklist(false);
     }
   };
 
   const handleDeleteChecklist = async (id: string) => {
-    const { queued } = await executeOfflineFirstMutation({
-      workspaceId: workspace.id,
-      table: "honeymoon_checklists",
-      operation: "DELETE",
-      recordId: id,
-      queryClient,
+    const target = checklists.find((c) => c.id === id);
+    const ok = await confirm({
+      title: "Hapus Item Checklist?",
+      description: target
+        ? `Hapus "${target.title}" dari daftar persiapan bulan madu?`
+        : "Hapus item ini dari checklist bulan madu?",
+      confirmLabel: "Ya, Hapus",
+      variant: "destructive",
     });
-    if (!queued) await onRefresh();
+    if (!ok) return;
+
+    try {
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId: workspace.id,
+        table: "honeymoon_checklists",
+        operation: "DELETE",
+        recordId: id,
+        queryClient,
+      });
+      if (!queued) {
+        await onRefresh();
+        toast.success("Checklist dihapus", target?.title);
+      } else {
+        toast.warning("Penghapusan checklist masuk antrean offline");
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal menghapus checklist",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
+    }
   };
 
   // Guard untuk paket WEDDING_ONLY

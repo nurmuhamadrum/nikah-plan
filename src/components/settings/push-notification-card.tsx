@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Card,
   CardContent,
@@ -25,6 +27,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 export function PushNotificationCard() {
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -98,21 +102,32 @@ export function PushNotificationCard() {
       }
 
       setSubscribed(true);
-      setStatusMsg(
-        "Notifikasi pengingat H-3 jatuh tempo berhasil diaktifkan di perangkat ini!"
-      );
+      const msg =
+        "Notifikasi pengingat H-3 jatuh tempo berhasil diaktifkan di perangkat ini!";
+      setStatusMsg(msg);
+      toast.success("Notifikasi H-3 aktif", msg);
     } catch (err) {
-      setStatusMsg(
+      const msg =
         err instanceof Error
           ? err.message
-          : "Gagal mengaktifkan Web Push (pastikan build production/HTTPS aktif)."
-      );
+          : "Gagal mengaktifkan Web Push (pastikan build production/HTTPS aktif).";
+      setStatusMsg(msg);
+      toast.error("Gagal mengaktifkan notifikasi", msg);
     } finally {
       setBusy(false);
     }
   };
 
   const handleDisable = async () => {
+    const ok = await confirm({
+      title: "Nonaktifkan Notifikasi H-3?",
+      description:
+        "Anda tidak akan menerima pengingat jatuh tempo termin vendor di perangkat ini sampai diaktifkan kembali.",
+      confirmLabel: "Ya, Nonaktifkan",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
     setBusy(true);
     setStatusMsg(null);
     try {
@@ -128,8 +143,10 @@ export function PushNotificationCard() {
       }
       setSubscribed(false);
       setStatusMsg("Pengingat notifikasi perangkat ini dinonaktifkan.");
+      toast.success("Notifikasi dinonaktifkan");
     } catch {
       setStatusMsg("Gagal menonaktifkan notifikasi.");
+      toast.error("Gagal menonaktifkan notifikasi");
     } finally {
       setBusy(false);
     }

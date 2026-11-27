@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2, Upload, FileCheck2, X } from "lucide-react";
 import type { BudgetItem, FundingSource, ItemPayment } from "@/types/database";
+import { formatIDR } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import {
   compressReceiptFile,
@@ -15,6 +16,8 @@ import {
   executeOfflineFirstMutation,
   queueReceiptUploadOffline,
 } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +57,8 @@ export function PaymentDialog({
   onSuccess,
 }: PaymentDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [label, setLabel] = useState("DP 30%");
   const [amount, setAmount] = useState("0");
@@ -148,11 +153,18 @@ export function PaymentDialog({
     e.preventDefault();
     if (!item || !label.trim()) return;
 
+    const amountNum = Math.max(0, Number(amount) || 0);
+    const ok = await confirm({
+      title: payment ? "Simpan Perubahan Termin?" : "Simpan Termin Pembayaran?",
+      description: `Termin "${label.trim()}" senilai ${formatIDR(amountNum)} untuk ${item.title} akan disimpan.`,
+      confirmLabel: "Ya, Simpan Termin",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
     try {
-      const amountNum = Math.max(0, Number(amount) || 0);
       const effectivePaidDate = isPaid
         ? paidDate || new Date().toISOString().split("T")[0]
         : null;
@@ -246,11 +258,23 @@ export function PaymentDialog({
       }
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Termin disimpan di antrean offline",
+          `"${label.trim()}" (${formatIDR(amountNum)}) akan sinkron saat online.`
+        );
+      } else {
+        toast.success(
+          payment ? "Termin berhasil diperbarui" : "Termin berhasil disimpan",
+          `"${label.trim()}" senilai ${formatIDR(amountNum)}.`
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menyimpan termin pembayaran."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menyimpan termin pembayaran.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan termin", msg);
     } finally {
       setSaving(false);
     }
@@ -258,7 +282,12 @@ export function PaymentDialog({
 
   const handleDelete = async () => {
     if (!payment) return;
-    const confirmed = window.confirm(`Hapus termin "${payment.label}"?`);
+    const confirmed = await confirm({
+      title: "Hapus Termin Pembayaran?",
+      description: `Hapus termin "${payment.label}" (${formatIDR(Number(payment.amount) || 0)}) beserta lampiran bukti bayarnya?`,
+      confirmLabel: "Ya, Hapus Termin",
+      variant: "destructive",
+    });
     if (!confirmed) return;
 
     setDeleting(true);
@@ -281,11 +310,20 @@ export function PaymentDialog({
       });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Penghapusan termin masuk antrean offline",
+          `"${payment.label}" akan dihapus saat online.`
+        );
+      } else {
+        toast.success("Termin berhasil dihapus", `"${payment.label}" telah dihapus.`);
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menghapus termin."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menghapus termin.";
+      setErrorMsg(msg);
+      toast.error("Gagal menghapus termin", msg);
     } finally {
       setDeleting(false);
     }

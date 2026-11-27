@@ -16,6 +16,7 @@ import {
   executeOfflineFirstMutation,
   saveWorkspaceSnapshot,
 } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
 import { formatIDR } from "@/lib/utils";
@@ -56,6 +57,7 @@ export function DashboardClient({
   initialBundle,
 }: DashboardClientProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const mode = useAppStore((s) => s.mode);
   const setMode = useAppStore((s) => s.setMode);
   const [markingId, setMarkingId] = useState<string | null>(null);
@@ -210,7 +212,18 @@ export function DashboardClient({
         await queryClient.invalidateQueries({
           queryKey: ["workspace-data", workspaceId],
         });
+        toast.success("Termin ditandai lunas", "Status pembayaran telah diperbarui.");
+      } else {
+        toast.warning(
+          "Status lunas disimpan di antrean offline",
+          "Akan disinkronkan otomatis saat kembali online."
+        );
       }
+    } catch (err) {
+      toast.error(
+        "Gagal menandai termin lunas",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
     } finally {
       setMarkingId(null);
     }

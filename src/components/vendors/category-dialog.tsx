@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { BudgetCategory } from "@/types/database";
+import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
 import { CATEGORY_ICON_OPTIONS } from "@/lib/category-icons";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +39,8 @@ export function CategoryDialog({
   onSuccess,
 }: CategoryDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("utensils");
@@ -63,12 +68,18 @@ export function CategoryDialog({
     e.preventDefault();
     if (!name.trim()) return;
 
+    const amountNum = Math.max(0, Number(allocatedAmount) || 0);
+    const ok = await confirm({
+      title: category ? "Simpan Perubahan Kategori?" : "Tambah Kategori Baru?",
+      description: `Kategori "${name.trim()}" dengan target alokasi ${formatIDR(amountNum)} akan disimpan.`,
+      confirmLabel: category ? "Ya, Simpan" : "Ya, Tambah",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
     try {
-      const amountNum = Math.max(0, Number(allocatedAmount) || 0);
-
       const { queued } = category
         ? await executeOfflineFirstMutation({
             workspaceId,
@@ -98,11 +109,23 @@ export function CategoryDialog({
           });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Kategori disimpan di antrean offline",
+          `"${name.trim()}" akan sinkron otomatis saat perangkat kembali online.`
+        );
+      } else {
+        toast.success(
+          category ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan",
+          `"${name.trim()}" (${formatIDR(amountNum)}).`
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menyimpan kategori."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menyimpan kategori.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan kategori", msg);
     } finally {
       setSaving(false);
     }
@@ -110,9 +133,12 @@ export function CategoryDialog({
 
   const handleDelete = async () => {
     if (!category) return;
-    const confirmed = window.confirm(
-      `Hapus kategori "${category.name}" beserta seluruh item vendor dan termin di dalamnya?`
-    );
+    const confirmed = await confirm({
+      title: "Hapus Kategori Anggaran?",
+      description: `Hapus kategori "${category.name}" beserta seluruh item vendor dan termin di dalamnya?`,
+      confirmLabel: "Ya, Hapus Kategori",
+      variant: "destructive",
+    });
     if (!confirmed) return;
 
     setDeleting(true);
@@ -128,11 +154,20 @@ export function CategoryDialog({
       });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Penghapusan kategori masuk antrean offline",
+          `"${category.name}" akan dihapus dari server saat online.`
+        );
+      } else {
+        toast.success("Kategori berhasil dihapus", `"${category.name}" telah dihapus.`);
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menghapus kategori."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menghapus kategori.";
+      setErrorMsg(msg);
+      toast.error("Gagal menghapus kategori", msg);
     } finally {
       setDeleting(false);
     }

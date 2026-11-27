@@ -40,6 +40,8 @@ import {
   SakuraBranch,
   StarlightGlow,
 } from "@/components/invitations/theme-ornaments";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 
 function formatLongDateID(dateStr: string | null | undefined): string {
   if (!dateStr) return "Segera diumumkan";
@@ -106,6 +108,8 @@ export function InvitationRenderer({
   onToggleOpened,
 }: InvitationRendererProps) {
   const isEmbedded = mode === "embedded";
+  const toast = useToast();
+  const confirm = useConfirm();
   const theme =
     INVITATION_THEMES[invitation.theme] ?? INVITATION_THEMES.BOTANICAL_SAGE;
   const layout = theme.layoutStyle;
@@ -190,8 +194,26 @@ export function InvitationRenderer({
         type: "success",
         text: "Mode Pratinjau: Di halaman publik, ucapan & konfirmasi tamu akan langsung tersimpan ke daftar RSVP Anda.",
       });
+      toast.info(
+        "Mode Pratinjau RSVP",
+        "Di halaman publik, ucapan tamu langsung masuk ke daftar RSVP Anda."
+      );
       return;
     }
+
+    const attendanceLabel =
+      rsvpAttendance === "HADIR"
+        ? `Hadir (${rsvpCount} orang)`
+        : rsvpAttendance === "RAGU"
+          ? "Masih Ragu"
+          : "Berhalangan Hadir";
+
+    const ok = await confirm({
+      title: "Kirim Konfirmasi Kehadiran?",
+      description: `Kirim RSVP atas nama "${rsvpName.trim()}" dengan status ${attendanceLabel}?`,
+      confirmLabel: "Ya, Kirim RSVP",
+    });
+    if (!ok) return;
 
     setSubmittingRsvp(true);
     setRsvpFeedback(null);
@@ -209,10 +231,9 @@ export function InvitationRenderer({
       });
       const data = await res.json();
       if (!res.ok) {
-        setRsvpFeedback({
-          type: "error",
-          text: data.error || "Gagal mengirim konfirmasi kehadiran.",
-        });
+        const msg = data.error || "Gagal mengirim konfirmasi kehadiran.";
+        setRsvpFeedback({ type: "error", text: msg });
+        toast.error("Gagal mengirim RSVP", msg);
       } else {
         setRsvps((prev) => [data.rsvp as InvitationRsvp, ...prev]);
         setRsvpMessage("");
@@ -220,12 +241,15 @@ export function InvitationRenderer({
           type: "success",
           text: "Terima kasih! Konfirmasi kehadiran & doa restu Anda telah kami terima.",
         });
+        toast.success(
+          "RSVP berhasil dikirim",
+          "Terima kasih atas konfirmasi & doa restu Anda!"
+        );
       }
     } catch {
-      setRsvpFeedback({
-        type: "error",
-        text: "Kendala jaringan. Silakan coba beberapa saat lagi.",
-      });
+      const msg = "Kendala jaringan. Silakan coba beberapa saat lagi.";
+      setRsvpFeedback({ type: "error", text: msg });
+      toast.error("Gagal mengirim RSVP", msg);
     } finally {
       setSubmittingRsvp(false);
     }

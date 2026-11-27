@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,12 +41,23 @@ export function JoinClient({
   alreadyMember,
 }: JoinClientProps) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [joining, setJoining] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const isFull = workspace ? workspace.memberCount >= 2 && !alreadyMember : false;
 
   const handleJoin = async () => {
+    const ok = await confirm({
+      title: "Gabung ke Workspace Pasangan?",
+      description: workspace
+        ? `Akun Anda akan terhubung ke workspace "${workspace.coupleTitle}" secara gratis tanpa bayar ulang.`
+        : "Hubungkan akun Anda ke workspace pasangan ini?",
+      confirmLabel: "Ya, Gabung Sekarang",
+    });
+    if (!ok) return;
+
     setErrorMsg(null);
     setJoining(true);
     try {
@@ -56,15 +69,23 @@ export function JoinClient({
 
       const data = await response.json();
       if (!response.ok) {
-        setErrorMsg(data.error || "Gagal bergabung ke workspace.");
+        const msg = data.error || "Gagal bergabung ke workspace.";
+        setErrorMsg(msg);
+        toast.error("Gagal bergabung", msg);
         setJoining(false);
         return;
       }
 
+      toast.success(
+        "Berhasil bergabung!",
+        workspace ? `Selamat datang di workspace ${workspace.coupleTitle}.` : undefined
+      );
       router.push(data.redirectTo || "/dashboard");
       router.refresh();
     } catch {
-      setErrorMsg("Terjadi kendala jaringan. Silakan coba lagi.");
+      const msg = "Terjadi kendala jaringan. Silakan coba lagi.";
+      setErrorMsg(msg);
+      toast.error("Gagal bergabung", msg);
       setJoining(false);
     }
   };

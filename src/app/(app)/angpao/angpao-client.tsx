@@ -23,6 +23,8 @@ import {
   executeOfflineFirstMutation,
   saveWorkspaceSnapshot,
 } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
 import { formatIDR } from "@/lib/utils";
@@ -83,6 +85,8 @@ const ALLOC_META: Record<
 export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
   const setMode = useAppStore((s) => s.setMode);
 
   const workspaceId = initialBundle.workspace.id;
@@ -184,9 +188,11 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
 
   const handleBulkMoveToHoneymoon = async () => {
     if (!canAllocateHoneymoon || unallocatedCashGifts.length === 0) return;
-    const confirmed = window.confirm(
-      `Pindahkan seluruh saldo angpao bebas (${formatIDR(stats.unallocated)}) ke Dompet Honeymoon?`
-    );
+    const confirmed = await confirm({
+      title: "Pindahkan Angpao ke Dompet Honeymoon?",
+      description: `Seluruh saldo angpao bebas senilai ${formatIDR(stats.unallocated)} (${unallocatedCashGifts.length} catatan) akan dipindahkan ke Dompet Honeymoon.`,
+      confirmLabel: "Ya, Pindahkan",
+    });
     if (!confirmed) return;
 
     setAllocatingHoneymoon(true);
@@ -203,7 +209,23 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
         });
         if (!queued) anyOnline = true;
       }
-      if (anyOnline) await refreshData();
+      if (anyOnline) {
+        await refreshData();
+        toast.success(
+          "Dana angpao dipindahkan ke Honeymoon",
+          `${formatIDR(stats.unallocated)} telah masuk ke Dompet Honeymoon.`
+        );
+      } else {
+        toast.warning(
+          "Pemindahan dana masuk antrean offline",
+          "Akan sinkron otomatis saat perangkat kembali online."
+        );
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal memindahkan dana angpao",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
     } finally {
       setAllocatingHoneymoon(false);
     }
@@ -223,7 +245,23 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
         payload: { allocated_to: target },
         queryClient,
       });
-      if (!queued) await refreshData();
+      if (!queued) {
+        await refreshData();
+        toast.success(
+          "Alokasi angpao diperbarui",
+          `Dana diarahkan ke ${ALLOC_META[target].label}.`
+        );
+      } else {
+        toast.warning(
+          "Alokasi disimpan di antrean offline",
+          "Akan disinkronkan saat kembali online."
+        );
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal mengubah alokasi angpao",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
     } finally {
       setQuickUpdatingId(null);
     }

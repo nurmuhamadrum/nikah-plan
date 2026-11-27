@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { GiftAllocation, GiftType, WeddingGift } from "@/types/database";
+import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +47,8 @@ export function GiftDialog({
   onSuccess,
 }: GiftDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [senderName, setSenderName] = useState("");
   const [giftType, setGiftType] = useState<GiftType>("CASH");
@@ -77,12 +82,18 @@ export function GiftDialog({
     e.preventDefault();
     if (!senderName.trim()) return;
 
+    const amountNum = Math.max(0, Number(amount) || 0);
+    const ok = await confirm({
+      title: gift ? "Simpan Perubahan Angpao?" : "Catat Angpao / Kado Baru?",
+      description: `Hadiah dari "${senderName.trim()}"${giftType === "PHYSICAL" ? " (Kado Fisik)" : ` senilai ${formatIDR(amountNum)}`} akan disimpan.`,
+      confirmLabel: "Ya, Simpan",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
     try {
-      const amountNum = Math.max(0, Number(amount) || 0);
-
       const safeAllocation: GiftAllocation =
         giftType === "PHYSICAL"
           ? "UNALLOCATED"
@@ -119,11 +130,23 @@ export function GiftDialog({
           });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Catatan angpao disimpan di antrean offline",
+          `Dari "${senderName.trim()}" akan sinkron saat online.`
+        );
+      } else {
+        toast.success(
+          gift ? "Catatan angpao diperbarui" : "Angpao berhasil dicatat",
+          `Dari "${senderName.trim()}"${giftType === "PHYSICAL" ? "" : ` (${formatIDR(amountNum)})`}.`
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menyimpan data angpao."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menyimpan data angpao.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan angpao", msg);
     } finally {
       setSaving(false);
     }
@@ -131,9 +154,12 @@ export function GiftDialog({
 
   const handleDelete = async () => {
     if (!gift) return;
-    const confirmed = window.confirm(
-      `Hapus catatan hadiah dari "${gift.sender_name}"?`
-    );
+    const confirmed = await confirm({
+      title: "Hapus Catatan Angpao?",
+      description: `Hapus catatan hadiah dari "${gift.sender_name}"?`,
+      confirmLabel: "Ya, Hapus",
+      variant: "destructive",
+    });
     if (!confirmed) return;
 
     setDeleting(true);
@@ -148,11 +174,20 @@ export function GiftDialog({
         queryClient,
       });
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Penghapusan angpao masuk antrean offline",
+          `Catatan dari "${gift.sender_name}" akan dihapus saat online.`
+        );
+      } else {
+        toast.success("Catatan angpao dihapus", `Dari "${gift.sender_name}".`);
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menghapus catatan."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menghapus catatan.";
+      setErrorMsg(msg);
+      toast.error("Gagal menghapus catatan", msg);
     } finally {
       setDeleting(false);
     }

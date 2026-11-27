@@ -48,6 +48,8 @@ import {
   WIFE_FRAMEWORK,
 } from "@/lib/guide-content";
 import { BotanicalCorner } from "@/components/brand/botanical-accent";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -93,6 +95,8 @@ export function PanduanClient({
   initialBundle: WorkspaceBundle;
 }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { workspace } = initialBundle;
   const storageKey = `nikahplan:guide:${workspace.id}`;
 
@@ -235,6 +239,13 @@ export function PanduanClient({
   );
 
   const handleApplyScenario = async () => {
+    const ok = await confirm({
+      title: `Terapkan Skenario ${activeScenarioData.label}?`,
+      description: `Target anggaran workspace akan diperbarui menjadi ${formatIDR(activeScenarioData.totalBudget)} (${activeScenarioData.guestRecommendation} tamu) beserta alokasi ${activeScenarioData.rows.length} kategori. Vendor & termin yang sudah ada tidak akan dihapus.`,
+      confirmLabel: "Ya, Terapkan Skenario",
+    });
+    if (!ok) return;
+
     setApplyingScenario(true);
     setScenarioFeedback(null);
     try {
@@ -253,24 +264,22 @@ export function PanduanClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        setScenarioFeedback({
-          type: "error",
-          text: data.error || "Gagal menerapkan skenario ke workspace.",
-        });
+        const msg = data.error || "Gagal menerapkan skenario ke workspace.";
+        setScenarioFeedback({ type: "error", text: msg });
+        toast.error("Gagal menerapkan skenario", msg);
       } else {
         await queryClient.invalidateQueries({
           queryKey: ["workspace-data", workspace.id],
         });
-        setScenarioFeedback({
-          type: "success",
-          text: `Skenario ${activeScenarioData.label} (${formatIDR(activeScenarioData.totalBudget)}) berhasil diterapkan! ${data.insertedCount} kategori baru ditambahkan & ${data.updatedCount} kategori diperbarui tanpa menghapus vendor Anda.`,
-        });
+        const msg = `Skenario ${activeScenarioData.label} (${formatIDR(activeScenarioData.totalBudget)}) berhasil diterapkan! ${data.insertedCount} kategori baru ditambahkan & ${data.updatedCount} kategori diperbarui tanpa menghapus vendor Anda.`;
+        setScenarioFeedback({ type: "success", text: msg });
+        toast.success("Skenario anggaran diterapkan!", msg);
       }
     } catch {
-      setScenarioFeedback({
-        type: "error",
-        text: "Kendala jaringan. Pastikan perangkat online untuk menerapkan skenario.",
-      });
+      const msg =
+        "Kendala jaringan. Pastikan perangkat online untuk menerapkan skenario.";
+      setScenarioFeedback({ type: "error", text: msg });
+      toast.error("Gagal menerapkan skenario", msg);
     } finally {
       setApplyingScenario(false);
     }

@@ -6,6 +6,8 @@ import { Check, CheckCircle2, Loader2, ReceiptText } from "lucide-react";
 import type { BudgetItem, ItemPayment, WeddingGift } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,8 @@ export function AllocateVendorDialog({
   onSuccess,
 }: AllocateVendorDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +70,16 @@ export function AllocateVendorDialog({
 
   const handleConfirm = async () => {
     if (!workspaceId) return;
+    const ok = await confirm({
+      title: "Alokasikan Dana Angpao ke Vendor?",
+      description:
+        selectedPaymentIds.length > 0
+          ? `${selectedPaymentIds.length} termin senilai ${formatIDR(selectedTotal)} akan ditandai lunas dari sumber dana Angpao, dan saldo bebas (${formatIDR(availablePool)}) ditandai untuk biaya nikah.`
+          : `Seluruh saldo angpao bebas (${formatIDR(availablePool)}) akan ditandai sebagai penutup biaya pernikahan.`,
+      confirmLabel: "Ya, Alokasikan",
+    });
+    if (!ok) return;
+
     setSubmitting(true);
     setErrorMsg(null);
 
@@ -105,15 +119,30 @@ export function AllocateVendorDialog({
         if (!queued) anyOnline = true;
       }
 
+      const paidCount = selectedPaymentIds.length;
       setSelectedPaymentIds([]);
-      if (anyOnline) await onSuccess();
+      if (anyOnline) {
+        await onSuccess();
+        toast.success(
+          "Dana angpao berhasil dialokasikan",
+          paidCount > 0
+            ? `${paidCount} termin dilunasi & saldo angpao telah dialokasikan.`
+            : `Saldo ${formatIDR(availablePool)} dialokasikan ke biaya pernikahan.`
+        );
+      } else {
+        toast.warning(
+          "Alokasi angpao masuk antrean offline",
+          "Akan disinkronkan otomatis saat kembali online."
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
+      const msg =
         err instanceof Error
           ? err.message
-          : "Gagal mengalokasikan dana angpao ke tagihan vendor."
-      );
+          : "Gagal mengalokasikan dana angpao ke tagihan vendor.";
+      setErrorMsg(msg);
+      toast.error("Gagal mengalokasikan angpao", msg);
     } finally {
       setSubmitting(false);
     }

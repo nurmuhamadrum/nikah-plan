@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import type { BudgetCategory, BudgetItem } from "@/types/database";
+import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +47,8 @@ export function VendorDialog({
   onSuccess,
 }: VendorDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
@@ -84,6 +89,15 @@ export function VendorDialog({
     e.preventDefault();
     if (!title.trim() || !categoryId) return;
 
+    const dealNum = Math.max(0, Number(dealCost) || 0);
+    const estNum = Math.max(0, Number(estimatedCost) || 0);
+    const ok = await confirm({
+      title: item ? "Simpan Perubahan Vendor?" : "Tambah Vendor Baru?",
+      description: `"${title.trim()}" (${dealNum > 0 ? `Deal ${formatIDR(dealNum)}` : `Estimasi ${formatIDR(estNum)}`}) akan disimpan ke daftar anggaran.`,
+      confirmLabel: item ? "Ya, Simpan" : "Ya, Tambah",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
@@ -91,8 +105,8 @@ export function VendorDialog({
       const payload = {
         category_id: categoryId,
         title: title.trim(),
-        estimated_cost: Math.max(0, Number(estimatedCost) || 0),
-        deal_cost: Math.max(0, Number(dealCost) || 0),
+        estimated_cost: estNum,
+        deal_cost: dealNum,
         vendor_contact: vendorContact.trim() || null,
         notes: notes.trim() || null,
         is_booked: isBooked,
@@ -122,11 +136,23 @@ export function VendorDialog({
           });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Vendor disimpan di antrean offline",
+          `"${title.trim()}" akan sinkron otomatis saat online.`
+        );
+      } else {
+        toast.success(
+          item ? "Data vendor diperbarui" : "Vendor berhasil ditambahkan",
+          `"${title.trim()}" telah disimpan.`
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menyimpan data vendor."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menyimpan data vendor.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan vendor", msg);
     } finally {
       setSaving(false);
     }
@@ -134,9 +160,12 @@ export function VendorDialog({
 
   const handleDelete = async () => {
     if (!item) return;
-    const confirmed = window.confirm(
-      `Hapus vendor "${item.title}" beserta seluruh jadwal termin pembayarannya?`
-    );
+    const confirmed = await confirm({
+      title: "Hapus Vendor?",
+      description: `Hapus vendor "${item.title}" beserta seluruh jadwal termin pembayarannya?`,
+      confirmLabel: "Ya, Hapus Vendor",
+      variant: "destructive",
+    });
     if (!confirmed) return;
 
     setDeleting(true);
@@ -152,11 +181,20 @@ export function VendorDialog({
       });
 
       if (!queued) await onSuccess();
+      if (queued) {
+        toast.warning(
+          "Penghapusan vendor masuk antrean offline",
+          `"${item.title}" akan dihapus dari server saat online.`
+        );
+      } else {
+        toast.success("Vendor berhasil dihapus", `"${item.title}" telah dihapus.`);
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menghapus vendor."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menghapus vendor.";
+      setErrorMsg(msg);
+      toast.error("Gagal menghapus vendor", msg);
     } finally {
       setDeleting(false);
     }

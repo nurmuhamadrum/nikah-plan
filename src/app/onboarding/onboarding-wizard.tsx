@@ -32,6 +32,8 @@ import {
 import { formatIDR, formatNumberID } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,6 +68,8 @@ export function OnboardingWizard({
   appUrl,
 }: OnboardingWizardProps) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [step, setStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -179,6 +183,13 @@ export function OnboardingWizard({
   };
 
   const handleFinish = async () => {
+    const ok = await confirm({
+      title: "Simpan Setup Workspace?",
+      description: `Simpan profil "${coupleTitle.trim()}" dengan target anggaran ${formatIDR(budgetTarget)} (${guestEstimate} tamu)? Anda tetap bisa mengubahnya kapan saja di Pengaturan.`,
+      confirmLabel: "Ya, Simpan & Mulai",
+    });
+    if (!ok) return;
+
     setErrorMsg(null);
     setSubmitting(true);
     try {
@@ -209,15 +220,23 @@ export function OnboardingWizard({
 
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error || "Gagal menyimpan setup onboarding.");
+        const msg = data.error || "Gagal menyimpan setup onboarding.";
+        setErrorMsg(msg);
+        toast.error("Gagal menyimpan setup", msg);
         setSubmitting(false);
         return;
       }
 
+      toast.success(
+        "Workspace berhasil disiapkan!",
+        `Selamat merencanakan hari bahagia, ${coupleTitle.trim()}.`
+      );
       router.push(data.redirectTo || "/dashboard");
       router.refresh();
     } catch {
-      setErrorMsg("Terjadi kendala jaringan. Silakan coba lagi.");
+      const msg = "Terjadi kendala jaringan. Silakan coba lagi.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan setup", msg);
       setSubmitting(false);
     }
   };

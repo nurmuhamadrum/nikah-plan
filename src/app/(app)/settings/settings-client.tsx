@@ -45,6 +45,8 @@ import {
 } from "@/lib/export-reports";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { PushNotificationCard } from "@/components/settings/push-notification-card";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,6 +78,8 @@ export function SettingsClient({
   upgradePrice = 50000,
 }: SettingsClientProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
   const queuedCount = useAppStore((s) => s.queuedCount);
   const syncStatus = useAppStore((s) => s.syncStatus);
 
@@ -133,11 +137,18 @@ export function SettingsClient({
 
   const handleSaveCurrency = async (e: React.FormEvent) => {
     e.preventDefault();
+    const rateNum =
+      currency === "IDR" ? 1 : Math.max(0.01, Number(exchangeRate) || 1);
+    const ok = await confirm({
+      title: "Simpan Pengaturan Kurs?",
+      description: `Simpan mata uang ${currency} dengan kurs ${currency === "IDR" ? "1 IDR" : `1 ${currency} = ${formatIDR(rateNum)}`}?`,
+      confirmLabel: "Ya, Simpan Kurs",
+    });
+    if (!ok) return;
+
     setSavingRate(true);
     setRateSavedFeedback(null);
     try {
-      const rateNum =
-        currency === "IDR" ? 1 : Math.max(0.01, Number(exchangeRate) || 1);
       const { queued } = await executeOfflineFirstMutation({
         workspaceId,
         table: "workspaces",
@@ -153,11 +164,25 @@ export function SettingsClient({
         await queryClient.invalidateQueries({
           queryKey: ["workspace-data", workspaceId],
         });
+        toast.success(
+          "Kurs mata uang disimpan",
+          `Mata uang ${currency} berhasil diperbarui.`
+        );
+      } else {
+        toast.warning(
+          "Kurs disimpan di antrean offline",
+          "Akan disinkronkan saat kembali online."
+        );
       }
       setRateSavedFeedback(
         queued
           ? "Kurs tersimpan di cache lokal & akan disinkronkan saat online."
           : "Kurs mata uang berhasil diperbarui & tersimpan untuk mode offline."
+      );
+    } catch (err) {
+      toast.error(
+        "Gagal menyimpan kurs",
+        err instanceof Error ? err.message : "Silakan coba lagi."
       );
     } finally {
       setSavingRate(false);
@@ -170,8 +195,10 @@ export function SettingsClient({
     try {
       exportBudgetToPDF(bundle);
       setExportFeedback("Laporan PDF berhasil diunduh.");
+      toast.success("Laporan PDF diunduh", "Berkas ringkasan anggaran siap dibuka.");
     } catch {
       setExportFeedback("Gagal membuat file PDF.");
+      toast.error("Gagal membuat file PDF");
     } finally {
       setExportingType(null);
     }
@@ -183,8 +210,10 @@ export function SettingsClient({
     try {
       exportBudgetToExcel(bundle);
       setExportFeedback("Laporan Excel (.xlsx) 4 sheet berhasil diunduh.");
+      toast.success("Laporan Excel diunduh", "File .xlsx 4 sheet berhasil dibuat.");
     } catch {
       setExportFeedback("Gagal membuat file Excel.");
+      toast.error("Gagal membuat file Excel");
     } finally {
       setExportingType(null);
     }
@@ -196,27 +225,45 @@ export function SettingsClient({
     try {
       const result = await flushSyncQueue(queryClient);
       if (result.synced > 0) {
-        setSyncMessage(`${result.synced} perubahan berhasil disinkronkan ke server.`);
+        const msg = `${result.synced} perubahan berhasil disinkronkan ke server.`;
+        setSyncMessage(msg);
+        toast.success("Sinkronisasi berhasil", msg);
       } else if (syncStatus === "offline") {
-        setSyncMessage("Perangkat masih offline. Sinkronisasi akan jalan otomatis saat online.");
+        const msg =
+          "Perangkat masih offline. Sinkronisasi akan jalan otomatis saat online.";
+        setSyncMessage(msg);
+        toast.warning("Perangkat offline", msg);
       } else {
-        setSyncMessage("Semua data sudah tersinkronisasi dengan server.");
+        const msg = "Semua data sudah tersinkronisasi dengan server.";
+        setSyncMessage(msg);
+        toast.info("Data sudah mutakhir", msg);
       }
+    } catch {
+      toast.error("Gagal menyinkronkan data");
     } finally {
       setSyncingNow(false);
     }
   };
 
   const handleClearLocalCache = async () => {
-    const confirmed = window.confirm(
-      "Bersihkan snapshot lokal & antrean offline di perangkat ini? (Data yang sudah tersimpan di server tetap aman)."
-    );
-    if (!confirmed) return;
-    await clearOfflineCache(workspaceId);
-    await queryClient.invalidateQueries({
-      queryKey: ["workspace-data", workspaceId],
+    const confirmed = await confirm({
+      title: "Bersihkan Cache Lokal?",
+      description:
+        "Bersihkan snapshot lokal & antrean offline di perangkat ini? Data yang sudah tersimpan di server tetap aman.",
+      confirmLabel: "Ya, Bersihkan Cache",
+      variant: "destructive",
     });
-    setSyncMessage("Cache lokal IndexedDB dibersihkan.");
+    if (!confirmed) return;
+    try {
+      await clearOfflineCache(workspaceId);
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace-data", workspaceId],
+      });
+      setSyncMessage("Cache lokal IndexedDB dibersihkan.");
+      toast.success("Cache lokal dibersihkan", "IndexedDB perangkat telah direset.");
+    } catch {
+      toast.error("Gagal membersihkan cache lokal");
+    }
   };
 
   const waText = `Hai sayang! Yuk kelola bareng budget pernikahan kita (${workspace.couple_title}) di NikahPlan. Gabung gratis via tautan ini ya: ${inviteUrl}`;

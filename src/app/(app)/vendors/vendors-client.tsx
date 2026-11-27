@@ -24,6 +24,7 @@ import {
   executeOfflineFirstMutation,
   saveWorkspaceSnapshot,
 } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { formatIDR } from "@/lib/utils";
 import {
@@ -71,6 +72,7 @@ export function VendorsClient({
   openNewVendorOnMount = false,
 }: VendorsClientProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const workspaceId = initialBundle.workspace.id;
   useWorkspaceRealtime(workspaceId);
@@ -218,19 +220,35 @@ export function VendorsClient({
   const handleTogglePaymentPaid = async (payment: ItemPayment) => {
     const nextPaid = !payment.is_paid;
     const today = new Date().toISOString().split("T")[0];
-    const { queued } = await executeOfflineFirstMutation({
-      workspaceId,
-      table: "item_payments",
-      operation: "UPDATE",
-      recordId: payment.id,
-      payload: {
-        is_paid: nextPaid,
-        paid_date: nextPaid ? payment.paid_date || today : null,
-      },
-      queryClient,
-    });
-    if (!queued) {
-      await refreshData();
+    try {
+      const { queued } = await executeOfflineFirstMutation({
+        workspaceId,
+        table: "item_payments",
+        operation: "UPDATE",
+        recordId: payment.id,
+        payload: {
+          is_paid: nextPaid,
+          paid_date: nextPaid ? payment.paid_date || today : null,
+        },
+        queryClient,
+      });
+      if (!queued) {
+        await refreshData();
+        toast.success(
+          nextPaid ? "Termin ditandai lunas" : "Status lunas dibatalkan",
+          `"${payment.label}" (${formatIDR(Number(payment.amount) || 0)}).`
+        );
+      } else {
+        toast.warning(
+          "Status termin disimpan di antrean offline",
+          `"${payment.label}" akan disinkronkan saat online.`
+        );
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal memperbarui status termin",
+        err instanceof Error ? err.message : "Silakan coba lagi."
+      );
     }
   };
 

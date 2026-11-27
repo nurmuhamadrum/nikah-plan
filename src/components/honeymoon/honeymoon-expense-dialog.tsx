@@ -13,6 +13,8 @@ import {
   HONEYMOON_CURRENCIES,
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +60,8 @@ export function HoneymoonExpenseDialog({
   onSuccess,
 }: HoneymoonExpenseDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [phase, setPhase] = useState<HoneymoonPhase>("HONEYMOON_ONTRIP");
   const [categoryId, setCategoryId] = useState("");
@@ -163,6 +167,15 @@ export function HoneymoonExpenseDialog({
     e.preventDefault();
     if (!title.trim() || amountNum <= 0) return;
 
+    const ok = await confirm({
+      title: editingItem
+        ? "Simpan Perubahan Pengeluaran?"
+        : "Catat Pengeluaran Honeymoon?",
+      description: `"${title.trim()}" senilai ${formatIDR(convertedIDR)} akan dicatat ke Dompet Honeymoon.`,
+      confirmLabel: "Ya, Simpan",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
@@ -240,14 +253,28 @@ export function HoneymoonExpenseDialog({
         if (res.queued) anyQueued = true;
       }
 
-      if (!anyQueued) await onSuccess();
+      if (!anyQueued) {
+        await onSuccess();
+        toast.success(
+          editingItem
+            ? "Pengeluaran honeymoon diperbarui"
+            : "Pengeluaran honeymoon dicatat",
+          `"${title.trim()}" (${formatIDR(convertedIDR)}).`
+        );
+      } else {
+        toast.warning(
+          "Pengeluaran disimpan di antrean offline",
+          `"${title.trim()}" akan sinkron saat online.`
+        );
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
+      const msg =
         err instanceof Error
           ? err.message
-          : "Gagal menyimpan pengeluaran honeymoon."
-      );
+          : "Gagal menyimpan pengeluaran honeymoon.";
+      setErrorMsg(msg);
+      toast.error("Gagal menyimpan pengeluaran", msg);
     } finally {
       setSaving(false);
     }
@@ -255,9 +282,12 @@ export function HoneymoonExpenseDialog({
 
   const handleDelete = async () => {
     if (!editingItem) return;
-    const confirmed = window.confirm(
-      `Hapus pengeluaran "${editingItem.title}"?`
-    );
+    const confirmed = await confirm({
+      title: "Hapus Pengeluaran Honeymoon?",
+      description: `Hapus pengeluaran "${editingItem.title}" dari Dompet Honeymoon?`,
+      confirmLabel: "Ya, Hapus",
+      variant: "destructive",
+    });
     if (!confirmed) return;
 
     setDeleting(true);
@@ -270,12 +300,18 @@ export function HoneymoonExpenseDialog({
         recordId: editingItem.id,
         queryClient,
       });
-      if (!queued) await onSuccess();
+      if (!queued) {
+        await onSuccess();
+        toast.success("Pengeluaran dihapus", `"${editingItem.title}" telah dihapus.`);
+      } else {
+        toast.warning("Penghapusan masuk antrean offline");
+      }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menghapus pengeluaran."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menghapus pengeluaran.";
+      setErrorMsg(msg);
+      toast.error("Gagal menghapus pengeluaran", msg);
     } finally {
       setDeleting(false);
     }

@@ -6,6 +6,8 @@ import { Check, CheckSquare, Loader2, Sparkles, Square } from "lucide-react";
 import type { BudgetCategory, BudgetItem } from "@/types/database";
 import { STANDARD_WEDDING_CATEGORIES } from "@/lib/wedding-templates";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { useToast } from "@/components/providers/toast-provider";
+import { useConfirm } from "@/components/providers/confirm-provider";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +65,8 @@ export function TemplatePickerDialog({
   onSuccess,
 }: TemplatePickerDialogProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [targetCategoryId, setTargetCategoryId] = useState<string>("");
   const [templateKey, setTemplateKey] = useState<string>(
     STANDARD_WEDDING_CATEGORIES[0].key
@@ -121,6 +125,15 @@ export function TemplatePickerDialog({
 
   const handleSubmit = async () => {
     if (!targetCategoryId || selectedTitles.length === 0) return;
+    const targetCatName =
+      categories.find((c) => c.id === targetCategoryId)?.name || "kategori terpilih";
+    const ok = await confirm({
+      title: `Tambahkan ${selectedTitles.length} Item Template?`,
+      description: `${selectedTitles.length} sub-item dari "${activeTemplate.name}" akan dimasukkan ke kategori "${targetCatName}".`,
+      confirmLabel: "Ya, Tambahkan",
+    });
+    if (!ok) return;
+
     setSaving(true);
     setErrorMsg(null);
 
@@ -151,12 +164,22 @@ export function TemplatePickerDialog({
 
       if (anyOnline) {
         await onSuccess();
+        toast.success(
+          `${selectedTitles.length} item template ditambahkan`,
+          `Berhasil dimasukkan ke kategori "${targetCatName}".`
+        );
+      } else {
+        toast.warning(
+          `${selectedTitles.length} item disimpan di antrean offline`,
+          "Akan disinkronkan otomatis saat kembali online."
+        );
       }
       onOpenChange(false);
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal menambahkan item template."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Gagal menambahkan item template.";
+      setErrorMsg(msg);
+      toast.error("Gagal menambahkan template", msg);
     } finally {
       setSaving(false);
     }
