@@ -1,19 +1,8 @@
 import Link from "next/link";
-import { Check, X, Sparkles, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Check, Minus } from "lucide-react";
 import { PLANS, type PlanDefinition } from "@/lib/plans";
 import type { PlanType } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export function PricingSection({
   plans = PLANS,
@@ -23,123 +12,136 @@ export function PricingSection({
   const planList = [plans.WEDDING_ONLY, plans.COMPLETE_PASS];
 
   return (
-    <section id="harga" className="scroll-mt-16 py-20 sm:py-28 px-4">
+    <section id="harga" className="scroll-mt-16 px-4 pt-8 pb-20 sm:pb-24">
       <div className="mx-auto max-w-5xl">
-        <Reveal className="text-center max-w-2xl mx-auto space-y-4 mb-14">
-          <Badge variant="softTerracotta" className="mx-auto">
-            <Sparkles className="h-3.5 w-3.5" />
-            Sekali Bayar &bull; Tanpa Langganan Bulanan
-          </Badge>
-          <h2 className="font-display text-3xl sm:text-[2.75rem] sm:leading-[1.15] font-semibold text-sage-900">
-            Pilih Paket{" "}
-            <span className="font-script text-gradient-warm text-[1.2em] font-normal">
-              Couple Pass
-            </span>{" "}
-            Terbaikmu
+        <div className="mx-auto mb-10 max-w-xl text-center space-y-2">
+          <h2 className="font-display text-2xl font-semibold leading-tight text-[#161917] sm:text-4xl">
+            Sekali bayar untuk 2 akun pasangan.
           </h2>
-          <p className="text-sage-700/85 text-sm sm:text-base">
-            Satu kali pembayaran sudah mencakup akses penuh untuk 2 akun (Anda &amp;
-            Pasangan) dengan sinkronisasi real-time dan mode offline PWA.
+          <p className="text-sm text-[#5E6762]">
+            Tanpa biaya langganan bulanan. Aktivasi otomatis via Midtrans.
           </p>
-        </Reveal>
+        </div>
 
-        <RevealStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-stretch" stagger={0.15}>
-          {planList.map((plan) => (
-            <RevealItem key={plan.id} className="h-full">
-            <Card
-              className={`relative flex h-full flex-col justify-between rounded-[2rem] transition-all duration-300 hover:-translate-y-1 ${
-                plan.recommended
-                  ? "border-gradient-warm border-transparent bg-white shadow-glow md:scale-[1.03]"
-                  : "border border-white/70 bg-white/75 hover:shadow-lift"
-              }`}
-            >
-              {plan.badge && (
-                <div className="absolute -top-3.5 right-6">
-                  <Badge variant="terracotta" className="px-3.5 py-1 shadow-sm">
-                    {plan.badge}
-                  </Badge>
-                </div>
-              )}
-
-              <div>
-                <CardHeader className="pb-4">
-                  <CardTitle className="font-display text-2xl text-sage-900">
-                    {plan.name}
-                  </CardTitle>
-                  <CardDescription className="text-sage-700/80">
-                    {plan.tagline}
-                  </CardDescription>
-
-                  <div className="pt-4 flex items-baseline gap-2.5">
-                    <span className="font-display text-4xl sm:text-5xl font-semibold tracking-tight tabular-nums text-sage-900">
-                      {formatIDR(plan.price)}
-                    </span>
-                    {plan.originalPrice > plan.price && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatIDR(plan.originalPrice)}
+        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
+          {planList.map((plan) => {
+            const isPrimary = Boolean(plan.recommended);
+            return (
+              <div
+                key={plan.id}
+                className={`flex flex-col justify-between rounded-[2rem] border p-6 sm:p-8 ${
+                  isPrimary
+                    ? "border-[#2B3352] bg-midnight-luxury text-white shadow-lift"
+                    : "border-black/[0.06] bg-white text-[#161917] shadow-[0_2px_16px_rgba(0,0,0,0.03)]"
+                }`}
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-display text-xl font-semibold">
+                        {plan.name}
+                      </h3>
+                      <p
+                        className={`mt-1 text-xs ${
+                          isPrimary ? "text-white/65" : "text-[#6B746F]"
+                        }`}
+                      >
+                        {plan.tagline}
+                      </p>
+                    </div>
+                    {plan.badge && (
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                          isPrimary
+                            ? "bg-white/15 text-amberwarm"
+                            : "bg-[#F3F3F1] text-[#161917]"
+                        }`}
+                      >
+                        {plan.badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-medium text-sage-600">
-                    One-time payment &bull; Berlaku untuk 2 akun pasangan
-                  </p>
-                </CardHeader>
 
-                <CardContent className="space-y-3 pt-2">
-                  {plan.features.map((feat) => (
-                    <div
-                      key={feat.label}
-                      className="flex items-start gap-2.5 text-sm"
-                    >
-                      {feat.included ? (
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage-50 text-sage">
-                          <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                        </span>
-                      ) : (
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cream-200 text-sage-400">
-                          <X className="h-3.5 w-3.5" />
+                  <div
+                    className={`mt-5 border-y py-4 ${
+                      isPrimary ? "border-white/10" : "border-black/[0.06]"
+                    }`}
+                  >
+                    <div className="flex items-baseline gap-2.5">
+                      <span className="font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+                        {formatIDR(plan.price)}
+                      </span>
+                      {plan.originalPrice > plan.price && (
+                        <span
+                          className={`text-sm line-through tabular-nums ${
+                            isPrimary ? "text-white/40" : "text-[#9AA29D]"
+                          }`}
+                        >
+                          {formatIDR(plan.originalPrice)}
                         </span>
                       )}
-                      <span
-                        className={
-                          feat.included
-                            ? "text-sage-800"
-                            : "text-muted-foreground/70 line-through"
-                        }
-                      >
-                        {feat.label}
-                      </span>
                     </div>
-                  ))}
-                </CardContent>
-              </div>
+                  </div>
 
-              <CardFooter className="pt-6">
-                <Button
-                  asChild
-                  size="lg"
-                  variant={plan.recommended ? "default" : "sage"}
-                  className="w-full"
-                >
+                  <ul className="mt-5 space-y-2.5">
+                    {plan.features.map((feat) => (
+                      <li
+                        key={feat.label}
+                        className="flex items-start gap-2.5 text-sm"
+                      >
+                        {feat.included ? (
+                          <Check
+                            className={`mt-0.5 h-4 w-4 shrink-0 ${
+                              isPrimary ? "text-emerald-400" : "text-sage"
+                            }`}
+                          />
+                        ) : (
+                          <Minus
+                            className={`mt-0.5 h-4 w-4 shrink-0 ${
+                              isPrimary ? "text-white/25" : "text-black/20"
+                            }`}
+                          />
+                        )}
+                        <span
+                          className={
+                            feat.included
+                              ? isPrimary
+                                ? "text-white/90"
+                                : "text-[#2E3531]"
+                              : isPrimary
+                                ? "text-white/35 line-through"
+                                : "text-[#9AA29D] line-through"
+                          }
+                        >
+                          {feat.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-7">
                   <Link
                     href={`/login?next=${encodeURIComponent(`/checkout?plan=${plan.id}`)}`}
+                    className={`group flex w-full items-center justify-between rounded-full py-2 pl-5 pr-2 text-sm font-semibold transition-all ${
+                      isPrimary
+                        ? "bg-white text-[#161917] hover:bg-[#EFEFED]"
+                        : "bg-midnight-btn text-white hover:opacity-90"
+                    }`}
                   >
-                    Pilih {plan.name}
+                    <span>Pilih {plan.name}</span>
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
+                        isPrimary ? "bg-black/10" : "bg-white/15"
+                      }`}
+                    >
+                      <ArrowUpRight className="h-4 w-4" />
+                    </span>
                   </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-            </RevealItem>
-          ))}
-        </RevealStagger>
-
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-sage-700">
-          <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-sage" />
-            Pembayaran Aman via Midtrans (QRIS, VA Bank, GoPay, ShopeePay)
-          </span>
-          <span>&bull;</span>
-          <span>Aktivasi Workspace Otomatis Seketika</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

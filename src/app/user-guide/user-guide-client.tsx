@@ -34,8 +34,6 @@ import {
   type UserGuideIconKey,
 } from "@/lib/user-guide-content";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
-import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { ScrollHeader } from "@/components/landing/scroll-header";
 import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -155,31 +153,24 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       {/* Hero Banner */}
       <section className="relative px-4 pt-8 pb-8 sm:pt-12 sm:pb-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-20 h-80 -z-10 bg-gradient-to-b from-[#E5EAF8] via-[#EFF2FA] to-transparent"
+        />
         <div className="mx-auto max-w-6xl">
-          <div className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-sage-700 via-sage to-sage-900 px-6 py-10 text-cream-50 shadow-lift sm:px-10 sm:py-12">
-            <div
-              aria-hidden="true"
-              className="pattern-leaves absolute inset-0 opacity-75"
-            />
-            <BotanicalCorner
-              className="pointer-events-none absolute -bottom-6 -right-4 h-44 w-44 opacity-25"
-              variant="terracotta"
-            />
-
+          <div className="relative overflow-hidden rounded-[2rem] bg-midnight-luxury px-6 py-10 text-white shadow-lift sm:px-10 sm:py-12">
             <div className="relative z-10 max-w-3xl space-y-4">
               <Badge
                 variant="outline"
-                className="border-white/25 bg-white/10 text-cream-50 text-xs"
+                className="border-white/20 bg-white/10 text-white text-xs"
               >
-                <BookOpen className="h-3.5 w-3.5 text-amberwarm" />
+                <BookOpen className="h-3.5 w-3.5 text-[#818CF8]" />
                 Buku Panduan Resmi Penggunaan Aplikasi
               </Badge>
 
-              <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl lg:text-[2.75rem]">
+              <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-[2.75rem]">
                 Panduan Lengkap Menggunakan{" "}
-                <span className="font-script text-[1.2em] font-normal text-amberwarm">
-                  NikahPlan
-                </span>
+                <span className="text-[#818CF8]">NikahPlan</span>
               </h1>
 
               <p className="text-sm leading-relaxed text-cream-200/90 sm:text-base">
@@ -554,17 +545,12 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             </section>
 
             {/* Closing CTA */}
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-sage-700 via-sage to-sage-800 px-6 py-9 text-center text-cream-50 shadow-lift sm:px-10">
-              <div
-                aria-hidden="true"
-                className="pattern-leaves absolute inset-0 opacity-75"
-              />
-              <FloatingBotanicals preset="page" className="opacity-40" />
+            <div className="relative overflow-hidden rounded-[2rem] bg-midnight-luxury px-6 py-9 text-center text-white shadow-lift sm:px-10">
               <div className="relative z-10 space-y-3">
-                <p className="font-script text-3xl text-amberwarm sm:text-4xl">
-                  Siap Merencanakan Tanpa Drama?
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#818CF8]">
+                  Mulai Rencana Kalian
                 </p>
-                <h3 className="mx-auto max-w-xl font-display text-xl font-semibold sm:text-2xl">
+                <h3 className="mx-auto max-w-xl font-display text-xl font-bold sm:text-2xl">
                   {isLoggedIn
                     ? "Lanjutkan pengelolaan anggaran & undangan pernikahan kalian sekarang."
                     : "Aktifkan Couple Pass 1x bayar untuk berdua dan coba seluruh fiturnya hari ini."}

@@ -26,7 +26,6 @@ import {
 } from "@/lib/budget-allocator";
 import { formatIDR } from "@/lib/utils";
 import { CategoryIconBadge } from "@/lib/category-icons";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { HoneymoonExpenseDialog } from "@/components/honeymoon/honeymoon-expense-dialog";
 import { HoneymoonSettingsDialog } from "@/components/honeymoon/honeymoon-settings-dialog";
 import { Button } from "@/components/ui/button";
@@ -351,14 +350,9 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
         </Button>
       </div>
 
-      {/* Kartu Dompet Honeymoon (Warm Sage Gradient + Pola Botani) */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-white/90 shadow-lift">
-        <div className="relative bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 p-5 sm:p-6 space-y-4">
-          <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
-          <BotanicalCorner
-            className="absolute -top-3 -right-3 h-32 w-32 opacity-25"
-            variant="terracotta"
-          />
+      {/* Kartu Dompet Honeymoon (Sleek Charcoal) */}
+      <Card className="relative overflow-hidden rounded-3xl border border-black/[0.06] bg-white shadow-card">
+        <div className="relative bg-midnight-luxury text-white p-5 sm:p-6 space-y-4">
 
           <div className="relative z-10 space-y-1">
             <div className="flex items-center justify-between gap-2">

@@ -648,7 +648,7 @@ export function AdminClient({
   return (
     <div className="min-h-screen pb-16">
       {/* Admin Header */}
-      <header className="sticky top-0 z-30 border-b border-white/60 bg-cream-50/75 shadow-soft backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 gap-3">
           <div className="flex items-center gap-3">
             <NikahPlanLogo size="sm" />

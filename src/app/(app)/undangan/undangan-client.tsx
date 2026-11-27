@@ -66,7 +66,6 @@ import {
   slugifyInvitation,
   splitCoupleNames,
 } from "@/lib/invitation-themes";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { LivePreviewPanel } from "@/components/invitations/live-preview-panel";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
@@ -405,15 +404,7 @@ export function UndanganClient({
   if (workspace.plan !== "COMPLETE_PASS") {
     return (
       <div className="space-y-5 pb-8">
-        <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
-          <div
-            aria-hidden="true"
-            className="pattern-leaves absolute inset-0 opacity-80"
-          />
-          <BotanicalCorner
-            className="pointer-events-none absolute -bottom-5 -right-4 h-36 w-36 opacity-25"
-            variant="terracotta"
-          />
+        <Card className="relative overflow-hidden rounded-3xl border-0 bg-midnight-luxury text-white shadow-lift">
           <CardContent className="relative z-10 p-6 sm:p-8 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-amberwarm border border-white/20">
               <Lock className="h-7 w-7" />
@@ -752,15 +743,7 @@ export function UndanganClient({
   return (
     <div className="space-y-5 pb-10">
       {/* Header Banner */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
-        <div
-          aria-hidden="true"
-          className="pattern-leaves absolute inset-0 opacity-80"
-        />
-        <BotanicalCorner
-          className="pointer-events-none absolute -bottom-5 -right-4 h-36 w-36 opacity-25"
-          variant="terracotta"
-        />
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-midnight-luxury text-white shadow-lift">
         <CardContent className="relative z-10 p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Badge

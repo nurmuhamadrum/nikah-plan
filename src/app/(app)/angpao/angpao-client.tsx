@@ -32,7 +32,6 @@ import type { GiftAllocation, GiftType, WeddingGift } from "@/types/database";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { GiftDialog } from "@/components/angpao/gift-dialog";
 import { AllocateVendorDialog } from "@/components/angpao/allocate-vendor-dialog";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -296,13 +295,8 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
         </Button>
       </div>
 
-      {/* Hero Summary Card (Warm Sage Gradient) */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
-        <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
-        <BotanicalCorner
-          className="absolute -bottom-6 -right-4 h-36 w-36 opacity-25"
-          variant="terracotta"
-        />
+      {/* Hero Summary Card (Sleek Charcoal) */}
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-midnight-luxury text-white shadow-lift">
         <CardContent className="relative z-10 p-5 sm:p-6 space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>

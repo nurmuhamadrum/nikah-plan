@@ -13,7 +13,6 @@ import {
   LogIn,
 } from "lucide-react";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,10 @@ export function JoinClient({
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-10">
-      <FloatingBotanicals preset="page" fixed />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 -z-10 bg-gradient-to-b from-[#E5EAF8] via-[#EFF2FA] to-transparent"
+      />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex justify-center mb-6">

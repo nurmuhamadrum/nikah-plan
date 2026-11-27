@@ -33,14 +33,14 @@ export interface SiteContentsBundle {
 }
 
 export const DEFAULT_HERO_CONTENT: HeroContent = {
-  badge: 'From "I Do" to Honeymoon • PWA Offline-First',
+  badge: "Perencana Nikah & Bulan Madu · Offline-Ready",
   headline: "Atur Budget Nikah & Bulan Madu",
   headlineAccent: "Tanpa Drama",
   headlineSuffix: "Bersama Pasangan",
   subheadline:
-    "Lacak estimasi vs harga deal vendor, jadwalkan termin DP, pisahkan porsi dana keluarga, hingga ubah saldo angpao menjadi dompet honeymoon — semuanya tersinkronisasi rapi di HP Anda berdua.",
+    "Catat vendor, jadwal DP, dana dua keluarga, undangan online, hingga dompet bulan madu dalam satu ruang bersama pasangan.",
   primaryCta: "Aktifkan Couple Pass",
-  secondaryCta: "Lihat Paket Couple Pass",
+  secondaryCta: "Lihat Paket",
 };
 
 export const DEFAULT_ANNOUNCEMENT_CONTENT: AnnouncementContent = {

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E2440" />
+      <stop offset="55%" stop-color="#141724" />
+      <stop offset="100%" stop-color="#1D1B2E" />
+    </linearGradient>
+    <radialGradient id="indigoGlow" cx="1" cy="0" r="0.9">
+      <stop offset="0%" stop-color="#637CF8" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#637CF8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="goldGlow" cx="0" cy="1" r="0.8">
+      <stop offset="0%" stop-color="#E09F3E" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#E09F3E" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <rect width="64" height="64" rx="16" fill="url(#indigoGlow)" />
+  <rect width="64" height="64" rx="16" fill="url(#goldGlow)" />
+
+  <!-- Twin Wedding Rings + Diamond Mark -->
+  <circle cx="24" cy="37" r="11.5" stroke="#FFFFFF" stroke-width="3.2" />
+  <circle cx="40" cy="37" r="11.5" stroke="#818CF8" stroke-width="3.2" />
+  <path
+    d="M32 14.5L37.2 20L32 25.5L26.8 20L32 14.5Z"
+    fill="#E09F3E"
+    stroke="#FFFFFF"
+    stroke-width="1.8"
+    stroke-linejoin="round"
+  />
+</svg>

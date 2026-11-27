@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Allura, Fraunces, Manrope } from "next/font/google";
+import { Allura, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { BackgroundDecor } from "@/components/brand/background-decor";
 import "./globals.css";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-sans",
   display: "swap",
 });
 
-const fraunces = Fraunces({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-fraunces",
-  axes: ["SOFT", "opsz"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -39,6 +39,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3D5245",
+  themeColor: "#141726",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -70,7 +71,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${manrope.variable} ${fraunces.variable} ${allura.variable}`}
+      className={`${inter.variable} ${plusJakarta.variable} ${allura.variable}`}
       suppressHydrationWarning
     >
       <body

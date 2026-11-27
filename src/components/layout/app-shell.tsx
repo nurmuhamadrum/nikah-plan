@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
 import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 
@@ -80,12 +79,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-white/60 bg-cream-50/75 backdrop-blur-xl px-4 py-6 z-30 overflow-hidden shadow-soft">
-        <BotanicalCorner
-          className="absolute -bottom-6 -left-6 h-36 w-36 rotate-180 opacity-20"
-          variant="sage"
-        />
-
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-black/[0.06] bg-white px-4 py-6 z-30 overflow-hidden">
         <Link
           href="/dashboard"
           prefetch={true}
@@ -95,7 +89,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
           <NikahPlanLogo size="md" />
         </Link>
 
-        <nav className="relative z-10 flex-1 space-y-1.5">
+        <nav className="relative z-10 flex-1 space-y-1">
           {DESKTOP_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -107,16 +101,16 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
                 prefetch={true}
                 onClick={() => handleNavClick(item.href)}
                 className={cn(
-                  "relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
+                  "relative flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors",
                   isActive
-                    ? "text-cream-50"
-                    : "text-sage-700 hover:bg-white/70 hover:text-sage-900"
+                    ? "text-white"
+                    : "text-[#5F6978] hover:bg-[#F4F5F7] hover:text-[#141618]"
                 )}
               >
                 {isActive && (
                   <motion.span
                     layoutId="desktop-nav-pill"
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+                    className="absolute inset-0 rounded-full bg-midnight-btn shadow-sm"
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
                   />
                 )}
@@ -130,9 +124,9 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         <button
           type="button"
           onClick={() => setSupportOpen(true)}
-          className="relative z-10 mt-auto mb-2.5 flex items-center gap-2.5 rounded-2xl border border-sage/15 bg-sage-50/80 px-3.5 py-2.5 text-left text-xs font-semibold text-sage-800 hover:bg-sage-100/80 hover:border-sage/30 transition-all"
+          className="relative z-10 mt-auto mb-2.5 flex items-center gap-2.5 rounded-2xl border border-black/[0.06] bg-[#F4F5F7] px-3.5 py-2.5 text-left text-xs font-semibold text-[#141618] hover:bg-[#ECEEF2] transition-colors"
         >
-          <Headphones className="h-4 w-4 shrink-0 text-sage" />
+          <Headphones className="h-4 w-4 shrink-0 text-[#4F6BF6]" />
           <span className="truncate">Bantuan CS &amp; Masukan</span>
         </button>
 
@@ -140,7 +134,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
           href="/settings"
           prefetch={true}
           onClick={() => handleNavClick("/settings")}
-          className="relative z-10 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-3 hover:border-sage/25 hover:bg-white transition-all shadow-sm"
+          className="relative z-10 flex items-center gap-3 rounded-2xl border border-black/[0.06] bg-white p-3 hover:border-black/15 hover:bg-[#FAFAFB] transition-all"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

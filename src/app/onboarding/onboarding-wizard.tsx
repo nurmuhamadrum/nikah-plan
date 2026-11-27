@@ -31,7 +31,6 @@ import {
 } from "@/lib/budget-allocator";
 import { formatIDR, formatNumberID } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
@@ -244,7 +243,10 @@ export function OnboardingWizard({
 
   return (
     <div className="relative min-h-screen px-4 py-6 sm:py-10 overflow-x-hidden">
-      <FloatingBotanicals preset="page" fixed />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 -z-10 bg-gradient-to-b from-[#E5EAF8] via-[#EFF2FA] to-transparent"
+      />
 
       <div className="relative z-10 mx-auto max-w-xl space-y-6">
         {/* Header Logo & Stepper */}

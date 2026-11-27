@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { FloatingBotanicals } from "@/components/brand/floating-botanicals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -282,12 +281,15 @@ export function LoginClient({
 
   return (
     <div className="relative min-h-screen flex flex-col justify-between overflow-hidden px-4 py-6 sm:py-8">
-      <FloatingBotanicals preset="page" fixed />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 -z-10 bg-gradient-to-b from-[#E5EAF8] via-[#EFF2FA] to-transparent"
+      />
 
       <div className="relative z-10 mx-auto w-full max-w-5xl my-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-700 hover:text-sage-900 mb-5"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-500 hover:text-sage-900 mb-5"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Beranda
@@ -299,17 +301,16 @@ export function LoginClient({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden lg:flex lg:col-span-6 flex-col justify-between rounded-[2rem] bg-gradient-to-br from-sage-700 via-sage to-sage-900 p-9 text-cream-50 shadow-lift relative overflow-hidden min-h-[520px]"
+            className="hidden lg:flex lg:col-span-6 flex-col justify-between rounded-[2rem] bg-midnight-luxury p-9 text-white shadow-lift relative overflow-hidden min-h-[520px]"
           >
-            <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
             <div className="relative space-y-4">
-              <p className="font-script text-4xl text-amberwarm leading-none">
-                From &ldquo;I Do&rdquo; to Honeymoon
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#818CF8]">
+                NikahPlan Workspace
               </p>
-              <h2 className="font-display text-3xl font-semibold leading-tight text-cream-50">
+              <h2 className="font-display text-3xl font-bold leading-tight text-white">
                 Satu Ruang Bersama untuk Merencanakan Hari Bahagia Kalian.
               </h2>
-              <p className="text-sm text-cream-200/90 leading-relaxed">
+              <p className="text-sm text-white/70 leading-relaxed">
                 Catat deal vendor, termin DP, porsi dana keluarga, hingga alokasi angpao ke dompet bulan madu — sinkron otomatis di HP Anda dan pasangan.
               </p>
             </div>

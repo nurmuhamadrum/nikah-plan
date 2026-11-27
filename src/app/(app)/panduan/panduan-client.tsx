@@ -47,7 +47,6 @@ import {
   UNDER_50M_TIPS,
   WIFE_FRAMEWORK,
 } from "@/lib/guide-content";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Badge } from "@/components/ui/badge";
@@ -298,25 +297,17 @@ export function PanduanClient({
   return (
     <div className="relative space-y-5 pb-8">
       {/* Hero Banner Panduan Eksklusif */}
-      <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-sage-700 via-sage to-sage-900 text-cream-50 shadow-lift">
-        <div
-          aria-hidden="true"
-          className="pattern-leaves absolute inset-0 opacity-80"
-        />
-        <BotanicalCorner
-          className="pointer-events-none absolute -bottom-5 -right-4 h-36 w-36 opacity-25"
-          variant="terracotta"
-        />
+      <Card className="relative overflow-hidden rounded-3xl border-0 bg-midnight-luxury text-white shadow-lift">
         <CardContent className="relative z-10 p-5 sm:p-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Badge
               variant="outline"
-              className="border-white/25 bg-white/10 text-cream-50 text-[11px]"
+              className="border-white/20 bg-white/10 text-white text-[11px]"
             >
-              <BookOpen className="h-3 w-3 text-amberwarm" />
+              <BookOpen className="h-3 w-3 text-[#818CF8]" />
               Panduan Eksklusif Couple Pass
             </Badge>
-            <span className="font-script text-2xl text-amberwarm leading-none">
+            <span className="text-xs font-semibold text-[#818CF8]">
               Tanpa Stres &amp; Tanpa Boros
             </span>
           </div>

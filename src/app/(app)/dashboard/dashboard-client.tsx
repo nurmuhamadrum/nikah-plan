@@ -26,7 +26,6 @@ import {
 } from "@/lib/category-icons";
 import type { FundingSource, Profile } from "@/types/database";
 import { NikahPlanLogo } from "@/components/brand/logo";
-import { BotanicalCorner } from "@/components/brand/botanical-accent";
 import { RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { BudgetInsightsCard } from "@/components/dashboard/budget-insights-card";
@@ -241,12 +240,6 @@ export function DashboardClient({
 
   return (
     <div className="relative space-y-5 pb-4">
-      {/* Decorative botanical accent on top-right matching UI reference */}
-      <BotanicalCorner
-        className="pointer-events-none absolute -top-5 -right-4 h-36 w-36 opacity-35"
-        variant="sage"
-      />
-
       {/* Mobile Top Bar (Logo + Avatar) */}
       <div className="relative z-10 flex items-center justify-between md:hidden">
         <NikahPlanLogo size="sm" />
@@ -335,14 +328,9 @@ export function DashboardClient({
       {/* ================================================================= */}
       {mode === "WEDDING" ? (
         <div className="space-y-5 relative z-10">
-          {/* Kartu Kesehatan Anggaran (Hero Gradient Sage) & Funding Split Bar */}
-          <Card className="relative overflow-hidden rounded-3xl border-0 bg-white/90 shadow-lift">
-            <div className="relative bg-gradient-to-br from-sage-700 via-sage to-sage-900 p-5 sm:p-6 text-cream-50 space-y-4">
-              <div aria-hidden="true" className="pattern-leaves absolute inset-0 opacity-80" />
-              <BotanicalCorner
-                className="pointer-events-none absolute -bottom-5 -right-4 h-32 w-32 opacity-20"
-                variant="terracotta"
-              />
+          {/* Kartu Kesehatan Anggaran (Sleek Charcoal Hero) & Funding Split Bar */}
+          <Card className="relative overflow-hidden rounded-3xl border border-black/[0.06] bg-white shadow-card">
+            <div className="relative bg-midnight-luxury p-5 sm:p-6 text-white space-y-4">
 
               {/* Primary Metric: Sisa Anggaran */}
               <div className="relative z-10 space-y-2.5">

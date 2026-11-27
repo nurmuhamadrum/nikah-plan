@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 43 27% 95%; /* #F7F5F0 Warm Cream */
-    --foreground: 146 18% 18%; /* Deep Warm Sage Charcoal */
+    --background: 220 14% 96%; /* #F4F5F7 Gallery Light Gray */
+    --foreground: 220 16% 8%; /* #111317 Deep Charcoal Ink */
 
-    --card: 0 0% 100%; /* Pure Soft White */
-    --card-foreground: 146 18% 18%;
+    --card: 0 0% 100%; /* Pure White */
+    --card-foreground: 220 16% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 146 18% 18%;
+    --popover-foreground: 220 16% 8%;
 
-    --primary: 143 15% 28%; /* #3D5245 Warm Sage Green */
-    --primary-foreground: 43 27% 97%;
+    --primary: 220 12% 9%; /* #141618 Deep Charcoal */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 21 51% 56%; /* #C87D55 Soft Terracotta */
+    --secondary: 229 90% 64%; /* #4F6BF6 Refined Indigo Accent */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 20% 90%;
-    --muted-foreground: 143 10% 42%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 215 12% 43%;
 
-    --accent: 35 58% 59%; /* #D4A359 Warm Amber */
-    --accent-foreground: 146 18% 18%;
+    --accent: 36 72% 56%; /* #E09F3E Warm Gold Accent */
+    --accent-foreground: 220 16% 8%;
 
-    --destructive: 8 64% 48%;
+    --destructive: 6 76% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 38 18% 86%;
-    --input: 38 18% 84%;
-    --ring: 143 15% 28%;
+    --border: 220 13% 90%;
+    --input: 220 13% 88%;
+    --ring: 220 12% 14%;
 
     --radius: 1rem;
   }
@@ -57,31 +57,61 @@
 }
 
 @layer components {
-  /* Kanvas global: krem hangat + gradien mesh lembut sage / terracotta / amber */
+  /* Kanvas global: soft gallery light gray bersih sesuai referensi */
   .bg-canvas {
-    background-color: #f7f5f0;
-    background-image:
-      radial-gradient(60rem 40rem at -10% -10%, rgba(114, 150, 130, 0.22), transparent 60%),
-      radial-gradient(50rem 36rem at 110% 0%, rgba(232, 174, 143, 0.26), transparent 60%),
-      radial-gradient(46rem 34rem at 50% 115%, rgba(212, 163, 89, 0.18), transparent 60%),
-      radial-gradient(40rem 30rem at 105% 85%, rgba(158, 185, 169, 0.20), transparent 60%);
-    background-attachment: fixed;
+    background-color: #f4f5f7;
+  }
+
+  /* Pola titik buku catatan planner (Hobonichi / wedding notebook grid) */
+  .bg-planner-dots {
+    background-image: radial-gradient(
+      circle,
+      rgba(61, 82, 69, 0.14) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Pola anyaman serat kertas linen diagonal tipis untuk kontras seksi */
+  .bg-linen-weave {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(61, 82, 69, 0.032) 0px,
+      rgba(61, 82, 69, 0.032) 1px,
+      transparent 1px,
+      transparent 10px
+    );
   }
 
   /* Tekstur grain halus (noise SVG inline, tanpa aset tambahan) */
   .grain-overlay {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.32 0 0 0 0 0.27 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.07;
+    opacity: 0.045;
     mix-blend-mode: multiply;
   }
 
-  /* Permukaan kaca untuk header, sidebar, dan kartu di atas background bergradien */
+  /* Permukaan kartu putih bersih */
   .glass {
-    @apply border border-white/60 bg-white/70 backdrop-blur-xl;
+    @apply border border-black/[0.06] bg-white;
   }
 
   .glass-strong {
-    @apply border border-white/70 bg-white/85 backdrop-blur-xl;
+    @apply border border-black/[0.06] bg-white shadow-card;
+  }
+
+  /* Permukaan gelap romantis: Midnight Velvet (twilight slate-indigo + sentuhan pendar lembut indigo & emas hangat) */
+  .bg-midnight-luxury {
+    background-color: #141726;
+    background-image:
+      radial-gradient(90% 85% at 100% 0%, rgba(99, 124, 248, 0.34), transparent 62%),
+      radial-gradient(75% 75% at 0% 100%, rgba(224, 159, 62, 0.16), transparent 60%),
+      linear-gradient(145deg, #1b2038 0%, #141724 52%, #1d1b2c 100%);
+  }
+
+  /* Gradien satin halus untuk tombol pill & aksen gelap */
+  .bg-midnight-btn {
+    background-color: #181c2e;
+    background-image: linear-gradient(135deg, #181c2e 0%, #27304d 100%);
   }
 
   /* Border gradien beranimasi (dipakai kartu paket rekomendasi / widget hero) */
@@ -116,9 +146,8 @@
 
 @layer utilities {
   .font-display {
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-variation-settings: "SOFT" 100;
-    letter-spacing: -0.015em;
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
 
   .font-script {
@@ -129,8 +158,8 @@
   }
 
   .text-gradient-warm {
-    color: #b2663f;
-    background-image: linear-gradient(100deg, #9e4d26 0%, #c87d55 52%, #b88232 100%);
+    color: #4f6bf6;
+    background-image: linear-gradient(100deg, #141618 0%, #4f6bf6 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

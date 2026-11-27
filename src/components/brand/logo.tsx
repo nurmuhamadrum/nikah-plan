@@ -35,29 +35,29 @@ export function NikahPlanLogo({
             cx="12.5"
             cy="15.5"
             r="7.5"
-            stroke="#C87D55"
-            strokeWidth="2"
+            stroke="#141618"
+            strokeWidth="2.1"
           />
           {/* Right Ring */}
           <circle
             cx="23.5"
             cy="15.5"
             r="7.5"
-            stroke="#C87D55"
-            strokeWidth="2"
+            stroke="#4F6BF6"
+            strokeWidth="2.1"
           />
           {/* Minimalist diamond accent */}
           <path
             d="M18 3.5L21 6.8L18 10L15 6.8L18 3.5Z"
-            stroke="#3D5245"
+            stroke="#141618"
             strokeWidth="1.6"
-            fill="#F7F5F0"
+            fill="#FFFFFF"
           />
         </svg>
       )}
       <span
         className={cn(
-          "font-display font-bold tracking-tight text-sage",
+          "font-display font-bold tracking-tight text-[#141618]",
           textSize
         )}
       >
