@@ -13,6 +13,7 @@ import {
   Copy,
   ExternalLink,
   Eye,
+  FileSpreadsheet,
   Gift,
   Globe,
   Heart,
@@ -67,6 +68,7 @@ import {
   splitCoupleNames,
 } from "@/lib/invitation-themes";
 import { LivePreviewPanel } from "@/components/invitations/live-preview-panel";
+import { exportRsvpToExcel } from "@/lib/export-reports";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Badge } from "@/components/ui/badge";
@@ -2074,15 +2076,33 @@ export function UndanganClient({
                     <strong>{workspace.guest_estimate} pax</strong>
                   </p>
                 </div>
-                <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showRsvp}
-                    onChange={(e) => setShowRsvp(e.target.checked)}
-                    className="rounded border-sage/30 text-sage"
-                  />
-                  Buka Form RSVP
-                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={rsvps.length === 0}
+                    onClick={() => {
+                      exportRsvpToExcel(workspace.couple_title, rsvps);
+                      globalToast.success(
+                        "Rekap RSVP diunduh",
+                        `${rsvps.length} data tamu berhasil diekspor ke Excel.`
+                      );
+                    }}
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    Export Excel
+                  </Button>
+                  <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showRsvp}
+                      onChange={(e) => setShowRsvp(e.target.checked)}
+                      className="rounded border-sage/30 text-sage"
+                    />
+                    Buka Form RSVP
+                  </label>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">

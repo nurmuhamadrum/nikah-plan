@@ -10,6 +10,7 @@ import { HeroSection } from "@/components/landing/hero-section";
 import { BentoShowcase } from "@/components/landing/bento-showcase";
 import { ScrollHeader } from "@/components/landing/scroll-header";
 import { PricingSection } from "@/components/landing/pricing-section";
+import { FaqSection } from "@/components/landing/faq-section";
 
 export const revalidate = 60;
 
@@ -94,6 +95,9 @@ export default async function LandingPage() {
 
         {/* 3. Harga Couple Pass */}
         <PricingSection plans={plans} />
+
+        {/* 4. Pertanyaan Umum (FAQ) */}
+        <FaqSection />
       </main>
 
       {/* Footer 1 Baris Minimal */}
@@ -104,9 +108,15 @@ export default async function LandingPage() {
             <span className="text-black/20">&middot;</span>
             <span>&copy; {new Date().getFullYear()} NikahPlan</span>
           </div>
-          <div className="flex items-center gap-5 font-medium text-[#161917]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-medium text-[#161917]">
             <Link href="/user-guide" className="hover:text-sage">
               Panduan
+            </Link>
+            <Link href="/terms" className="hover:text-sage">
+              Syarat &amp; Ketentuan
+            </Link>
+            <Link href="/privacy" className="hover:text-sage">
+              Privasi
             </Link>
             <Link href="/login" className="hover:text-sage">
               Masuk

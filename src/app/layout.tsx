@@ -40,14 +40,12 @@ export const metadata: Metadata = {
     title: "NikahPlan — Wedding & Honeymoon Budget Planner",
     description:
       "Atur anggaran pernikahan, termin DP vendor, undangan online 8 tema + musik ambient, angpao, hingga dompet bulan madu bersama pasangan.",
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "NikahPlan" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "NikahPlan — Wedding & Honeymoon Budget Planner",
     description:
       "Perencana anggaran pernikahan, undangan digital, dan dompet bulan madu untuk pasangan Indonesia.",
-    images: ["/icons/icon-512.png"],
   },
   manifest: "/manifest.json",
   appleWebApp: {

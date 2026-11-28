@@ -10,7 +10,7 @@ import {
   calculateTripDays,
   formatForeignCurrency,
 } from "@/lib/budget-allocator";
-import type { FundingSource } from "@/types/database";
+import type { FundingSource, InvitationRsvp } from "@/types/database";
 
 function slugifyCouple(name: string): string {
   return (
@@ -111,14 +111,14 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
   const stats = computeReportSummary(bundle);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  const SAGE: [number, number, number] = [61, 82, 69]; // #3D5245
-  const TERRACOTTA: [number, number, number] = [200, 125, 85]; // #C87D55
-  const CREAM_BG: [number, number, number] = [247, 245, 240]; // #F7F5F0
+  const PRIMARY: [number, number, number] = [24, 28, 46]; // #181C2E (Midnight Velvet)
+  const ACCENT: [number, number, number] = [79, 107, 246]; // #4F6BF6 (Indigo)
+  const SOFT_BG: [number, number, number] = [244, 245, 247]; // #F4F5F7 (Gallery Light Gray)
 
   // Header Banner
-  doc.setFillColor(...SAGE);
+  doc.setFillColor(...PRIMARY);
   doc.rect(0, 0, 210, 34, "F");
-  doc.setTextColor(247, 245, 240);
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text("NikahPlan — Laporan Anggaran", 14, 15);
@@ -139,7 +139,7 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
 
   // 1. Ringkasan Kesehatan Anggaran Pernikahan
   let y = 42;
-  doc.setTextColor(...SAGE);
+  doc.setTextColor(...PRIMARY);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("1. Ringkasan Anggaran Pernikahan & Sumber Dana", 14, y);
@@ -180,9 +180,9 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
       ],
     ],
     theme: "grid",
-    headStyles: { fillColor: SAGE, textColor: [255, 255, 255], fontSize: 8.5 },
-    bodyStyles: { fontSize: 8.5, textColor: [30, 40, 33] },
-    alternateRowStyles: { fillColor: CREAM_BG },
+    headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 8.5 },
+    bodyStyles: { fontSize: 8.5, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
     margin: { left: 14, right: 14 },
   });
 
@@ -226,7 +226,7 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
         .finalY + 10
     : 105;
 
-  doc.setTextColor(...SAGE);
+  doc.setTextColor(...PRIMARY);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("2. Rincian Vendor & Termin Pembayaran", 14, y);
@@ -241,9 +241,9 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
         ? vendorRows
         : [["-", "Belum ada data vendor tercatat", "-", "-", "-", "-"]],
     theme: "grid",
-    headStyles: { fillColor: SAGE, textColor: [255, 255, 255], fontSize: 8 },
-    bodyStyles: { fontSize: 7.5, textColor: [30, 40, 33] },
-    alternateRowStyles: { fillColor: CREAM_BG },
+    headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 8 },
+    bodyStyles: { fontSize: 7.5, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
     margin: { left: 14, right: 14 },
   });
 
@@ -256,7 +256,7 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
     y = 20;
   }
 
-  doc.setTextColor(...TERRACOTTA);
+  doc.setTextColor(...ACCENT);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("3. Catatan Angpao & Hadiah Pernikahan", 14, y);
@@ -278,12 +278,12 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
         : [["-", "Belum ada catatan angpao/kado", "-", "-", "-"]],
     theme: "grid",
     headStyles: {
-      fillColor: TERRACOTTA,
+      fillColor: ACCENT,
       textColor: [255, 255, 255],
       fontSize: 8,
     },
-    bodyStyles: { fontSize: 8, textColor: [30, 40, 33] },
-    alternateRowStyles: { fillColor: CREAM_BG },
+    bodyStyles: { fontSize: 8, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
     margin: { left: 14, right: 14 },
   });
 
@@ -297,7 +297,7 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
       y = 20;
     }
 
-    doc.setTextColor(...SAGE);
+    doc.setTextColor(...PRIMARY);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(
@@ -339,8 +339,8 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
         ],
       ],
       theme: "grid",
-      headStyles: { fillColor: SAGE, textColor: [255, 255, 255], fontSize: 8 },
-      bodyStyles: { fontSize: 8, textColor: [30, 40, 33] },
+      headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 8 },
+      bodyStyles: { fontSize: 8, textColor: [20, 22, 24] },
       margin: { left: 14, right: 14 },
     });
 
@@ -354,12 +354,12 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
         body: hmRows,
         theme: "grid",
         headStyles: {
-          fillColor: [83, 118, 98],
+          fillColor: [30, 36, 64],
           textColor: [255, 255, 255],
           fontSize: 8,
         },
-        bodyStyles: { fontSize: 8, textColor: [30, 40, 33] },
-        alternateRowStyles: { fillColor: CREAM_BG },
+        bodyStyles: { fontSize: 8, textColor: [20, 22, 24] },
+        alternateRowStyles: { fillColor: SOFT_BG },
         margin: { left: 14, right: 14 },
       });
     }
@@ -559,5 +559,78 @@ export function exportBudgetToExcel(bundle: WorkspaceBundle) {
   XLSX.utils.book_append_sheet(wb, wsHoneymoon, "Honeymoon");
 
   const filename = `NikahPlan-Laporan-${slugifyCouple(workspace.couple_title)}-${getTodayStamp()}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+/**
+ * Export rekap konfirmasi RSVP & ucapan doa tamu undangan ke Excel (.xlsx).
+ */
+export function exportRsvpToExcel(
+  coupleTitle: string,
+  rsvps: InvitationRsvp[]
+) {
+  const wb = XLSX.utils.book_new();
+
+  const hadirRows = rsvps.filter((r) => r.attendance === "HADIR");
+  const raguRows = rsvps.filter((r) => r.attendance === "RAGU");
+  const tidakRows = rsvps.filter((r) => r.attendance === "TIDAK_HADIR");
+  const totalPax = hadirRows.reduce(
+    (sum, r) => sum + Math.max(1, Number(r.guest_count) || 1),
+    0
+  );
+
+  const summaryRows: (string | number)[][] = [
+    ["REKAP RSVP UNDANGAN PERNIKAHAN — NIKAHPLAN"],
+    ["Mempelai", coupleTitle],
+    ["Tanggal Unduh", getTodayStamp()],
+    [],
+    ["METRIK", "JUMLAH"],
+    ["Total Responden", rsvps.length],
+    ["Konfirmasi Hadir", hadirRows.length],
+    ["Estimasi Total Tamu Hadir (Pax)", totalPax],
+    ["Masih Ragu", raguRows.length],
+    ["Tidak Hadir", tidakRows.length],
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+  wsSummary["!cols"] = [{ wch: 32 }, { wch: 24 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan RSVP");
+
+  const statusLabel = (attendance: InvitationRsvp["attendance"]) =>
+    attendance === "HADIR"
+      ? "Hadir"
+      : attendance === "RAGU"
+        ? "Masih Ragu"
+        : "Tidak Hadir";
+
+  const guestRows: (string | number)[][] = [
+    [
+      "No",
+      "Nama Tamu",
+      "Status Kehadiran",
+      "Jumlah Tamu (Pax)",
+      "Ucapan & Doa",
+      "Waktu Konfirmasi",
+    ],
+    ...rsvps.map((r, idx) => [
+      idx + 1,
+      r.guest_name,
+      statusLabel(r.attendance),
+      r.attendance === "HADIR" ? Math.max(1, Number(r.guest_count) || 1) : 0,
+      r.message || "-",
+      new Date(r.created_at).toLocaleString("id-ID"),
+    ]),
+  ];
+  const wsGuests = XLSX.utils.aoa_to_sheet(guestRows);
+  wsGuests["!cols"] = [
+    { wch: 6 },
+    { wch: 28 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 44 },
+    { wch: 22 },
+  ];
+  XLSX.utils.book_append_sheet(wb, wsGuests, "Daftar Tamu & Ucapan");
+
+  const filename = `NikahPlan-RSVP-${slugifyCouple(coupleTitle)}-${getTodayStamp()}.xlsx`;
   XLSX.writeFile(wb, filename);
 }

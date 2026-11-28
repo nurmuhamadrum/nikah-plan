@@ -54,11 +54,14 @@ export async function updateSessionAndGuard(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
 
-  // 1. Webhook, cron, dan callback auth tidak perlu dialihkan middleware
+  // 1. Webhook, cron, callback auth, reset password, dan halaman legal tidak perlu dialihkan middleware
   if (
     pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/api/cron") ||
-    pathname.startsWith("/auth/")
+    pathname.startsWith("/auth/") ||
+    pathname === "/reset-password" ||
+    pathname === "/terms" ||
+    pathname === "/privacy"
   ) {
     return supabaseResponse;
   }

@@ -94,20 +94,21 @@ export default async function PublicInvitationPage({
 
   if (!invitation) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="glass-strong max-w-md w-full rounded-3xl p-8 text-center space-y-4 shadow-lift">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-terracotta-50 text-terracotta border border-terracotta/20">
+      <div className="min-h-screen relative flex items-center justify-center bg-[#F4F5F7] px-4 py-12">
+        <div className="pointer-events-none fixed inset-x-0 top-0 h-72 bg-gradient-to-b from-[#E5EAF8]/80 to-transparent" />
+        <div className="relative z-10 max-w-md w-full rounded-3xl border border-black/[0.06] bg-white p-8 text-center space-y-4 shadow-card">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#4F6BF6] border border-[#4F6BF6]/20">
             <Mail className="h-7 w-7" />
           </div>
-          <h1 className="font-display text-2xl font-semibold text-sage-900">
+          <h1 className="font-display text-2xl font-bold text-[#141618]">
             Undangan Belum Tersedia
           </h1>
-          <p className="text-sm text-sage-600 leading-relaxed">
-            Tautan undangan <code className="font-mono">/u/{slug}</code> tidak
+          <p className="text-sm text-[#5F6978] leading-relaxed">
+            Tautan undangan <code className="font-mono text-[#141618]">/u/{slug}</code> tidak
             ditemukan atau belum dipublikasikan oleh mempelai.
           </p>
           <div className="pt-2 flex flex-col items-center gap-3">
-            <Button asChild variant="sage">
+            <Button asChild>
               <Link href="/">Kembali ke NikahPlan</Link>
             </Button>
             <NikahPlanLogo size="sm" />

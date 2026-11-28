@@ -208,18 +208,23 @@ export async function activatePaidSubscription(params: {
     };
   }
 
-  // 3. Update status subscription -> PAID + increment promo_codes.used_count jika ada promo
-  const wasPending = subscription.status !== "PAID";
-  await admin
+  // 3. Update status subscription -> PAID secara atomik (mencegah race condition webhook & verify)
+  const { data: transitionedRows } = await admin
     .from("subscriptions")
     .update({
       status: "PAID",
       payment_method: params.paymentMethod ?? subscription.payment_method,
       paid_at: new Date().toISOString(),
     })
-    .eq("id", subscription.id);
+    .eq("id", subscription.id)
+    .neq("status", "PAID")
+    .select("id");
 
-  if (wasPending && subscription.promo_code) {
+  const transitionedToPaid = Boolean(
+    transitionedRows && transitionedRows.length > 0
+  );
+
+  if (transitionedToPaid && subscription.promo_code) {
     const { data: promoRow } = await admin
       .from("promo_codes")
       .select("id, used_count")

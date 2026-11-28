@@ -52,7 +52,7 @@ function mapSupabaseAuthError(rawMessage: string): string {
     return "Email atau kata sandi salah. Periksa kembali atau daftar akun baru.";
   }
   if (lower.includes("email not confirmed")) {
-    return "Email belum dikonfirmasi. Silakan cek inbox email Anda (atau nonaktifkan 'Confirm email' di Supabase Auth untuk testing lokal).";
+    return "Email belum dikonfirmasi. Silakan cek folder Inbox atau Spam pada email Anda untuk mengaktifkan akun.";
   }
   if (lower.includes("user already registered")) {
     return "Email sudah terdaftar. Silakan gunakan tab Masuk.";
@@ -75,7 +75,7 @@ export function LoginClient({
   const [authMethod, setAuthMethod] = useState<"password" | "magiclink">(
     "password"
   );
-  const [passwordMode, setPasswordMode] = useState<"signin" | "signup">(
+  const [passwordMode, setPasswordMode] = useState<"signin" | "signup" | "forgot">(
     "signin"
   );
 
@@ -174,13 +174,35 @@ export function LoginClient({
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) return;
+    if (!email.trim()) return;
+    if (passwordMode !== "forgot" && !password) return;
 
     setErrorMsg(null);
     setLoadingSubmit(true);
 
     try {
       const supabase = createClient();
+
+      if (passwordMode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(
+          email.trim(),
+          {
+            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+          }
+        );
+
+        if (error) {
+          setErrorMsg(mapSupabaseAuthError(error.message));
+          setLoadingSubmit(false);
+          return;
+        }
+
+        setEmailSentInfo({
+          title: "Tautan Reset Kata Sandi Terkirim",
+          description: `Jika email ${email.trim()} terdaftar di NikahPlan, kami telah mengirimkan tautan untuk membuat kata sandi baru. Silakan periksa folder Inbox atau Spam Anda.`,
+        });
+        return;
+      }
 
       if (passwordMode === "signin") {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -229,10 +251,10 @@ export function LoginClient({
           return;
         }
 
-        // Jika Confirm Email masih aktif di Supabase
+        // Jika Confirm Email aktif di Supabase
         setEmailSentInfo({
           title: "Akun Terdaftar — Konfirmasi Email Anda",
-          description: `Kami telah mengirimkan tautan konfirmasi ke ${email.trim()}. Klik tautan tersebut untuk mengaktifkan akun (untuk testing lokal tanpa verifikasi email, matikan 'Confirm email' di Supabase Auth → Providers → Email).`,
+          description: `Kami telah mengirimkan tautan verifikasi ke ${email.trim()}. Klik tautan di dalam email (periksa juga folder Spam) untuk mengaktifkan akun NikahPlan Anda.`,
         });
       }
     } catch (err) {
@@ -547,39 +569,55 @@ export function LoginClient({
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Kata Sandi</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          required
-                          minLength={6}
-                          placeholder="Minimal 6 karakter"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10"
-                          disabled={loadingSubmit || loadingGoogle}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          aria-label={
-                            showPassword
-                              ? "Sembunyikan kata sandi"
-                              : "Tampilkan kata sandi"
-                          }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-500 hover:text-sage-800"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
+                    {passwordMode !== "forgot" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Label htmlFor="password">Kata Sandi</Label>
+                          {passwordMode === "signin" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasswordMode("forgot");
+                                setErrorMsg(null);
+                              }}
+                              className="text-[11.5px] font-semibold text-terracotta hover:underline"
+                            >
+                              Lupa kata sandi?
+                            </button>
                           )}
-                        </button>
+                        </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            required
+                            minLength={6}
+                            placeholder="Minimal 6 karakter"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pl-10 pr-10"
+                            disabled={loadingSubmit || loadingGoogle}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            aria-label={
+                              showPassword
+                                ? "Sembunyikan kata sandi"
+                                : "Tampilkan kata sandi"
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-500 hover:text-sage-800"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <Button
                       type="submit"
@@ -589,7 +627,7 @@ export function LoginClient({
                         loadingSubmit ||
                         loadingGoogle ||
                         !email.trim() ||
-                        !password
+                        (passwordMode !== "forgot" && !password)
                       }
                     >
                       {loadingSubmit ? (
@@ -597,12 +635,19 @@ export function LoginClient({
                           <Loader2 className="h-4 w-4 animate-spin" />
                           {passwordMode === "signin"
                             ? "Memeriksa Akun..."
-                            : "Mendaftarkan Akun..."}
+                            : passwordMode === "forgot"
+                              ? "Mengirim Tautan Reset..."
+                              : "Mendaftarkan Akun..."}
                         </>
                       ) : passwordMode === "signin" ? (
                         <>
                           <LogIn className="h-4 w-4" />
                           Masuk Sekarang
+                        </>
+                      ) : passwordMode === "forgot" ? (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          Kirim Tautan Reset Kata Sandi
                         </>
                       ) : (
                         <>
@@ -625,6 +670,20 @@ export function LoginClient({
                             className="font-semibold text-terracotta hover:underline"
                           >
                             Daftar di sini
+                          </button>
+                        </>
+                      ) : passwordMode === "forgot" ? (
+                        <>
+                          Ingat kata sandi Anda?{" "}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPasswordMode("signin");
+                              setErrorMsg(null);
+                            }}
+                            className="font-semibold text-terracotta hover:underline"
+                          >
+                            Kembali ke Masuk
                           </button>
                         </>
                       ) : (
@@ -688,8 +747,15 @@ export function LoginClient({
 
             <p className="text-center text-xs text-muted-foreground leading-relaxed pt-2">
               Satu kali pembayaran berlaku seumur hidup untuk 2 akun (Anda &amp;
-              Pasangan). Data Anda dilindungi enkripsi &amp; isolasi workspace
-              pribadi.
+              Pasangan). Dengan melanjutkan, Anda menyetujui{" "}
+              <Link href="/terms" className="underline hover:text-sage-900">
+                Syarat &amp; Ketentuan
+              </Link>{" "}
+              serta{" "}
+              <Link href="/privacy" className="underline hover:text-sage-900">
+                Kebijakan Privasi
+              </Link>{" "}
+              kami.
             </p>
           </CardContent>
         </Card>
