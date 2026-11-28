@@ -7,7 +7,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   ArrowLeft,
   ArrowRight,
-  Calendar,
   Check,
   CheckCircle2,
   Copy,
@@ -35,6 +34,7 @@ import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -337,16 +337,12 @@ export function OnboardingWizard({
                     <Label htmlFor="wedding-date">
                       Rencana Tanggal Pernikahan (Opsional)
                     </Label>
-                    <div className="relative">
-                      <Calendar className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
-                      <Input
-                        id="wedding-date"
-                        type="date"
-                        value={weddingDate}
-                        onChange={(e) => setWeddingDate(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+                    <DatePicker
+                      id="wedding-date"
+                      value={weddingDate}
+                      onChange={setWeddingDate}
+                      placeholder="Pilih rencana tanggal pernikahan..."
+                    />
                   </div>
                 </div>
 
@@ -719,21 +715,21 @@ export function OnboardingWizard({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="hm-start">Tanggal Berangkat</Label>
-                        <Input
+                        <DatePicker
                           id="hm-start"
-                          type="date"
                           value={hmStartDate}
-                          onChange={(e) => setHmStartDate(e.target.value)}
+                          onChange={setHmStartDate}
+                          placeholder="Pilih tgl berangkat..."
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="hm-end">Tanggal Pulang</Label>
-                        <Input
+                        <DatePicker
                           id="hm-end"
-                          type="date"
                           value={hmEndDate}
-                          min={hmStartDate || undefined}
-                          onChange={(e) => setHmEndDate(e.target.value)}
+                          minDate={hmStartDate || undefined}
+                          onChange={setHmEndDate}
+                          placeholder="Pilih tgl pulang..."
                         />
                       </div>
                     </div>

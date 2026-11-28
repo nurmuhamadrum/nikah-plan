@@ -77,6 +77,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -1564,10 +1565,10 @@ export function UndanganClient({
                   </p>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Tanggal</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={akadDate}
-                      onChange={(e) => setAkadDate(e.target.value)}
+                      onChange={setAkadDate}
+                      placeholder="Pilih tanggal akad..."
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -1611,10 +1612,10 @@ export function UndanganClient({
                   </p>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Tanggal</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={resepsiDate}
-                      onChange={(e) => setResepsiDate(e.target.value)}
+                      onChange={setResepsiDate}
+                      placeholder="Pilih tanggal resepsi..."
                     />
                   </div>
                   <div className="space-y-1.5">

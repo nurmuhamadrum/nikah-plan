@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
@@ -424,22 +425,24 @@ export function PaymentDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="termin-due">Tanggal Jatuh Tempo</Label>
-              <Input
+              <DatePicker
                 id="termin-due"
-                type="date"
+                displayMode="modal"
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
+                placeholder="Pilih jatuh tempo..."
               />
             </div>
 
             {isPaid && (
               <div className="space-y-2">
                 <Label htmlFor="termin-paid-date">Tanggal Dibayar</Label>
-                <Input
+                <DatePicker
                   id="termin-paid-date"
-                  type="date"
+                  displayMode="modal"
                   value={paidDate}
-                  onChange={(e) => setPaidDate(e.target.value)}
+                  onChange={setPaidDate}
+                  placeholder="Pilih tgl bayar..."
                 />
               </div>
             )}

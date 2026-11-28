@@ -44,6 +44,7 @@ import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -1211,11 +1212,11 @@ export function AdminClient({
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="promo-exp">Kedaluwarsa (Opsional)</Label>
-                      <Input
+                      <DatePicker
                         id="promo-exp"
-                        type="date"
                         value={newExpiresAt}
-                        onChange={(e) => setNewExpiresAt(e.target.value)}
+                        onChange={setNewExpiresAt}
+                        placeholder="Pilih tgl berakhir..."
                       />
                     </div>
                   </div>

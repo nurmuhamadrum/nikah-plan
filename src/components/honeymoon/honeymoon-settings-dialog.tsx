@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
@@ -215,21 +216,23 @@ export function HoneymoonSettingsDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="hm-set-start">Tanggal Berangkat</Label>
-              <Input
+              <DatePicker
                 id="hm-set-start"
-                type="date"
+                displayMode="modal"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={setStartDate}
+                placeholder="Pilih tgl berangkat..."
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="hm-set-end">Tanggal Pulang</Label>
-              <Input
+              <DatePicker
                 id="hm-set-end"
-                type="date"
-                min={startDate || undefined}
+                displayMode="modal"
+                minDate={startDate || undefined}
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={setEndDate}
+                placeholder="Pilih tgl pulang..."
               />
             </div>
           </div>

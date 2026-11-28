@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 
 interface SavingsTrackerCardProps {
@@ -430,10 +431,9 @@ export function SavingsTrackerCard({
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Untuk Bulan</Label>
-                <Input
-                  type="month"
+                <MonthPicker
                   value={entryMonth}
-                  onChange={(e) => setEntryMonth(e.target.value)}
+                  onChange={setEntryMonth}
                   className="bg-white"
                 />
               </div>
