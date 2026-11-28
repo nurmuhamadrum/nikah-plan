@@ -156,12 +156,38 @@ export function BentoShowcase() {
               </p>
             </div>
 
-            {/* Arched Romantic Invitation Card */}
+            {/* Arched Romantic Invitation Card (Double Gold Hairline Arch + Starlight) */}
             <motion.div
               whileHover={{ y: -4 }}
               transition={{ duration: 0.35, ease: EASE }}
-              className="relative mx-auto w-full max-w-[250px] overflow-hidden rounded-t-[7.5rem] bg-midnight-luxury px-6 pt-10 pb-8 text-white shadow-lift"
+              className="relative mx-auto w-full max-w-[254px] overflow-hidden rounded-t-[7.75rem] bg-midnight-luxury px-6 pt-11 pb-8 text-white shadow-lift"
             >
+              {/* Inner Double Gold Hairline Arch */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-2.5 top-2.5 bottom-0 rounded-t-[7rem] border border-b-0 border-[#E09F3E]/30"
+              />
+
+              {/* Starlight Micro Twinkles */}
+              {[
+                { left: "22%", top: "18%", delay: 0 },
+                { left: "78%", top: "24%", delay: 1.1 },
+                { left: "16%", top: "64%", delay: 2.0 },
+              ].map((star, idx) => (
+                <motion.span
+                  key={idx}
+                  aria-hidden="true"
+                  style={{ left: star.left, top: star.top }}
+                  className="pointer-events-none absolute h-1 w-1 rounded-full bg-[#F8D28C]"
+                  animate={{ opacity: [0.2, 0.95, 0.2], scale: [0.85, 1.35, 0.85] }}
+                  transition={{
+                    duration: 3.2,
+                    delay: star.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
               {/* Delicate Ink-Draw Corner Botanical inside Invitation Arch */}
               <svg
                 viewBox="0 0 120 120"
@@ -298,6 +324,18 @@ export function BentoShowcase() {
           </motion.div>
         </div>
       </section>
+
+      {/* Pembatas Ornamen Romantis */}
+      <div
+        aria-hidden="true"
+        className="mx-auto flex max-w-md items-center justify-center gap-3 text-[#C59B5F]"
+      >
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#E09F3E]/40" />
+        <span className="text-[10px]">✦</span>
+        <Heart className="h-3.5 w-3.5 text-[#E09F3E]" />
+        <span className="text-[10px]">✦</span>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#E09F3E]/40" />
+      </div>
 
       {/* ================================================================= */}
       {/* 2. BARIS 3 ANGKA RINGKAS (BERSIH TANPA KOTAK)                     */}

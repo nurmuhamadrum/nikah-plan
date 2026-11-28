@@ -15,6 +15,9 @@ export function PricingSection({
     <section id="harga" className="scroll-mt-16 px-4 pt-8 pb-20 sm:pb-24">
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto mb-10 max-w-xl text-center space-y-2">
+          <p className="font-script text-3xl text-[#4F6BF6] leading-none">
+            Investasi Kecil untuk Hari Terindah
+          </p>
           <h2 className="font-display text-2xl font-semibold leading-tight text-[#161917] sm:text-4xl">
             Sekali bayar untuk 2 akun pasangan.
           </h2>
@@ -29,13 +32,43 @@ export function PricingSection({
             return (
               <div
                 key={plan.id}
-                className={`flex flex-col justify-between rounded-[2rem] border p-6 sm:p-8 ${
+                className={`relative overflow-hidden flex flex-col justify-between rounded-[2rem] border p-6 sm:p-8 ${
                   isPrimary
-                    ? "border-[#2B3352] bg-midnight-luxury text-white shadow-lift"
+                    ? "border-[#E09F3E]/35 bg-midnight-luxury text-white shadow-lift"
                     : "border-black/[0.06] bg-white text-[#161917] shadow-[0_2px_16px_rgba(0,0,0,0.03)]"
                 }`}
               >
-                <div>
+                {isPrimary && (
+                  <svg
+                    viewBox="0 0 180 180"
+                    fill="none"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -top-4 -right-4 h-40 w-40 text-white/[0.08]"
+                  >
+                    <path
+                      d="M168 12C136 38 106 82 78 164"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M142 34C128 18 108 16 96 22C108 36 126 42 142 34Z"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                    />
+                    <path
+                      d="M124 62C142 58 158 66 164 80C146 82 132 74 124 62Z"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                    />
+                    <path
+                      d="M106 94C90 82 72 84 60 94C74 106 92 108 106 94Z"
+                      stroke="currentColor"
+                      strokeWidth="1.1"
+                    />
+                  </svg>
+                )}
+                <div className="relative z-10">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-display text-xl font-semibold">
