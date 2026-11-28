@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Loader2,
   AlertCircle,
-  Sparkles,
   LogOut,
   CheckCircle2,
   ExternalLink,
@@ -24,7 +23,6 @@ import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -339,21 +337,20 @@ export function CheckoutClient({
           </div>
 
           <div className="text-center max-w-xl mx-auto mb-8 space-y-2">
-            <Badge variant="softTerracotta">
-              <Sparkles className="h-3.5 w-3.5" />
+            <p className="font-script text-3xl text-[#4F6BF6] leading-none">
               {isUpgrade
-                ? "Upgrade ke Complete Couple Pass"
-                : "Langkah Aktivasi Akses Couple Pass"}
-            </Badge>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-sage-900">
+                ? "Lengkapi Perjalanan Berdua"
+                : "Investasi Kecil untuk Hari Terindah"}
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#141618]">
               {isUpgrade
-                ? "Buka Modul Honeymoon Planner"
+                ? "Buka Modul Honeymoon & Undangan"
                 : "Aktifkan Workspace Pernikahanmu"}
             </h1>
-            <p className="text-sm text-sage-700/85">
+            <p className="text-sm text-[#5F6978] leading-relaxed">
               {isUpgrade
-                ? "Cukup bayar selisih paket untuk langsung membuka Dompet Honeymoon, kalkulator uang jajan harian, multi-mata uang, dan Angpao Bridge."
-                : "Sekali bayar untuk seumur hidup. Setelah pembayaran terverifikasi, workspace bersama langsung aktif dan Anda bisa mengundang pasangan secara gratis."}
+                ? "Cukup bayar selisih paket untuk langsung membuka Dompet Honeymoon multi-mata uang, Angpao Bridge, dan Undangan Pernikahan Online."
+                : "Sekali bayar untuk seumur hidup. Setelah pembayaran terverifikasi, workspace bersama langsung aktif dan Anda bisa mengundang pasangan gratis."}
             </p>
           </div>
 
@@ -372,88 +369,180 @@ export function CheckoutClient({
                   <button
                     key={key}
                     type="button"
+                    aria-pressed={isSelected}
                     onClick={() => handlePlanChange(key)}
-                    className={`w-full text-left rounded-3xl p-5 transition-all duration-300 hover:-translate-y-0.5 ${
+                    className={`relative overflow-hidden w-full text-left rounded-[2rem] border p-6 sm:p-7 transition-all duration-300 ${
                       isSelected
-                        ? "border-gradient-warm border-2 border-transparent bg-white shadow-glow"
-                        : "border border-white/70 bg-white/80 backdrop-blur-sm hover:border-sage/30 hover:shadow-lift"
+                        ? "border-[#E09F3E]/35 bg-midnight-luxury text-white shadow-lift"
+                        : "border-black/[0.07] bg-white text-[#141618] shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:border-black/20 hover:-translate-y-0.5"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-display text-xl font-bold text-sage-900">
-                            {isUpgrade ? `Upgrade ke ${item.name}` : item.name}
+                    {/* Ornamen botani monoline halus pada kartu terpilih */}
+                    {isSelected && (
+                      <svg
+                        viewBox="0 0 180 180"
+                        fill="none"
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -top-4 -right-4 h-36 w-36 text-white/[0.08]"
+                      >
+                        <path
+                          d="M168 12C136 38 106 82 78 164"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M142 34C128 18 108 16 96 22C108 36 126 42 142 34Z"
+                          stroke="currentColor"
+                          strokeWidth="1.1"
+                        />
+                        <path
+                          d="M124 62C142 58 158 66 164 80C146 82 132 74 124 62Z"
+                          stroke="currentColor"
+                          strokeWidth="1.1"
+                        />
+                        <path
+                          d="M106 94C90 82 72 84 60 94C74 106 92 108 106 94Z"
+                          stroke="currentColor"
+                          strokeWidth="1.1"
+                        />
+                      </svg>
+                    )}
+
+                    <div className="relative z-10">
+                      {/* Header Paket + Indikator Radio + Badge */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                              isSelected
+                                ? "border-[#E09F3E] bg-[#E09F3E] text-[#141618]"
+                                : "border-black/20 bg-white"
+                            }`}
+                          >
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                           </span>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-display text-lg sm:text-xl font-bold">
+                                {isUpgrade
+                                  ? `Upgrade ke ${item.name}`
+                                  : item.name}
+                              </span>
+                            </div>
+                            <p
+                              className={`mt-1 text-xs leading-relaxed ${
+                                isSelected ? "text-white/70" : "text-[#5F6978]"
+                              }`}
+                            >
+                              {item.tagline}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1.5 shrink-0">
                           {item.badge && (
-                            <Badge variant="terracotta" className="text-[11px]">
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                                isSelected
+                                  ? "bg-white/15 text-[#E09F3E]"
+                                  : "bg-[#F4F5F7] text-[#141618]"
+                              }`}
+                            >
                               {item.badge}
-                            </Badge>
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-emerald-400">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Dipilih
+                            </span>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm text-sage-700/85">
-                          {item.tagline}
-                        </p>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <p className="font-display text-xl font-semibold tabular-nums text-sage-900">
-                          {formatIDR(displayPrice)}
-                        </p>
-                        {!isUpgrade && item.originalPrice > item.price && (
-                          <p className="text-xs text-muted-foreground line-through">
-                            {formatIDR(item.originalPrice)}
-                          </p>
-                        )}
-                        {isUpgrade && (
-                          <p className="text-[11px] text-sage-600">
-                            Selisih paket
-                          </p>
-                        )}
+                      {/* Blok Harga + Harga Coret */}
+                      <div
+                        className={`mt-4 border-y py-3.5 flex flex-wrap items-baseline justify-between gap-2 ${
+                          isSelected ? "border-white/10" : "border-black/[0.06]"
+                        }`}
+                      >
+                        <div className="flex items-baseline gap-2.5">
+                          <span className="font-display text-2xl sm:text-3xl font-bold tracking-tight tabular-nums">
+                            {formatIDR(displayPrice)}
+                          </span>
+                          {!isUpgrade && item.originalPrice > item.price && (
+                            <span
+                              className={`text-xs sm:text-sm line-through tabular-nums ${
+                                isSelected ? "text-white/40" : "text-[#9AA29D]"
+                              }`}
+                            >
+                              {formatIDR(item.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={`text-[11px] font-medium ${
+                            isSelected ? "text-white/65" : "text-[#5F6978]"
+                          }`}
+                        >
+                          {isUpgrade
+                            ? "Bayar selisih paket"
+                            : "1× bayar · Seumur hidup (2 akun)"}
+                        </span>
                       </div>
-                    </div>
 
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {item.features
-                        .filter((f) => f.included)
-                        .slice(0, 6)
-                        .map((feat) => (
-                          <div
-                            key={feat.label}
-                            className="flex items-start gap-1.5 text-xs text-sage-700"
-                          >
-                            <Check className="h-3.5 w-3.5 text-sage shrink-0 mt-0.5" />
-                            <span>{feat.label}</span>
-                          </div>
-                        ))}
+                      {/* Daftar Fitur Utama */}
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                        {item.features
+                          .filter((f) => f.included)
+                          .slice(0, 6)
+                          .map((feat) => (
+                            <div
+                              key={feat.label}
+                              className={`flex items-start gap-2 text-xs ${
+                                isSelected ? "text-white/90" : "text-[#2E3531]"
+                              }`}
+                            >
+                              <Check
+                                className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${
+                                  isSelected
+                                    ? "text-emerald-400"
+                                    : "text-[#4F6BF6]"
+                                }`}
+                              />
+                              <span>{feat.label}</span>
+                            </div>
+                          ))}
+                      </div>
                     </div>
                   </button>
                 );
               })}
 
               {!isUpgrade && (
-                <div className="rounded-2xl border border-sage/15 bg-sage-50/70 p-4 text-xs text-sage-800 leading-relaxed">
-                  <p className="font-semibold text-sage-900 mb-1">
+                <div className="rounded-2xl border border-black/[0.06] bg-white p-4 text-xs text-[#5F6978] leading-relaxed shadow-sm">
+                  <p className="font-semibold text-[#141618] mb-1">
                     Pasanganmu sudah membeli paket NikahPlan?
                   </p>
                   <p>
                     Anda tidak perlu membayar ulang! Minta pasangan Anda
                     mengirimkan tautan undangan (
-                    <span className="font-mono">/join/KODE</span>) dari halaman
-                    Onboarding atau Profil, lalu klik tautan tersebut untuk
-                    langsung bergabung gratis.
+                    <span className="font-mono text-[#141618]">/join/KODE</span>
+                    ) dari halaman Onboarding atau Profil, lalu klik tautan
+                    tersebut untuk langsung bergabung gratis.
                   </p>
                 </div>
               )}
             </div>
 
             {/* Order Summary & Midtrans Pay Button */}
-            <Card className="lg:col-span-5 rounded-3xl border-sage/15 shadow-soft sticky top-6">
+            <Card className="lg:col-span-5 rounded-[2rem] border border-black/[0.06] bg-white shadow-card sticky top-6">
               <CardHeader className="pb-4">
-                <CardTitle className="font-display text-xl">
+                <CardTitle className="font-display text-xl text-[#141618]">
                   Ringkasan Pembayaran
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-[#5F6978]">
                   Aktivasi otomatis via Midtrans Snap
                 </CardDescription>
               </CardHeader>
@@ -463,9 +552,9 @@ export function CheckoutClient({
                 <div className="space-y-2">
                   <label
                     htmlFor="promo-code"
-                    className="text-xs font-semibold text-sage-800 inline-flex items-center gap-1.5"
+                    className="text-xs font-semibold text-[#141618] inline-flex items-center gap-1.5"
                   >
-                    <Tag className="h-3.5 w-3.5 text-terracotta" />
+                    <Tag className="h-3.5 w-3.5 text-[#4F6BF6]" />
                     Kode Promo (Opsional)
                   </label>
                   <div className="flex gap-2">
@@ -497,8 +586,8 @@ export function CheckoutClient({
                     <p
                       className={`text-xs ${
                         promoFeedback.type === "success"
-                          ? "text-sage-700 font-medium"
-                          : "text-terracotta-700"
+                          ? "text-emerald-700 font-medium"
+                          : "text-red-600"
                       }`}
                     >
                       {promoFeedback.text}
@@ -510,26 +599,28 @@ export function CheckoutClient({
 
                 {/* Price Breakdown */}
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-sage-700">
+                  <div className="flex justify-between text-[#5F6978]">
                     <span>
                       {isUpgrade ? "Selisih Upgrade Complete" : planDef.name}
                     </span>
-                    <span className="font-medium">{formatIDR(basePrice)}</span>
+                    <span className="font-semibold text-[#141618] tabular-nums">
+                      {formatIDR(basePrice)}
+                    </span>
                   </div>
                   {discountAmount > 0 && appliedPromo && (
-                    <div className="flex justify-between text-terracotta-700">
+                    <div className="flex justify-between text-emerald-700">
                       <span>Diskon ({appliedPromo.code})</span>
-                      <span className="font-medium">
+                      <span className="font-semibold tabular-nums">
                         -{formatIDR(discountAmount)}
                       </span>
                     </div>
                   )}
                   <Separator />
                   <div className="flex justify-between items-baseline pt-1">
-                    <span className="font-semibold text-sage-900">
+                    <span className="font-semibold text-[#141618]">
                       Total Bayar
                     </span>
-                    <span className="text-2xl font-bold text-sage-900">
+                    <span className="font-display text-2xl font-bold text-[#141618] tabular-nums">
                       {formatIDR(finalAmount)}
                     </span>
                   </div>
