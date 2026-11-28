@@ -805,7 +805,7 @@ export function UndanganClient({
           </div>
 
           {/* URL Bar + Quick Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-2xl bg-white/10 border border-white/15 p-2.5 backdrop-blur-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-2 rounded-2xl bg-white/10 border border-white/15 p-2.5 backdrop-blur-sm">
             <div className="flex items-center gap-2 min-w-0 flex-1 px-1.5">
               <Globe className="h-4 w-4 text-amberwarm shrink-0" />
               <span className="text-xs font-mono text-cream-100 truncate">
@@ -899,7 +899,7 @@ export function UndanganClient({
           <div
             role="tablist"
             aria-label="Editor Undangan"
-            className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-2xl sm:rounded-full glass p-1 shadow-sm"
+            className="grid grid-cols-2 xl:grid-cols-4 gap-1 rounded-2xl xl:rounded-full glass p-1 shadow-sm"
           >
         {BUILDER_TABS.map((tab) => {
           const Icon = tab.icon;
@@ -911,14 +911,14 @@ export function UndanganClient({
               role="tab"
               aria-selected={active}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full py-2.5 px-2 text-xs font-semibold transition-colors ${
+              className={`relative flex items-center justify-center gap-1.5 rounded-xl xl:rounded-full py-2.5 px-2 text-xs font-semibold transition-colors ${
                 active ? "text-cream-50" : "text-sage-700 hover:text-sage-900"
               }`}
             >
               {active && (
                 <motion.span
                   layoutId="undangan-tab-pill"
-                  className="absolute inset-0 rounded-xl sm:rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+                  className="absolute inset-0 rounded-xl xl:rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
                 />
               )}
@@ -1717,7 +1717,7 @@ export function UndanganClient({
                           Hapus
                         </button>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-2.5">
                         <Input
                           value={story.year}
                           onChange={(e) =>
@@ -1851,7 +1851,7 @@ export function UndanganClient({
                           Hapus
                         </button>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-2.5">
                         <Input
                           value={acc.bank}
                           onChange={(e) =>
@@ -2041,7 +2041,7 @@ export function UndanganClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/75 p-3">
                   <p className="text-[10.5px] font-medium text-emerald-700">
                     Konfirmasi Hadir
@@ -2232,7 +2232,7 @@ export function UndanganClient({
       )}
 
           {/* Sticky Bottom Save / Publish Bar */}
-          <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-col xl:flex-row xl:items-center justify-between gap-2.5">
             <label className="inline-flex items-center gap-2 text-xs font-semibold text-sage-900 cursor-pointer px-1">
               <input
                 type="checkbox"
@@ -2243,7 +2243,7 @@ export function UndanganClient({
               Publikasikan ke umum
             </label>
 
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="grid grid-cols-2 xl:flex xl:flex-wrap items-center gap-2 w-full xl:w-auto">
               <Button
                 type="button"
                 variant="outline"
@@ -2258,6 +2258,7 @@ export function UndanganClient({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="lg:col-span-2 xl:col-span-1"
                 disabled={saving}
                 onClick={() => handleSave(false)}
               >
@@ -2266,7 +2267,7 @@ export function UndanganClient({
               <Button
                 type="button"
                 size="sm"
-                className="col-span-2 sm:col-span-1"
+                className="col-span-2 xl:col-span-1"
                 disabled={saving}
                 onClick={() => handleSave(true)}
               >

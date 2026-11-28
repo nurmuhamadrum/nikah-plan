@@ -267,9 +267,9 @@ export function VendorsClient({
     selectedCategory !== "ALL" ? categoryMap.get(selectedCategory) ?? null : null;
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-5 pb-6 min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
             Vendor &amp; Termin
@@ -277,12 +277,12 @@ export function VendorsClient({
           <SyncStatusBadge />
         </div>
 
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+        <div className="grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="w-full sm:w-auto"
+            className="w-full lg:w-auto"
             disabled={weddingCategories.length === 0}
             onClick={() => setTemplateDialogOpen(true)}
           >
@@ -293,7 +293,7 @@ export function VendorsClient({
             type="button"
             variant="outline"
             size="sm"
-            className="w-full sm:w-auto"
+            className="w-full lg:w-auto"
             onClick={() => {
               setEditingCategory(null);
               setCatDialogOpen(true);
@@ -305,7 +305,7 @@ export function VendorsClient({
           <Button
             type="button"
             size="sm"
-            className="col-span-2 sm:col-span-1 w-full sm:w-auto"
+            className="col-span-2 lg:col-span-1 w-full lg:w-auto"
             disabled={weddingCategories.length === 0}
             onClick={() => {
               setEditingVendor(null);
@@ -319,33 +319,33 @@ export function VendorsClient({
       </div>
 
       {/* Ringkasan Estimasi vs Deal vs Aktual */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
         <Card className="glass-strong rounded-2xl">
-          <CardContent className="p-3.5 flex items-center justify-between sm:block">
-            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between lg:block">
+            <p className="text-xs lg:text-[11px] font-medium text-sage-600">
               Estimasi Awal
             </p>
-            <p className="text-sm sm:text-base font-bold text-sage-900 tabular-nums sm:mt-0.5 sm:truncate">
+            <p className="text-sm lg:text-base font-bold text-sage-900 tabular-nums lg:mt-0.5 lg:truncate">
               {formatIDR(summary.totalEstimated)}
             </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl border-sage/10 bg-white">
-          <CardContent className="p-3.5 flex items-center justify-between sm:block">
-            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between lg:block">
+            <p className="text-xs lg:text-[11px] font-medium text-sage-600">
               Harga Deal
             </p>
-            <p className="text-sm sm:text-base font-bold text-terracotta-700 tabular-nums sm:mt-0.5 sm:truncate">
+            <p className="text-sm lg:text-base font-bold text-terracotta-700 tabular-nums lg:mt-0.5 lg:truncate">
               {formatIDR(summary.totalDeal)}
             </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl border-sage/10 bg-white">
-          <CardContent className="p-3.5 flex items-center justify-between sm:block">
-            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between lg:block">
+            <p className="text-xs lg:text-[11px] font-medium text-sage-600">
               Sudah Dibayar
             </p>
-            <p className="text-sm sm:text-base font-bold text-sage-800 tabular-nums sm:mt-0.5 sm:truncate">
+            <p className="text-sm lg:text-base font-bold text-sage-800 tabular-nums lg:mt-0.5 lg:truncate">
               {formatIDR(summary.totalPaid)}
             </p>
           </CardContent>
@@ -443,7 +443,7 @@ export function VendorsClient({
       </div>
 
       {/* Search + Funding Source Filter */}
-      <div className="flex flex-col sm:flex-row gap-2.5">
+      <div className="flex flex-col lg:flex-row gap-2.5">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
           <Input
@@ -623,7 +623,7 @@ export function VendorsClient({
                   </div>
 
                   {/* Estimasi Awal vs Harga Deal + Selisih */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 rounded-2xl bg-cream-50 border border-sage/8 p-3 text-xs">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 rounded-2xl bg-cream-50 border border-sage/8 p-3 text-xs">
                     <div className="min-w-0">
                       <p className="text-[10px] text-sage-600">Estimasi Awal</p>
                       <p className="font-semibold text-sage-800 tabular-nums mt-0.5 truncate">
@@ -655,7 +655,7 @@ export function VendorsClient({
                         )}
                       </div>
                     </div>
-                    <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-sage/10 min-w-0">
+                    <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 pt-2 lg:pt-0 border-sage/10 min-w-0">
                       <p className="text-[10px] text-sage-600">
                         Terbayar / Sisa
                       </p>

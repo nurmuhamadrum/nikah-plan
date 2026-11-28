@@ -719,7 +719,7 @@ export function GuestShareManager({
                 </div>
 
                 {/* Preset Chips */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
                   {WA_MESSAGE_TEMPLATES.map((preset) => {
                     const active = templateId === preset.id;
                     return (
@@ -807,8 +807,8 @@ export function GuestShareManager({
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="sm:hidden truncate">{tab.shortLabel}</span>
-                  <span className="hidden sm:inline truncate">{tab.label}</span>
+                  <span className="xl:hidden truncate">{tab.shortLabel}</span>
+                  <span className="hidden xl:inline truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -817,8 +817,8 @@ export function GuestShareManager({
           {/* MODE 1: TAMBAH SATUAN TERSTRUKTUR */}
           {inputMode === "single" && (
             <form onSubmit={handleAddSingle} className="space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                <div className="sm:col-span-6 space-y-1.5">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-start">
+                <div className="xl:col-span-6 space-y-1.5">
                   <div className="flex h-5 items-center justify-between gap-2">
                     <Label
                       htmlFor="single-guest-name"
@@ -836,7 +836,7 @@ export function GuestShareManager({
                   />
                 </div>
 
-                <div className="sm:col-span-6 space-y-1.5">
+                <div className="xl:col-span-6 space-y-1.5">
                   <div className="flex h-5 items-center justify-between gap-2">
                     <Label
                       htmlFor="single-guest-phone"
@@ -1234,7 +1234,7 @@ export function GuestShareManager({
                   return (
                     <div
                       key={guest.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border px-3.5 py-3 transition-colors ${
+                      className={`flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 rounded-2xl border px-3.5 py-3 transition-colors ${
                         guest.sent
                           ? "border-emerald-200/80 bg-emerald-50/40"
                           : "border-black/[0.07] bg-white hover:border-black/15"
@@ -1290,12 +1290,12 @@ export function GuestShareManager({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 shrink-0 pl-0 sm:pl-0 w-full sm:w-auto pt-1 sm:pt-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 pl-0 w-full xl:w-auto pt-1 xl:pt-0">
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="flex-1 sm:flex-none h-8 px-2.5 text-[11px]"
+                          className="flex-1 xl:flex-none h-8 px-2.5 text-[11px]"
                           onClick={() =>
                             copyText(
                               guest.id,
@@ -1318,7 +1318,7 @@ export function GuestShareManager({
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="flex-1 sm:flex-none h-8 px-2.5 text-[11px]"
+                          className="flex-1 xl:flex-none h-8 px-2.5 text-[11px]"
                           onClick={() =>
                             copyText(
                               guest.id,
@@ -1340,7 +1340,7 @@ export function GuestShareManager({
                         <Button
                           asChild
                           size="sm"
-                          className="flex-1 sm:flex-none h-8 px-3 text-[11px]"
+                          className="flex-1 xl:flex-none h-8 px-3 text-[11px]"
                         >
                           <a
                             href={waHref}
@@ -1370,7 +1370,7 @@ export function GuestShareManager({
 
             {/* Kontrol Pagination Daftar Tamu */}
             {filteredGuests.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-2 border-t border-black/[0.06]">
+              <div className="flex flex-col xl:flex-row items-center justify-between gap-2.5 pt-2 border-t border-black/[0.06]">
                 <div className="flex items-center gap-2 text-[11px] text-[#5F6978]">
                   <span>
                     Menampilkan{" "}

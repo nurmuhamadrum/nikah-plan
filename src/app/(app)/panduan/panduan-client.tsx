@@ -295,7 +295,7 @@ export function PanduanClient({
   };
 
   return (
-    <div className="relative space-y-5 pb-8">
+    <div className="relative space-y-5 pb-8 min-w-0">
       {/* Hero Banner Panduan Eksklusif */}
       <Card className="relative overflow-hidden rounded-3xl border-0 bg-midnight-luxury text-white shadow-lift">
         <CardContent className="relative z-10 p-5 sm:p-6 space-y-3">
@@ -328,7 +328,7 @@ export function PanduanClient({
       <div
         role="tablist"
         aria-label="Navigasi Panduan"
-        className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-2xl sm:rounded-full glass p-1 shadow-sm"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-1 rounded-2xl lg:rounded-full glass p-1 shadow-sm"
       >
         {GUIDE_TABS.map((tab) => {
           const Icon = tab.icon;
@@ -340,14 +340,14 @@ export function PanduanClient({
               role="tab"
               aria-selected={active}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full py-2.5 px-2 text-xs font-semibold transition-colors ${
+              className={`relative flex items-center justify-center gap-1.5 rounded-xl lg:rounded-full py-2.5 px-2 text-xs font-semibold transition-colors ${
                 active ? "text-cream-50" : "text-sage-700 hover:text-sage-900"
               }`}
             >
               {active && (
                 <motion.span
                   layoutId="guide-tab-pill"
-                  className="absolute inset-0 rounded-xl sm:rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
+                  className="absolute inset-0 rounded-xl lg:rounded-full bg-gradient-to-r from-sage-600 to-sage shadow-sm"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
                 />
               )}
@@ -450,7 +450,7 @@ export function PanduanClient({
                         {tier.share}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                       {tier.items.map((sub) => (
                         <div
                           key={sub.title}
@@ -520,7 +520,7 @@ export function PanduanClient({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
                 {BUDGET_SCENARIOS.map((sc) => {
                   const active = selectedScenario === sc.id;
                   return (
@@ -633,7 +633,7 @@ export function PanduanClient({
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-sage/12 bg-cream-50/90 p-3.5">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-2xl border border-sage/12 bg-cream-50/90 p-3.5">
                 <p className="text-[11px] text-sage-700 leading-relaxed">
                   <strong>Mode Aman:</strong> Memperbarui target budget &amp;
                   menambahkan 10 kategori skenario tanpa menghapus vendor atau
@@ -642,7 +642,7 @@ export function PanduanClient({
                 <Button
                   type="button"
                   size="sm"
-                  className="shrink-0"
+                  className="w-full lg:w-auto shrink-0"
                   disabled={applyingScenario}
                   onClick={handleApplyScenario}
                 >
@@ -843,12 +843,12 @@ export function PanduanClient({
                             {sc.title}
                           </h3>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2 w-full lg:w-auto">
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8 px-3 text-xs"
+                            className="flex-1 lg:flex-none h-8 px-3 text-xs"
                             onClick={() => handleCopyScript(sc.id, generated)}
                           >
                             {isCopied ? (
@@ -867,7 +867,7 @@ export function PanduanClient({
                             asChild
                             size="sm"
                             variant="sage"
-                            className="h-8 px-3 text-xs"
+                            className="flex-1 lg:flex-none h-8 px-3 text-xs"
                           >
                             <a
                               href={waHref}
@@ -918,7 +918,7 @@ export function PanduanClient({
           </Card>
 
           {/* Do's & Don'ts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
             <Card className="rounded-3xl border-emerald-200/80 bg-emerald-50/70 shadow-sm">
               <CardContent className="p-4 sm:p-5 space-y-2.5">
                 <p className="text-xs font-bold uppercase tracking-wider text-emerald-800 inline-flex items-center gap-1.5">
@@ -1108,7 +1108,7 @@ export function PanduanClient({
                 <p className="text-xs font-bold text-sage-800">
                   Arti Warna Indikator Status
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                   {STATUS_COLOR_LEGEND.map((item) => (
                     <div
                       key={item.label}
@@ -1165,15 +1165,15 @@ export function PanduanClient({
                 </div>
               </div>
 
-              <div className="pt-2 flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="sage">
+              <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-2">
+                <Button asChild size="sm" variant="sage" className="w-full sm:w-auto">
                   <Link href="/vendors">
                     Buka Daftar Vendor ({formatNumberID(initialBundle.items.length)}{" "}
                     item)
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link href="/dashboard">Kembali ke Dashboard</Link>
                 </Button>
               </div>

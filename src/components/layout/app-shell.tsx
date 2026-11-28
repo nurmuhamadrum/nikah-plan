@@ -165,10 +165,10 @@ export function AppShell({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:pl-64 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-10">
+      <main className="flex-1 min-w-0 w-full md:pl-64 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-10">
         <div
           className={cn(
-            "mx-auto w-full px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7",
+            "mx-auto w-full min-w-0 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7",
             pathname === "/undangan" ? "max-w-6xl" : "max-w-3xl"
           )}
         >
