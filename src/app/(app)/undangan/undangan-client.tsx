@@ -9,6 +9,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Copy,
   ExternalLink,
@@ -22,13 +24,13 @@ import {
   Loader2,
   Lock,
   Mail,
-  MessageCircle,
   Music2,
   Palette,
   Pause,
   Play,
   Plus,
   Save,
+  Search,
   Send,
   Sparkles,
   Trash2,
@@ -63,11 +65,11 @@ import {
   DEFAULT_QUOTE_SOURCE,
   INVITATION_THEMES,
   INVITATION_THEME_LIST,
-  buildGuestWhatsAppMessage,
   slugifyInvitation,
   splitCoupleNames,
 } from "@/lib/invitation-themes";
 import { LivePreviewPanel } from "@/components/invitations/live-preview-panel";
+import { GuestShareManager } from "@/components/invitations/guest-share-manager";
 import { exportRsvpToExcel } from "@/lib/export-reports";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
@@ -283,15 +285,44 @@ export function UndanganClient({
   const globalToast = useToast();
   const confirm = useConfirm();
 
-  // Guest share generator
-  const [guestNamesInput, setGuestNamesInput] = useState(
-    "Bapak Budi Santoso & Keluarga\nRina Wijaya"
-  );
-  const [copiedGuestIdx, setCopiedGuestIdx] = useState<number | null>(null);
-
-  // RSVP list
+  // RSVP list & pagination
   const [rsvps, setRsvps] = useState<InvitationRsvp[]>(initialRsvps);
   const [deletingRsvpId, setDeletingRsvpId] = useState<string | null>(null);
+  const [rsvpSearch, setRsvpSearch] = useState("");
+  const [rsvpFilter, setRsvpFilter] = useState<
+    "ALL" | "HADIR" | "RAGU" | "TIDAK_HADIR"
+  >("ALL");
+  const [rsvpPage, setRsvpPage] = useState(1);
+  const RSVP_PAGE_SIZE = 10;
+
+  const filteredRsvps = useMemo(() => {
+    const q = rsvpSearch.trim().toLowerCase();
+    return rsvps.filter((item) => {
+      if (rsvpFilter !== "ALL" && item.attendance !== rsvpFilter) return false;
+      if (
+        q &&
+        !item.guest_name.toLowerCase().includes(q) &&
+        !(item.message || "").toLowerCase().includes(q)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [rsvps, rsvpSearch, rsvpFilter]);
+
+  useEffect(() => {
+    setRsvpPage(1);
+  }, [rsvpSearch, rsvpFilter]);
+
+  const rsvpTotalPages = Math.max(
+    1,
+    Math.ceil(filteredRsvps.length / RSVP_PAGE_SIZE)
+  );
+  const safeRsvpPage = Math.min(rsvpPage, rsvpTotalPages);
+  const paginatedRsvps = useMemo(() => {
+    const start = (safeRsvpPage - 1) * RSVP_PAGE_SIZE;
+    return filteredRsvps.slice(start, start + RSVP_PAGE_SIZE);
+  }, [filteredRsvps, safeRsvpPage]);
 
   const normalizedSlug = slugifyInvitation(slug);
   const publicUrl = `${appUrl}/u/${savedInvitation?.slug || normalizedSlug}`;
@@ -389,16 +420,6 @@ export function UndanganClient({
       tidakCount: tidak.length,
     };
   }, [rsvps]);
-
-  const parsedGuestList = useMemo(
-    () =>
-      guestNamesInput
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .slice(0, 50),
-    [guestNamesInput]
-  );
 
   // =========================================================================
   // GUARD: HANYA UNTUK PAKET COMPLETE_PASS
@@ -1970,98 +1991,11 @@ export function UndanganClient({
       {activeTab === "rsvp" && (
         <div className="space-y-5">
           {/* Generator Personalisasi Tamu WhatsApp */}
-          <Card className="glass-strong rounded-3xl shadow-card">
-            <CardContent className="p-5 sm:p-6 space-y-4">
-              <div>
-                <Badge variant="softTerracotta" className="mb-1">
-                  Personalisasi Tamu
-                </Badge>
-                <h2 className="font-display text-lg font-semibold text-sage-900">
-                  Kirim Undangan Personal via WhatsApp
-                </h2>
-                <p className="text-xs text-sage-600 mt-0.5">
-                  Tulis daftar nama tamu (1 nama per baris). Setiap tamu akan
-                  mendapatkan tautan unik{" "}
-                  <code className="font-mono">?to=Nama+Tamu</code> &amp; pesan
-                  WhatsApp sopan siap kirim.
-                </p>
-              </div>
-
-              <textarea
-                rows={4}
-                value={guestNamesInput}
-                onChange={(e) => setGuestNamesInput(e.target.value)}
-                placeholder={"Bapak Budi Santoso & Keluarga\nSiti Rahma\nAndika & Partner"}
-                className="w-full rounded-2xl border border-sage/20 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage/35"
-              />
-
-              <div className="space-y-2 max-h-64 overflow-y-auto -mx-1 px-1">
-                {parsedGuestList.map((guest, idx) => {
-                  const guestUrl = `${publicUrl}?to=${encodeURIComponent(guest)}`;
-                  const waMsg = buildGuestWhatsAppMessage({
-                    guestName: guest,
-                    coupleLabel: `${groomName} & ${brideName}`,
-                    invitationUrl: guestUrl,
-                  });
-                  const waHref = `https://wa.me/?text=${encodeURIComponent(
-                    waMsg
-                  )}`;
-                  const copied = copiedGuestIdx === idx;
-
-                  return (
-                    <div
-                      key={`${guest}-${idx}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sage/12 bg-white/95 px-3.5 py-2.5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-sage-900 truncate">
-                          {guest}
-                        </p>
-                        <p className="text-[10.5px] font-mono text-sage-500 truncate">
-                          {guestUrl}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2.5 text-[11px]"
-                          onClick={async () => {
-                            await navigator.clipboard.writeText(guestUrl);
-                            setCopiedGuestIdx(idx);
-                            setTimeout(() => setCopiedGuestIdx(null), 1800);
-                          }}
-                        >
-                          {copied ? (
-                            <Check className="h-3.5 w-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                          )}
-                          Link
-                        </Button>
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="sage"
-                          className="h-8 px-2.5 text-[11px]"
-                        >
-                          <a
-                            href={waHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <MessageCircle className="h-3.5 w-3.5" />
-                            Kirim WA
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <GuestShareManager
+            workspaceId={workspace.id}
+            publicUrl={publicUrl}
+            coupleLabel={`${groomName} & ${brideName}`}
+          />
 
           {/* Rekap RSVP & Buku Tamu */}
           <Card className="glass-strong rounded-3xl shadow-card">
@@ -2148,50 +2082,146 @@ export function UndanganClient({
                   description="Publikasikan undangan lalu bagikan tautan ke tamu. Ucapan doa dan konfirmasi kehadiran akan otomatis tampil di sini."
                 />
               ) : (
-                <div className="space-y-2.5">
-                  {rsvps.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between gap-3 rounded-2xl border border-sage/12 bg-white/95 p-3.5"
-                    >
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-xs font-bold text-sage-900">
-                            {item.guest_name}
-                          </p>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              item.attendance === "HADIR"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : item.attendance === "RAGU"
-                                  ? "bg-amber-50 text-amber-800 border border-amber-200"
-                                  : "bg-cream-200 text-sage-700"
+                <div className="space-y-3">
+                  {rsvps.length > 5 && (
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sage-500" />
+                        <Input
+                          value={rsvpSearch}
+                          onChange={(e) => setRsvpSearch(e.target.value)}
+                          placeholder="Cari nama tamu atau ucapan doa..."
+                          className="h-9 pl-8 text-xs"
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {(
+                          [
+                            { id: "ALL", label: "Semua" },
+                            { id: "HADIR", label: "Hadir" },
+                            { id: "RAGU", label: "Ragu" },
+                            { id: "TIDAK_HADIR", label: "Tidak Hadir" },
+                          ] as const
+                        ).map((f) => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setRsvpFilter(f.id)}
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                              rsvpFilter === f.id
+                                ? "bg-midnight-btn text-white"
+                                : "bg-[#F4F5F7] text-[#5F6978] hover:text-[#141618]"
                             }`}
                           >
-                            {item.attendance === "HADIR"
-                              ? `Hadir (${item.guest_count} org)`
-                              : item.attendance === "RAGU"
-                                ? "Masih Ragu"
-                                : "Tidak Hadir"}
-                          </span>
-                        </div>
-                        {item.message && (
-                          <p className="text-xs text-sage-700 leading-relaxed">
-                            &ldquo;{item.message}&rdquo;
-                          </p>
-                        )}
+                            {f.label}
+                          </button>
+                        ))}
                       </div>
-                      <button
-                        type="button"
-                        disabled={deletingRsvpId === item.id}
-                        onClick={() => handleDeleteRsvp(item.id)}
-                        aria-label="Hapus ucapan"
-                        className="text-sage-400 hover:text-red-600 p-1 transition-colors shrink-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
-                  ))}
+                  )}
+
+                  {filteredRsvps.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-black/10 py-6 text-center text-xs text-[#5F6978]">
+                      Tidak ada ucapan RSVP yang cocok dengan filter pencarian.
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {paginatedRsvps.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-start justify-between gap-3 rounded-2xl border border-sage/12 bg-white/95 p-3.5"
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-xs font-bold text-sage-900">
+                                {item.guest_name}
+                              </p>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                  item.attendance === "HADIR"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : item.attendance === "RAGU"
+                                      ? "bg-amber-50 text-amber-800 border border-amber-200"
+                                      : "bg-cream-200 text-sage-700"
+                                }`}
+                              >
+                                {item.attendance === "HADIR"
+                                  ? `Hadir (${item.guest_count} org)`
+                                  : item.attendance === "RAGU"
+                                    ? "Masih Ragu"
+                                    : "Tidak Hadir"}
+                              </span>
+                            </div>
+                            {item.message && (
+                              <p className="text-xs text-sage-700 leading-relaxed">
+                                &ldquo;{item.message}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            disabled={deletingRsvpId === item.id}
+                            onClick={() => handleDeleteRsvp(item.id)}
+                            aria-label="Hapus ucapan"
+                            className="text-sage-400 hover:text-red-600 p-1 transition-colors shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {filteredRsvps.length > RSVP_PAGE_SIZE && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-black/[0.06]">
+                      <span className="text-[11px] text-[#5F6978]">
+                        Menampilkan{" "}
+                        <strong className="text-[#141618]">
+                          {(safeRsvpPage - 1) * RSVP_PAGE_SIZE + 1}–
+                          {Math.min(
+                            safeRsvpPage * RSVP_PAGE_SIZE,
+                            filteredRsvps.length
+                          )}
+                        </strong>{" "}
+                        dari{" "}
+                        <strong className="text-[#141618]">
+                          {filteredRsvps.length}
+                        </strong>{" "}
+                        ucapan
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2.5 text-[11px]"
+                          disabled={safeRsvpPage <= 1}
+                          onClick={() =>
+                            setRsvpPage((p) => Math.max(1, p - 1))
+                          }
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                          Sebelumnya
+                        </Button>
+                        <span className="px-2 text-[11px] font-semibold text-[#141618] tabular-nums">
+                          Hal. {safeRsvpPage} / {rsvpTotalPages}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2.5 text-[11px]"
+                          disabled={safeRsvpPage >= rsvpTotalPages}
+                          onClick={() =>
+                            setRsvpPage((p) => Math.min(rsvpTotalPages, p + 1))
+                          }
+                        >
+                          Berikutnya
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

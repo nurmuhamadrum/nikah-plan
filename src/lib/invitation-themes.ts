@@ -327,6 +327,98 @@ export function buildGoogleCalendarUrl(params: {
   return `https://calendar.google.com/calendar/render?${q.toString()}`;
 }
 
+export type WhatsAppTemplateId = "FORMAL" | "ISLAMI" | "SANTAI";
+
+export interface WhatsAppTemplatePreset {
+  id: WhatsAppTemplateId;
+  label: string;
+  description: string;
+  body: string;
+}
+
+export const WA_MESSAGE_TEMPLATES: WhatsAppTemplatePreset[] = [
+  {
+    id: "FORMAL",
+    label: "Formal Sopan",
+    description: "Cocok untuk keluarga besar, kolega, & tamu VIP",
+    body: [
+      "Kepada Yth. Bapak/Ibu/Saudara/i *{nama}*,",
+      "",
+      "Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami *{mempelai}*.",
+      "",
+      "Berikut tautan undangan digital kami untuk informasi lengkap acara & konfirmasi kehadiran:",
+      "{link}",
+      "",
+      "Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Terima kasih banyak!",
+    ].join("\n"),
+  },
+  {
+    id: "ISLAMI",
+    label: "Islami",
+    description: "Dengan salam & doa penuh berkah",
+    body: [
+      "Assalamu'alaikum Wr. Wb.",
+      "Kepada Yth. Bapak/Ibu/Saudara/i *{nama}*,",
+      "",
+      "Dengan memohon rahmat dan ridho Allah SWT, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami *{mempelai}*.",
+      "",
+      "Informasi lengkap acara & konfirmasi kehadiran dapat diakses melalui tautan berikut:",
+      "{link}",
+      "",
+      "Kehadiran serta doa restu Bapak/Ibu/Saudara/i merupakan kebahagiaan yang tak ternilai bagi kami.",
+      "Wassalamu'alaikum Wr. Wb.",
+    ].join("\n"),
+  },
+  {
+    id: "SANTAI",
+    label: "Santai & Akrab",
+    description: "Hangat untuk sahabat, teman kuliah, & rekan dekat",
+    body: [
+      "Halo *{nama}*! 👋",
+      "",
+      "Kabar bahagia nih — kami *{mempelai}* akan segera menikah! Senang banget kalau kamu bisa ikut hadir dan merayakan hari spesial kami.",
+      "",
+      "Detail jadwal, lokasi, & RSVP-nya bisa langsung dicek di sini ya:",
+      "{link}",
+      "",
+      "Ditunggu banget kehadirannya & doa terbaiknya. Sampai ketemu di hari H! 🤍",
+    ].join("\n"),
+  },
+];
+
+/**
+ * Menormalisasi nomor HP Indonesia ke format internasional WhatsApp (contoh: 0812-3456-7890 -> 6281234567890).
+ */
+export function normalizeWhatsAppPhone(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d]/g, "");
+  if (digits.length < 8 || digits.length > 16) return null;
+  if (digits.startsWith("0")) {
+    return `62${digits.slice(1)}`;
+  }
+  if (digits.startsWith("8")) {
+    return `62${digits}`;
+  }
+  return digits;
+}
+
+/**
+ * Mengisi variabel {nama}, {mempelai}, {link} pada template pesan WhatsApp.
+ */
+export function renderGuestWhatsAppMessage(
+  template: string,
+  params: {
+    guestName: string;
+    coupleLabel: string;
+    invitationUrl: string;
+  }
+): string {
+  return template
+    .replace(/\{nama\}/gi, params.guestName)
+    .replace(/\{mempelai\}/gi, params.coupleLabel)
+    .replace(/\{link\}/gi, params.invitationUrl);
+}
+
 /**
  * Menghasilkan pesan undangan WhatsApp yang sopan & personal untuk tiap tamu.
  */
@@ -335,14 +427,5 @@ export function buildGuestWhatsAppMessage(params: {
   coupleLabel: string;
   invitationUrl: string;
 }): string {
-  return [
-    `Kepada Yth. Bapak/Ibu/Saudara/i *${params.guestName}*,`,
-    "",
-    `Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami *${params.coupleLabel}*.`,
-    "",
-    "Berikut tautan undangan digital kami untuk info lengkap acara & konfirmasi kehadiran:",
-    params.invitationUrl,
-    "",
-    "Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Terima kasih banyak!",
-  ].join("\n");
+  return renderGuestWhatsAppMessage(WA_MESSAGE_TEMPLATES[0].body, params);
 }
