@@ -7,7 +7,9 @@ import {
   ArrowRightLeft,
   BookOpen,
   Check,
+  ChevronRight,
   Copy,
+  Crown,
   FileSpreadsheet,
   FileText,
   HardDrive,
@@ -47,6 +49,7 @@ import {
 } from "@/lib/export-reports";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { PushNotificationCard } from "@/components/settings/push-notification-card";
+import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
 import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
@@ -293,6 +296,11 @@ export function SettingsClient({
 
   const waText = `Hai sayang! Yuk kelola bareng budget pernikahan kita (${workspace.couple_title}) di NikahPlan. Gabung gratis via tautan ini ya: ${inviteUrl}`;
   const waUrl = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+  const profileInitials = (profile.full_name || workspace.couple_title || "NP")
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
 
   return (
     <div className="space-y-5 pb-8">
@@ -303,71 +311,151 @@ export function SettingsClient({
         <SyncStatusBadge />
       </div>
 
-      {/* 1. Info Akun & Paket */}
-      <Card className="glass-strong rounded-3xl shadow-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="font-display text-xl">
-              {workspace.couple_title}
-            </CardTitle>
-            <Badge variant="softTerracotta">
+      {/* 1. Info Akun & Paket (Midnight Velvet Identity Card + Menu Terstruktur) */}
+      <Card className="overflow-hidden rounded-3xl border border-black/[0.06] bg-white shadow-card">
+        {/* Midnight Velvet Identity Header */}
+        <div className="bg-midnight-luxury px-5 py-5 sm:px-6 text-white space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3.5 min-w-0">
+              {profile.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.full_name}
+                  className="h-12 w-12 shrink-0 rounded-2xl object-cover border border-white/20 shadow-sm"
+                />
+              ) : (
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#E09F3E]/35 bg-white/10 font-display text-base font-bold text-[#F6D38C] shadow-sm">
+                  {profileInitials}
+                </span>
+              )}
+              <div className="min-w-0">
+                <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-snug truncate">
+                  {workspace.couple_title}
+                </h2>
+                <p className="text-xs text-white/80 truncate mt-0.5">
+                  {profile.full_name}
+                </p>
+                <p className="text-[11px] text-white/55 truncate">
+                  {profile.email}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Plan Pill + Admin Shortcut */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/10">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E09F3E]/35 bg-[#E09F3E]/15 px-3 py-1 text-[11px] font-semibold text-[#F6D38C]">
+              <Crown className="h-3.5 w-3.5 shrink-0" />
               {workspace.plan === "COMPLETE_PASS"
                 ? "Complete Couple Pass"
                 : "Wedding Only Pass"}
-            </Badge>
+            </span>
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white/12 hover:bg-white/20 border border-white/15 px-3 py-1 text-[11px] font-semibold text-white transition-colors"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-[#8BA2FF]" />
+                Buka Admin Portal
+              </Link>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-sm text-sage-700 space-y-1">
-            <p>
-              Masuk sebagai:{" "}
-              <strong className="text-sage-900">{profile.full_name}</strong>
-            </p>
-            <p className="text-xs text-sage-600">{profile.email}</p>
+        </div>
+
+        {/* Menu Aksi Terstruktur */}
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <Link
+              href="/onboarding?edit=1"
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-[#FAFAFB] hover:bg-[#F2F4F8] hover:border-black/15 px-3.5 py-3 transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F6BF6]">
+                  <SlidersHorizontal className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#141618] truncate">
+                    Target Budget &amp; Profil
+                  </p>
+                  <p className="text-[11px] text-[#5F6978] truncate">
+                    Ubah nama, tanggal &amp; target bujet
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#94A3B8] group-hover:translate-x-0.5 group-hover:text-[#141618] transition-all" />
+            </Link>
+
+            <Link
+              href="/panduan"
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-[#FAFAFB] hover:bg-[#F2F4F8] hover:border-black/15 px-3.5 py-3 transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                  <BookOpen className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#141618] truncate">
+                    Pusat Panduan &amp; Skenario
+                  </p>
+                  <p className="text-[11px] text-[#5F6978] truncate">
+                    Template 30/50/80 Jt &amp; tips nikah
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#94A3B8] group-hover:translate-x-0.5 group-hover:text-[#141618] transition-all" />
+            </Link>
+
+            <Link
+              href="/user-guide"
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-[#FAFAFB] hover:bg-[#F2F4F8] hover:border-black/15 px-3.5 py-3 transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                  <FileText className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#141618] truncate">
+                    User Guide Aplikasi
+                  </p>
+                  <p className="text-[11px] text-[#5F6978] truncate">
+                    Cara pakai semua fitur NikahPlan
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#94A3B8] group-hover:translate-x-0.5 group-hover:text-[#141618] transition-all" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setSupportOpen(true)}
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-[#FAFAFB] hover:bg-[#F2F4F8] hover:border-black/15 px-3.5 py-3 text-left transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                  <Headphones className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#141618] truncate">
+                    Bantuan CS &amp; Masukan
+                  </p>
+                  <p className="text-[11px] text-[#5F6978] truncate">
+                    Tanya tim support atau kirim saran
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#94A3B8] group-hover:translate-x-0.5 group-hover:text-[#141618] transition-all" />
+            </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {isAdmin && (
-              <Button asChild variant="sage" size="sm">
-                <Link href="/admin">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Buka Admin Portal
-                </Link>
-              </Button>
-            )}
-            <Button asChild variant="outline" size="sm">
-              <Link href="/onboarding?edit=1">
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                Ubah Target Budget &amp; Profil
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/panduan">
-                <BookOpen className="h-3.5 w-3.5" />
-                Pusat Panduan &amp; Skenario
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/user-guide">
-                <FileText className="h-3.5 w-3.5" />
-                User Guide Aplikasi
-              </Link>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setSupportOpen(true)}
-            >
-              <Headphones className="h-3.5 w-3.5" />
-              Bantuan CS &amp; Masukan
-            </Button>
-            <form action="/auth/signout" method="post">
+          <div className="pt-2 border-t border-black/[0.06] flex justify-end">
+            <form action="/auth/signout" method="post" className="w-full sm:w-auto">
               <Button
                 variant="ghost"
                 size="sm"
                 type="submit"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Keluar Akun
@@ -376,6 +464,9 @@ export function SettingsClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* 1a. Download / Install Aplikasi PWA (Otomatis muncul hanya jika belum mode PWA standalone) */}
+      <PwaInstallCard />
 
       {/* 1b. Upgrade Banner khusus Wedding Only Pass */}
       {workspace.plan === "WEDDING_ONLY" && (
@@ -512,7 +603,13 @@ export function SettingsClient({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="submit" size="sm" variant="sage" disabled={savingRate}>
+              <Button
+                type="submit"
+                size="sm"
+                variant="sage"
+                className="flex-1 sm:flex-none"
+                disabled={savingRate}
+              >
                 {savingRate ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -526,6 +623,7 @@ export function SettingsClient({
                 type="button"
                 size="sm"
                 variant="outline"
+                className="flex-1 sm:flex-none"
                 onClick={() =>
                   setExchangeRate(
                     String(getCurrencyOption(currency).defaultRateToIDR)
@@ -571,6 +669,7 @@ export function SettingsClient({
               type="button"
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-none"
               disabled={syncingNow}
               onClick={handleManualSync}
             >
@@ -585,7 +684,7 @@ export function SettingsClient({
               type="button"
               variant="ghost"
               size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleClearLocalCache}
             >
               <Trash2 className="h-3.5 w-3.5" />

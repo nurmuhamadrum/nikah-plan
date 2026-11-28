@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 
-const AMOUNT_PRESETS = [100000, 200000, 500000, 1000000, 2000000];
+const AMOUNT_PRESETS = [50000, 100000, 150000, 200000, 500000, 1000000, 2000000];
 
 interface GiftDialogProps {
   open: boolean;
@@ -113,23 +113,23 @@ export function GiftDialog({
 
       const { queued } = gift
         ? await executeOfflineFirstMutation({
-            workspaceId,
-            table: "wedding_gifts",
-            operation: "UPDATE",
-            recordId: gift.id,
-            payload,
-            queryClient,
-          })
+          workspaceId,
+          table: "wedding_gifts",
+          operation: "UPDATE",
+          recordId: gift.id,
+          payload,
+          queryClient,
+        })
         : await executeOfflineFirstMutation({
-            workspaceId,
-            table: "wedding_gifts",
-            operation: "INSERT",
-            payload: {
-              workspace_id: workspaceId,
-              ...payload,
-            },
-            queryClient,
-          });
+          workspaceId,
+          table: "wedding_gifts",
+          operation: "INSERT",
+          payload: {
+            workspace_id: workspaceId,
+            ...payload,
+          },
+          queryClient,
+        });
 
       if (!queued) await onSuccess();
       await logWorkspaceActivity({
@@ -251,11 +251,10 @@ export function GiftDialog({
                     setAmount("0");
                   }
                 }}
-                className={`rounded-xl py-2.5 text-xs font-semibold border transition-all ${
-                  giftType === opt.value
-                    ? "border-sage bg-sage text-white shadow-sm"
-                    : "border-sage/15 bg-cream-50 text-sage-700 hover:bg-sage-50"
-                }`}
+                className={`rounded-xl py-2.5 text-xs font-semibold border transition-all ${giftType === opt.value
+                  ? "border-sage bg-sage text-white shadow-sm"
+                  : "border-sage/15 bg-cream-50 text-sage-700 hover:bg-sage-50"
+                  }`}
               >
                 {opt.label}
               </button>
@@ -281,11 +280,10 @@ export function GiftDialog({
                     key={preset}
                     type="button"
                     onClick={() => setAmount(String(preset))}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                      Number(amount) === preset
-                        ? "bg-terracotta text-white"
-                        : "bg-cream-200/80 text-sage-700 hover:bg-cream-300"
-                    }`}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${Number(amount) === preset
+                      ? "bg-terracotta text-white"
+                      : "bg-cream-200/80 text-sage-700 hover:bg-cream-300"
+                      }`}
                   >
                     {preset >= 1000000
                       ? `Rp${preset / 1000000}jt`

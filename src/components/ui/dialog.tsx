@@ -17,7 +17,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-sage-900/45 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-sage-900/45 backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -31,20 +31,22 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-3xl border border-sage/15 bg-white p-6 shadow-soft duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-sage-500 opacity-80 ring-offset-background transition-colors hover:bg-cream-200 hover:text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Tutup</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
+    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "pointer-events-auto relative grid w-full max-w-lg max-h-[90dvh] overflow-y-auto overflow-x-hidden [&>*]:min-w-0 gap-4 rounded-3xl border border-sage/15 bg-white p-5 sm:p-6 shadow-lift duration-200 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-1 focus:outline-none",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-sage-500 opacity-80 ring-offset-background transition-colors hover:bg-cream-200 hover:text-sage-900 focus:outline-none focus:ring-2 focus:ring-sage">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Tutup</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </div>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;

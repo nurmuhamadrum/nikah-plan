@@ -342,7 +342,7 @@ export function QuickAddFab({ workspaceId, userName }: QuickAddFabProps) {
         onClick={() => setOpen(true)}
         aria-label="Catat Pengeluaran Cepat"
         title="Catat Pengeluaran Cepat (3 Detik)"
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 inline-flex h-13 items-center gap-2 rounded-full bg-midnight-btn px-4 py-3 text-white shadow-lift border border-white/15 hover:opacity-95 active:scale-95 transition-all"
+        className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 md:bottom-6 md:right-6 z-30 inline-flex h-13 items-center gap-2 rounded-full bg-midnight-btn px-4 py-3 text-white shadow-lift border border-white/15 hover:opacity-95 active:scale-95 transition-all"
       >
         <Plus className="h-5 w-5 text-[#E09F3E]" />
         <span className="hidden sm:inline text-xs font-bold tracking-wide">

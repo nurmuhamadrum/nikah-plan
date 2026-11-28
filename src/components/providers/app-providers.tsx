@@ -7,6 +7,8 @@ import { useAppStore } from "@/store/use-app-store";
 import { flushSyncQueue, refreshQueuedCount } from "@/lib/offline/sync-engine";
 import { ToastProvider, useToast } from "@/components/providers/toast-provider";
 import { ConfirmProvider } from "@/components/providers/confirm-provider";
+import { PwaSplashScreen } from "@/components/pwa/pwa-splash-screen";
+import { initPwaInstallListener } from "@/hooks/use-pwa-install";
 
 function OfflineSyncWatcher({ queryClient }: { queryClient: QueryClient }) {
   const setSyncStatus = useAppStore((s) => s.setSyncStatus);
@@ -69,6 +71,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    initPwaInstallListener();
+  }, []);
+
+  useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
@@ -98,6 +104,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <MotionConfig reducedMotion="user">
         <ToastProvider>
           <ConfirmProvider>
+            <PwaSplashScreen />
             <OfflineSyncWatcher queryClient={queryClient} />
             {children}
           </ConfirmProvider>

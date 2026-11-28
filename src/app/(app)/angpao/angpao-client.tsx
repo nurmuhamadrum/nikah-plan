@@ -285,6 +285,7 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
         <Button
           type="button"
           size="sm"
+          className="w-full sm:w-auto"
           onClick={() => {
             setEditingGift(null);
             setGiftDialogOpen(true);
@@ -317,22 +318,22 @@ export function AngpaoClient({ initialBundle }: AngpaoClientProps) {
           </div>
 
           {/* 3 Bucket Breakdown */}
-          <div className="grid grid-cols-3 gap-2 border-t border-white/15 pt-4">
-            <div className="rounded-xl bg-white/10 px-3 py-2.5">
-              <p className="text-[10px] text-cream-200/80">Belum Dialokasi</p>
-              <p className="text-xs sm:text-sm font-bold truncate mt-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-white/15 pt-4">
+            <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2.5">
+              <p className="text-[11px] sm:text-[10px] text-cream-200/80">Belum Dialokasi</p>
+              <p className="text-xs sm:text-sm font-bold tabular-nums sm:truncate sm:mt-0.5">
                 {formatIDR(stats.unallocated)}
               </p>
             </div>
-            <div className="rounded-xl bg-white/10 px-3 py-2.5">
-              <p className="text-[10px] text-cream-200/80">Tutup Vendor</p>
-              <p className="text-xs sm:text-sm font-bold truncate mt-0.5">
+            <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2.5">
+              <p className="text-[11px] sm:text-[10px] text-cream-200/80">Tutup Vendor</p>
+              <p className="text-xs sm:text-sm font-bold tabular-nums sm:truncate sm:mt-0.5">
                 {formatIDR(stats.weddingCover)}
               </p>
             </div>
-            <div className="rounded-xl bg-white/10 px-3 py-2.5">
-              <p className="text-[10px] text-cream-200/80">Ke Honeymoon</p>
-              <p className="text-xs sm:text-sm font-bold text-terracotta-200 truncate mt-0.5">
+            <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2.5">
+              <p className="text-[11px] sm:text-[10px] text-cream-200/80">Ke Honeymoon</p>
+              <p className="text-xs sm:text-sm font-bold tabular-nums text-terracotta-200 sm:truncate sm:mt-0.5">
                 {formatIDR(stats.honeymoonFund)}
               </p>
             </div>

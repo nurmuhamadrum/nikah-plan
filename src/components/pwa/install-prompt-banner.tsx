@@ -2,66 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { Button } from "@/components/ui/button";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
 
 const DISMISS_STORAGE_KEY = "nikahplan_pwa_install_dismissed_at";
 const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
 export function InstallPromptBanner() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosHint, setShowIosHint] = useState(false);
+  const { ready, isStandalone, isIosSafari, canNativePrompt, promptInstall } =
+    usePwaInstall();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // Jangan tampilkan jika sudah terpasang sebagai PWA standalone
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      // @ts-expect-error Safari iOS standalone flag
-      Boolean(window.navigator.standalone);
-    if (isStandalone) return;
-
-    // Cek masa dismiss 7 hari
-    const dismissedAt = Number(localStorage.getItem(DISMISS_STORAGE_KEY) || 0);
-    if (dismissedAt && Date.now() - dismissedAt < DISMISS_TTL_MS) {
+    if (!ready || isStandalone) {
+      setDismissed(true);
       return;
     }
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIos = /iphone|ipad|ipod/.test(ua);
-    const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
-
-    if (isIos && isSafari) {
-      setShowIosHint(true);
-      setDismissed(false);
+    const dismissedAt = Number(localStorage.getItem(DISMISS_STORAGE_KEY) || 0);
+    if (dismissedAt && Date.now() - dismissedAt < DISMISS_TTL_MS) {
+      setDismissed(true);
+      return;
     }
 
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    if (canNativePrompt || isIosSafari) {
       setDismissed(false);
-    };
-
-    const handleAppInstalled = () => {
-      setDeferredPrompt(null);
-      setDismissed(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    window.addEventListener("appinstalled", handleAppInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-    };
-  }, []);
+    }
+  }, [ready, isStandalone, canNativePrompt, isIosSafari]);
 
   const handleDismiss = () => {
     localStorage.setItem(DISMISS_STORAGE_KEY, String(Date.now()));
@@ -69,16 +36,13 @@ export function InstallPromptBanner() {
   };
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === "accepted") {
+    const outcome = await promptInstall();
+    if (outcome === "accepted") {
       setDismissed(true);
     }
-    setDeferredPrompt(null);
   };
 
-  if (dismissed || (!deferredPrompt && !showIosHint)) {
+  if (dismissed || isStandalone || (!canNativePrompt && !isIosSafari)) {
     return null;
   }
 
@@ -86,7 +50,7 @@ export function InstallPromptBanner() {
     <div className="mb-4 rounded-2xl border border-sage/20 bg-sage text-cream-50 p-3.5 shadow-soft flex items-start justify-between gap-3">
       <div className="flex items-start gap-3 min-w-0">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/12 text-terracotta-200">
-          {showIosHint ? (
+          {isIosSafari ? (
             <Share className="h-4.5 w-4.5" />
           ) : (
             <Download className="h-4.5 w-4.5" />
@@ -96,7 +60,7 @@ export function InstallPromptBanner() {
           <p className="text-xs font-bold leading-snug">
             Install NikahPlan ke Layar Utama
           </p>
-          {showIosHint ? (
+          {isIosSafari ? (
             <p className="text-[11px] text-cream-200/90 leading-relaxed">
               Ketuk ikon <strong>Bagikan (Share)</strong> di bawah Safari lalu
               pilih <strong>&ldquo;Tambah ke Layar Utama&rdquo;</strong> untuk
@@ -108,7 +72,7 @@ export function InstallPromptBanner() {
               wedding expo atau honeymoon.
             </p>
           )}
-          {deferredPrompt && (
+          {canNativePrompt && (
             <div className="pt-1">
               <Button
                 type="button"

@@ -306,7 +306,7 @@ export function UserGuideClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           {/* Feature Sections */}
           <div className="space-y-6 min-w-0">
             {/* Mobile Horizontal Quick-Jump Pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden no-scrollbar">
               {filteredSections.map((sec) => (
                 <a
                   key={sec.id}

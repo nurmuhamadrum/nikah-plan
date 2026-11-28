@@ -691,7 +691,7 @@ export function AdminClient({
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {(
             [
               {
@@ -833,7 +833,7 @@ export function AdminClient({
                     Belum ada transaksi tercatat.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left text-xs sm:text-sm">
                       <thead>
                         <tr className="border-b border-sage/12 text-sage-600">

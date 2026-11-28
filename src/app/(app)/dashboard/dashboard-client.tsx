@@ -380,28 +380,28 @@ export function DashboardClient({
                 </div>
 
                 {/* 3 Sub-Metrics Grid */}
-                <div className="grid grid-cols-3 gap-2 pt-1.5">
-                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
-                    <p className="text-[10px] font-medium text-cream-200/85">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1.5">
+                  <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[11px] sm:text-[10px] font-medium text-cream-200/85">
                       Target Bujet
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-cream-50 tabular-nums truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-cream-50 tabular-nums sm:truncate sm:mt-0.5">
                       {formatIDR(metrics.targetBudget)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
-                    <p className="text-[10px] font-medium text-cream-200/85">
+                  <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[11px] sm:text-[10px] font-medium text-cream-200/85">
                       Deal Vendor
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-terracotta-200 tabular-nums truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-terracotta-200 tabular-nums sm:truncate sm:mt-0.5">
                       {formatIDR(metrics.totalDeal)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
-                    <p className="text-[10px] font-medium text-cream-200/85">
+                  <div className="flex items-center justify-between sm:block rounded-xl bg-white/10 px-3 py-2 border border-white/12 backdrop-blur-sm">
+                    <p className="text-[11px] sm:text-[10px] font-medium text-cream-200/85">
                       Sudah Dibayar
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-amberwarm-light tabular-nums truncate mt-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-amberwarm-light tabular-nums sm:truncate sm:mt-0.5">
                       {formatIDR(metrics.totalPaid)}
                     </p>
                   </div>
@@ -520,7 +520,7 @@ export function DashboardClient({
                     </div>
 
                     {payment.due_date && (
-                      <div className="pl-12">
+                      <div className="pl-0 sm:pl-12">
                         <PaymentReminderButtons
                           reminder={{
                             paymentId: payment.id,
@@ -551,15 +551,16 @@ export function DashboardClient({
 
           {/* Daftar Kategori Anggaran */}
           <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <h2 className="text-base font-bold text-sage-900">
                 Pos Anggaran Pernikahan
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   onClick={() => {
                     exportFamilyMeetingPDF(bundle);
                     toast.success(
@@ -571,7 +572,7 @@ export function DashboardClient({
                   <FileText className="h-3.5 w-3.5" />
                   PDF Rapat Keluarga
                 </Button>
-                <Button asChild size="sm" variant="default">
+                <Button asChild size="sm" variant="default" className="flex-1 sm:flex-none">
                   <Link href="/vendors?new=1">
                     <Plus className="h-3.5 w-3.5" />
                     Tambah Vendor

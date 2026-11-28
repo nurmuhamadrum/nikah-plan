@@ -303,12 +303,12 @@ export function SavingsTrackerCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex w-full sm:w-auto items-center gap-2">
             <Button
               type="button"
               size="sm"
               variant="outline"
-              className="h-8 px-2.5 text-xs"
+              className="flex-1 sm:flex-none h-9 sm:h-8 px-2.5 text-xs"
               onClick={() => {
                 setTargetGroom(String(monthlyGroom));
                 setTargetBride(String(monthlyBride));
@@ -322,7 +322,7 @@ export function SavingsTrackerCard({
             <Button
               type="button"
               size="sm"
-              className="h-8 px-3 text-xs"
+              className="flex-1 sm:flex-none h-9 sm:h-8 px-3 text-xs"
               onClick={() => {
                 setShowAddForm((prev) => !prev);
                 setShowTargetForm(false);
@@ -363,26 +363,32 @@ export function SavingsTrackerCard({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <span className="text-xs text-[#5F6978]">
-                Total target:{" "}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <div className="flex items-center justify-between sm:block rounded-xl bg-white sm:bg-transparent border border-black/[0.06] sm:border-0 px-3 py-2 sm:p-0 text-xs text-[#5F6978]">
+                <span>Total target:</span>{" "}
                 <strong className="text-[#141618] tabular-nums">
                   {formatIDR(
                     (Number(targetGroom) || 0) + (Number(targetBride) || 0)
                   )}
                   /bulan
                 </strong>
-              </span>
-              <div className="flex gap-2">
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row items-center gap-2 w-full sm:w-auto">
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
+                  className="w-full sm:w-auto"
                   onClick={() => setShowTargetForm(false)}
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm" disabled={savingTarget}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={savingTarget}
+                >
                   {savingTarget && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Simpan Target
                 </Button>
@@ -448,11 +454,12 @@ export function SavingsTrackerCard({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
+                className="w-full sm:w-auto"
                 onClick={() => setShowAddForm(false)}
               >
                 Batal
@@ -460,6 +467,7 @@ export function SavingsTrackerCard({
               <Button
                 type="submit"
                 size="sm"
+                className="w-full sm:w-auto"
                 disabled={savingEntry || (Number(amount) || 0) <= 0}
               >
                 {savingEntry && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

@@ -143,6 +143,21 @@ function buildCalendarCells(year: number, month: number) {
   return cells;
 }
 
+function useIsMobileViewport(): boolean {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+}
+
 export interface DatePickerProps {
   id?: string;
   value: string;
@@ -169,6 +184,8 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobileViewport();
+  const effectiveMode = displayMode === "modal" || isMobile ? "modal" : "popover";
   const [open, setOpen] = React.useState(false);
   const [openUpward, setOpenUpward] = React.useState(false);
   const [pickerView, setPickerView] = React.useState<"days" | "months" | "years">("days");
@@ -191,17 +208,17 @@ export function DatePicker({
       setViewMonth(target?.month ?? now.getMonth());
       setPickerView("days");
 
-      if (displayMode === "popover" && containerRef.current) {
+      if (effectiveMode === "popover" && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
         setOpenUpward(spaceBelow < 360 && rect.top > 360);
       }
     }
-  }, [open, value, minDate, displayMode]);
+  }, [open, value, minDate, effectiveMode]);
 
   // Tutup popover saat klik di luar atau tekan Escape
   React.useEffect(() => {
-    if (!open || displayMode !== "popover") return;
+    if (!open || effectiveMode !== "popover") return;
 
     const handlePointerDown = (e: MouseEvent) => {
       if (
@@ -221,7 +238,7 @@ export function DatePicker({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, displayMode]);
+  }, [open, effectiveMode]);
 
   const cells = React.useMemo(
     () => buildCalendarCells(viewYear, viewMonth),
@@ -274,7 +291,7 @@ export function DatePicker({
   const yearOptions = Array.from({ length: 12 }, (_, i) => yearGridStart + i);
 
   const calendarCard = (
-    <div className="w-[310px] sm:w-[324px] overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-20px_rgba(20,22,24,0.28)]">
+    <div className="w-[min(324px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-20px_rgba(20,22,24,0.28)]">
       {/* Header Midnight Velvet */}
       <div className="bg-midnight-luxury px-4 pt-3.5 pb-3 text-white">
         <div className="flex items-center justify-between gap-2">
@@ -523,21 +540,23 @@ export function DatePicker({
     </div>
   );
 
-  if (displayMode === "modal") {
+  if (effectiveMode === "modal") {
     return (
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         {triggerButton}
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <DialogPrimitive.Content
-            aria-describedby={undefined}
-            className="fixed left-1/2 top-1/2 z-[75] -translate-x-1/2 -translate-y-1/2 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-          >
-            <DialogPrimitive.Title className="sr-only">
-              Pilih Tanggal
-            </DialogPrimitive.Title>
-            {calendarCard}
-          </DialogPrimitive.Content>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <div className="pointer-events-none fixed inset-0 z-[75] flex items-center justify-center p-4">
+            <DialogPrimitive.Content
+              aria-describedby={undefined}
+              className="pointer-events-auto outline-none duration-200 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-1"
+            >
+              <DialogPrimitive.Title className="sr-only">
+                Pilih Tanggal
+              </DialogPrimitive.Title>
+              {calendarCard}
+            </DialogPrimitive.Content>
+          </div>
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
     );
@@ -584,6 +603,7 @@ export function MonthPicker({
   className,
 }: MonthPickerProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobileViewport();
   const [open, setOpen] = React.useState(false);
 
   const parsed = React.useMemo(() => {
@@ -606,7 +626,7 @@ export function MonthPicker({
   }, [open, parsed?.year]);
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || isMobile) return;
     const handlePointerDown = (e: MouseEvent) => {
       if (
         containerRef.current &&
@@ -624,38 +644,114 @@ export function MonthPicker({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, isMobile]);
 
   const displayLabel = parsed
     ? `${MONTH_NAMES_ID[parsed.month]} ${parsed.year}`
     : "";
 
-  return (
-    <div ref={containerRef} className="relative w-full">
-      <button
-        id={id}
-        type="button"
-        disabled={disabled}
-        aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
+  const monthTrigger = (
+    <button
+      id={id}
+      type="button"
+      disabled={disabled}
+      aria-expanded={open}
+      onClick={() => setOpen((prev) => !prev)}
+      className={cn(
+        "flex h-10 w-full items-center gap-2 rounded-xl border border-black/10 bg-white px-3 text-left text-sm transition-all hover:border-black/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F6BF6]/30 disabled:cursor-not-allowed disabled:opacity-50",
+        open && "border-[#4F6BF6] ring-2 ring-[#4F6BF6]/20",
+        className
+      )}
+    >
+      <CalendarIcon className="h-4 w-4 shrink-0 text-[#4F6BF6]" />
+      <span
         className={cn(
-          "flex h-10 w-full items-center gap-2 rounded-xl border border-black/10 bg-white px-3 text-left text-sm transition-all hover:border-black/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F6BF6]/30 disabled:cursor-not-allowed disabled:opacity-50",
-          open && "border-[#4F6BF6] ring-2 ring-[#4F6BF6]/20",
-          className
+          "truncate",
+          displayLabel
+            ? "font-medium text-[#141618]"
+            : "text-muted-foreground"
         )}
       >
-        <CalendarIcon className="h-4 w-4 shrink-0 text-[#4F6BF6]" />
-        <span
-          className={cn(
-            "truncate",
-            displayLabel
-              ? "font-medium text-[#141618]"
-              : "text-muted-foreground"
-          )}
+        {displayLabel || placeholder}
+      </span>
+    </button>
+  );
+
+  const monthCard = (
+    <div className="w-[min(288px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-20px_rgba(20,22,24,0.28)]">
+      <div className="flex items-center justify-between bg-midnight-luxury px-3.5 py-2.5 text-white">
+        <button
+          type="button"
+          onClick={() => setViewYear((y) => y - 1)}
+          aria-label="Tahun sebelumnya"
+          className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/15 transition-colors"
         >
-          {displayLabel || placeholder}
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="font-display text-sm font-bold tabular-nums">
+          {viewYear}
         </span>
-      </button>
+        <button
+          type="button"
+          onClick={() => setViewYear((y) => y + 1)}
+          aria-label="Tahun berikutnya"
+          className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/15 transition-colors"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1.5 p-3">
+        {MONTH_SHORT_ID.map((mLabel, idx) => {
+          const active = parsed?.year === viewYear && parsed?.month === idx;
+          return (
+            <button
+              key={mLabel}
+              type="button"
+              onClick={() => {
+                onChange(`${viewYear}-${pad2(idx + 1)}`);
+                setOpen(false);
+              }}
+              className={cn(
+                "rounded-xl py-2 text-xs font-semibold transition-colors",
+                active
+                  ? "bg-midnight-btn text-white shadow-sm"
+                  : "text-[#141618] hover:bg-[#EEF2FF] hover:text-[#4F6BF6]"
+              )}
+            >
+              {mLabel}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+        {monthTrigger}
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <div className="pointer-events-none fixed inset-0 z-[75] flex items-center justify-center p-4">
+            <DialogPrimitive.Content
+              aria-describedby={undefined}
+              className="pointer-events-auto outline-none duration-200 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-1"
+            >
+              <DialogPrimitive.Title className="sr-only">
+                Pilih Bulan
+              </DialogPrimitive.Title>
+              {monthCard}
+            </DialogPrimitive.Content>
+          </div>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {monthTrigger}
 
       <AnimatePresence>
         {open && (
@@ -664,54 +760,9 @@ export function MonthPicker({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
-            className="absolute left-0 top-full mt-2 z-50 w-[268px] overflow-hidden rounded-3xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-20px_rgba(20,22,24,0.28)]"
+            className="absolute left-0 top-full mt-2 z-50"
           >
-            <div className="flex items-center justify-between bg-midnight-luxury px-3.5 py-2.5 text-white">
-              <button
-                type="button"
-                onClick={() => setViewYear((y) => y - 1)}
-                aria-label="Tahun sebelumnya"
-                className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/15 transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="font-display text-sm font-bold tabular-nums">
-                {viewYear}
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewYear((y) => y + 1)}
-                aria-label="Tahun berikutnya"
-                className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/15 transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5 p-3">
-              {MONTH_SHORT_ID.map((mLabel, idx) => {
-                const active =
-                  parsed?.year === viewYear && parsed?.month === idx;
-                return (
-                  <button
-                    key={mLabel}
-                    type="button"
-                    onClick={() => {
-                      onChange(`${viewYear}-${pad2(idx + 1)}`);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "rounded-xl py-2 text-xs font-semibold transition-colors",
-                      active
-                        ? "bg-midnight-btn text-white shadow-sm"
-                        : "text-[#141618] hover:bg-[#EEF2FF] hover:text-[#4F6BF6]"
-                    )}
-                  >
-                    {mLabel}
-                  </button>
-                );
-              })}
-            </div>
+            {monthCard}
           </motion.div>
         )}
       </AnimatePresence>

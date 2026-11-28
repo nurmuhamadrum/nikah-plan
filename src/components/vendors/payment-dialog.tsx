@@ -353,7 +353,7 @@ export function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4 min-w-0">
           {errorMsg && (
             <p className="rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2 text-xs text-terracotta-800">
               {errorMsg}
@@ -466,29 +466,27 @@ export function PaymentDialog({
           </label>
 
           {/* Upload Bukti Bayar */}
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label htmlFor="receipt-upload">
               Bukti Bayar / Kwitansi (JPG, PNG, WebP, PDF)
             </Label>
 
-            <div className="rounded-xl border border-dashed border-sage/25 bg-cream-50/70 p-3.5 space-y-2.5">
+            <div className="rounded-xl border border-dashed border-sage/25 bg-cream-50/70 p-3.5 space-y-2.5 overflow-hidden min-w-0">
               <label
                 htmlFor="receipt-upload"
-                className="flex items-center justify-center gap-2 text-xs font-semibold text-sage-800 cursor-pointer py-1"
+                className="flex w-full min-w-0 items-center justify-center gap-2 text-xs font-semibold text-sage-800 cursor-pointer py-1"
               >
                 {compressing ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-terracotta" />
                 ) : (
-                  <Upload className="h-4 w-4 text-terracotta" />
+                  <Upload className="h-4 w-4 shrink-0 text-terracotta" />
                 )}
-                <span>
+                <span className="truncate">
                   {compressing
                     ? "Mengompresi gambar..."
-                    : selectedFile
-                      ? selectedFile.name
-                      : existingReceiptPath
-                        ? "Ganti file bukti bayar"
-                        : "Pilih foto struk / PDF (kompresi otomatis)"}
+                    : selectedFile || existingReceiptPath
+                      ? "Ganti file bukti bayar"
+                      : "Pilih foto struk / PDF (kompresi otomatis)"}
                 </span>
               </label>
               <input
@@ -506,8 +504,8 @@ export function PaymentDialog({
               />
 
               {(selectedFile || existingReceiptPath) && (
-                <div className="flex items-center justify-between gap-2.5 rounded-lg bg-white border border-sage/10 px-2.5 py-2 text-xs text-sage-700">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg bg-white border border-sage/10 px-2.5 py-2 text-xs text-sage-700 overflow-hidden">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
                     {previewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -518,28 +516,28 @@ export function PaymentDialog({
                     ) : (
                       <FileCheck2 className="h-4 w-4 text-sage shrink-0" />
                     )}
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-sage-900">
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <p className="block truncate font-medium text-sage-900">
                         {selectedFile
                           ? selectedFile.name
-                          : "Bukti bayar tersimpan di Supabase Storage"}
+                          : "Bukti bayar tersimpan"}
                       </p>
                       {compressedFile && (
-                        <p className="text-[11px] text-sage-600">
+                        <p className="flex flex-wrap items-center gap-x-1 text-[11px] text-sage-600 leading-snug">
                           {compressedFile.wasCompressed &&
                           compressedFile.savedPercent > 0 ? (
                             <>
-                              {formatFileSize(compressedFile.originalSize)} →{" "}
+                              <span>{formatFileSize(compressedFile.originalSize)} →</span>
                               <strong className="text-emerald-700">
                                 {formatFileSize(compressedFile.compressedSize)}
-                              </strong>{" "}
+                              </strong>
                               <span className="text-emerald-700 font-semibold">
                                 (Hemat {compressedFile.savedPercent}%)
                               </span>
                             </>
                           ) : (
                             <>
-                              Ukuran siap unggah:{" "}
+                              <span>Ukuran siap unggah:</span>
                               <strong>
                                 {formatFileSize(compressedFile.compressedSize)}
                               </strong>
@@ -565,12 +563,12 @@ export function PaymentDialog({
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
             {payment && (
               <Button
                 type="button"
                 variant="outline"
-                className="text-terracotta-700 border-terracotta/30 hover:bg-terracotta-50 sm:mr-auto"
+                className="w-full sm:w-auto text-terracotta-700 border-terracotta/30 hover:bg-terracotta-50 sm:mr-auto"
                 onClick={handleDelete}
                 disabled={deleting || saving}
               >
@@ -585,6 +583,7 @@ export function PaymentDialog({
             <Button
               type="button"
               variant="ghost"
+              className="w-full sm:w-auto"
               onClick={() => onOpenChange(false)}
               disabled={saving || deleting}
             >
@@ -592,6 +591,7 @@ export function PaymentDialog({
             </Button>
             <Button
               type="submit"
+              className="w-full sm:w-auto"
               disabled={saving || deleting || compressing || !label.trim()}
             >
               {saving ? (

@@ -277,11 +277,12 @@ export function VendorsClient({
           <SyncStatusBadge />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="w-full sm:w-auto"
             disabled={weddingCategories.length === 0}
             onClick={() => setTemplateDialogOpen(true)}
           >
@@ -292,6 +293,7 @@ export function VendorsClient({
             type="button"
             variant="outline"
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => {
               setEditingCategory(null);
               setCatDialogOpen(true);
@@ -303,6 +305,7 @@ export function VendorsClient({
           <Button
             type="button"
             size="sm"
+            className="col-span-2 sm:col-span-1 w-full sm:w-auto"
             disabled={weddingCategories.length === 0}
             onClick={() => {
               setEditingVendor(null);
@@ -316,33 +319,33 @@ export function VendorsClient({
       </div>
 
       {/* Ringkasan Estimasi vs Deal vs Aktual */}
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <Card className="glass-strong rounded-2xl">
-          <CardContent className="p-3.5">
-            <p className="text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between sm:block">
+            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
               Estimasi Awal
             </p>
-            <p className="text-sm sm:text-base font-bold text-sage-900 mt-0.5 truncate">
+            <p className="text-sm sm:text-base font-bold text-sage-900 tabular-nums sm:mt-0.5 sm:truncate">
               {formatIDR(summary.totalEstimated)}
             </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl border-sage/10 bg-white">
-          <CardContent className="p-3.5">
-            <p className="text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between sm:block">
+            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
               Harga Deal
             </p>
-            <p className="text-sm sm:text-base font-bold text-terracotta-700 mt-0.5 truncate">
+            <p className="text-sm sm:text-base font-bold text-terracotta-700 tabular-nums sm:mt-0.5 sm:truncate">
               {formatIDR(summary.totalDeal)}
             </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl border-sage/10 bg-white">
-          <CardContent className="p-3.5">
-            <p className="text-[11px] font-medium text-sage-600">
+          <CardContent className="p-3.5 flex items-center justify-between sm:block">
+            <p className="text-xs sm:text-[11px] font-medium text-sage-600">
               Sudah Dibayar
             </p>
-            <p className="text-sm sm:text-base font-bold text-sage-800 mt-0.5 truncate">
+            <p className="text-sm sm:text-base font-bold text-sage-800 tabular-nums sm:mt-0.5 sm:truncate">
               {formatIDR(summary.totalPaid)}
             </p>
           </CardContent>
@@ -393,11 +396,11 @@ export function VendorsClient({
             Number(activeCategoryObj.allocated_amount) || 0
           );
           return (
-          <div className="flex items-center justify-between gap-2 rounded-2xl border border-sage/12 bg-sage-50/70 px-4 py-2.5 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border border-sage/12 bg-sage-50/70 px-4 py-3 text-xs">
             <div className="flex items-center gap-2.5 min-w-0">
               <CategoryIconBadge
                 iconKey={activeCategoryObj.icon}
-                className="h-8 w-8"
+                className="h-8 w-8 shrink-0"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -425,7 +428,7 @@ export function VendorsClient({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 text-xs shrink-0"
+              className="h-8 text-xs w-full sm:w-auto shrink-0"
               onClick={() => {
                 setEditingCategory(activeCategoryObj);
                 setCatDialogOpen(true);
@@ -451,7 +454,7 @@ export function VendorsClient({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
           {(["ALL", "JOINT", "GROOM_FAMILY", "BRIDE_FAMILY", "ANGPAO"] as const).map(
             (key) => {
               const active = fundingFilter === key;
@@ -488,6 +491,7 @@ export function VendorsClient({
               <Button
                 type="button"
                 size="sm"
+                className="w-full sm:w-auto"
                 disabled={weddingCategories.length === 0}
                 onClick={() => {
                   setEditingVendor(null);
@@ -501,6 +505,7 @@ export function VendorsClient({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
                 disabled={weddingCategories.length === 0}
                 onClick={() => setTemplateDialogOpen(true)}
               >
@@ -618,31 +623,31 @@ export function VendorsClient({
                   </div>
 
                   {/* Estimasi Awal vs Harga Deal + Selisih */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-2xl bg-cream-50 border border-sage/8 p-3 text-xs">
-                    <div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 rounded-2xl bg-cream-50 border border-sage/8 p-3 text-xs">
+                    <div className="min-w-0">
                       <p className="text-[10px] text-sage-600">Estimasi Awal</p>
-                      <p className="font-semibold text-sage-800 mt-0.5">
+                      <p className="font-semibold text-sage-800 tabular-nums mt-0.5 truncate">
                         {formatIDR(est)}
                       </p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[10px] text-sage-600">Harga Deal</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="font-bold text-sage-900">
+                      <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                        <p className="font-bold text-sage-900 tabular-nums">
                           {deal > 0 ? formatIDR(deal) : "Belum deal"}
                         </p>
                         {variance !== 0 && (
                           <span
-                            className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
                               variance < 0
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "bg-terracotta-50 text-terracotta-700"
                             }`}
                           >
                             {variance < 0 ? (
-                              <TrendingDown className="h-2.5 w-2.5" />
+                              <TrendingDown className="h-2.5 w-2.5 shrink-0" />
                             ) : (
-                              <TrendingUp className="h-2.5 w-2.5" />
+                              <TrendingUp className="h-2.5 w-2.5 shrink-0" />
                             )}
                             {variance < 0 ? "Hemat" : "+"}
                             {formatIDR(Math.abs(variance))}
@@ -650,11 +655,11 @@ export function VendorsClient({
                         )}
                       </div>
                     </div>
-                    <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-sage/10">
+                    <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-sage/10 min-w-0">
                       <p className="text-[10px] text-sage-600">
                         Terbayar / Sisa
                       </p>
-                      <p className="font-bold text-sage-900 mt-0.5">
+                      <p className="font-bold text-sage-900 tabular-nums mt-0.5">
                         {formatIDR(paidSum)}{" "}
                         <span className="font-normal text-sage-500">
                           / sisa {formatIDR(remainingPay)}
@@ -672,7 +677,7 @@ export function VendorsClient({
                   {/* Multi-Termin Section */}
                   {isExpanded && (
                     <div className="space-y-2.5 pt-1 border-t border-sage/10">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-xs font-bold text-sage-800">
                           Jadwal Termin Pembayaran ({itemPayments.length})
                         </p>
@@ -680,7 +685,7 @@ export function VendorsClient({
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="h-7 px-3 text-[11px]"
+                          className="h-8 px-3 text-[11px]"
                           onClick={() => {
                             setPaymentTargetItem(item);
                             setEditingPayment(null);
@@ -704,127 +709,130 @@ export function VendorsClient({
                             return (
                               <div
                                 key={pay.id}
-                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border p-3 transition-colors ${
+                                className={`rounded-2xl border p-3 space-y-2.5 transition-colors ${
                                   pay.is_paid
                                     ? "border-sage/15 bg-sage-50/40"
                                     : "border-sage/12 bg-white"
                                 }`}
                               >
-                                <div className="flex items-start gap-2.5 min-w-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleTogglePaymentPaid(pay)}
-                                    className="mt-0.5 shrink-0 text-sage hover:scale-110 transition-transform"
-                                    title={
-                                      pay.is_paid
-                                        ? "Tandai belum lunas"
-                                        : "Tandai sudah lunas"
-                                    }
-                                  >
-                                    {pay.is_paid ? (
-                                      <CheckCircle2 className="h-5 w-5 text-sage" />
-                                    ) : (
-                                      <Circle className="h-5 w-5 text-sage-300" />
-                                    )}
-                                  </button>
-
-                                  <div className="min-w-0 space-y-1">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <span
-                                        className={`text-sm font-semibold ${
-                                          pay.is_paid
-                                            ? "line-through text-sage-600"
-                                            : "text-sage-900"
-                                        }`}
-                                      >
-                                        {pay.label}
-                                      </span>
-                                      <span
-                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${fundMeta.badgeClass}`}
-                                      >
-                                        {fundMeta.label}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-sage-600">
-                                      <span className="font-bold text-sage-900">
-                                        {formatIDR(Number(pay.amount))}
-                                      </span>
-                                      {pay.due_date && (
-                                        <span className="inline-flex items-center gap-1">
-                                          <Calendar className="h-3 w-3" />
-                                          Jatuh tempo:{" "}
-                                          {new Date(
-                                            pay.due_date
-                                          ).toLocaleDateString("id-ID", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric",
-                                          })}
-                                        </span>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                  <div className="flex items-start gap-2.5 min-w-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTogglePaymentPaid(pay)}
+                                      className="mt-0.5 shrink-0 text-sage hover:scale-110 transition-transform"
+                                      title={
+                                        pay.is_paid
+                                          ? "Tandai belum lunas"
+                                          : "Tandai sudah lunas"
+                                      }
+                                    >
+                                      {pay.is_paid ? (
+                                        <CheckCircle2 className="h-5 w-5 text-sage" />
+                                      ) : (
+                                        <Circle className="h-5 w-5 text-sage-300" />
                                       )}
-                                      {pay.is_paid && pay.paid_date && (
-                                        <span className="text-emerald-700 font-medium">
-                                          &bull; Lunas{" "}
-                                          {new Date(
-                                            pay.paid_date
-                                          ).toLocaleDateString("id-ID", {
-                                            day: "numeric",
-                                            month: "short",
-                                          })}
+                                    </button>
+
+                                    <div className="min-w-0 space-y-1">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <span
+                                          className={`text-sm font-semibold ${
+                                            pay.is_paid
+                                              ? "line-through text-sage-600"
+                                              : "text-sage-900"
+                                          }`}
+                                        >
+                                          {pay.label}
                                         </span>
-                                      )}
-                                    </div>
-                                    {!pay.is_paid && pay.due_date && (
-                                      <div className="pt-1">
-                                        <PaymentReminderButtons
-                                          reminder={{
-                                            paymentId: pay.id,
-                                            label: pay.label,
-                                            vendorTitle: item.title,
-                                            amount: Number(pay.amount) || 0,
-                                            funding: pay.funding,
-                                            dueDate: pay.due_date,
-                                          }}
-                                        />
+                                        <span
+                                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${fundMeta.badgeClass}`}
+                                        >
+                                          {fundMeta.label}
+                                        </span>
                                       </div>
+
+                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-sage-600">
+                                        <span className="font-bold text-sage-900 tabular-nums">
+                                          {formatIDR(Number(pay.amount))}
+                                        </span>
+                                        {pay.due_date && (
+                                          <span className="inline-flex items-center gap-1">
+                                            <Calendar className="h-3 w-3 shrink-0" />
+                                            Jatuh tempo:{" "}
+                                            {new Date(
+                                              pay.due_date
+                                            ).toLocaleDateString("id-ID", {
+                                              day: "numeric",
+                                              month: "short",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        )}
+                                        {pay.is_paid && pay.paid_date && (
+                                          <span className="text-emerald-700 font-medium">
+                                            &bull; Lunas{" "}
+                                            {new Date(
+                                              pay.paid_date
+                                            ).toLocaleDateString("id-ID", {
+                                              day: "numeric",
+                                              month: "short",
+                                            })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t border-sage/10 sm:border-t-0 shrink-0">
+                                    {pay.receipt_url && (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 px-3 text-[11px]"
+                                        onClick={() =>
+                                          setReceiptPreview({
+                                            open: true,
+                                            path: pay.receipt_url,
+                                            title: `${pay.label} — ${item.title}`,
+                                          })
+                                        }
+                                      >
+                                        <Paperclip className="h-3 w-3 text-terracotta" />
+                                        Bukti
+                                      </Button>
                                     )}
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 px-3 text-[11px]"
+                                      onClick={() => {
+                                        setPaymentTargetItem(item);
+                                        setEditingPayment(pay);
+                                        setPaymentDialogOpen(true);
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                                  {pay.receipt_url && (
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 px-2.5 text-[11px]"
-                                      onClick={() =>
-                                        setReceiptPreview({
-                                          open: true,
-                                          path: pay.receipt_url,
-                                          title: `${pay.label} — ${item.title}`,
-                                        })
-                                      }
-                                    >
-                                      <Paperclip className="h-3 w-3 text-terracotta" />
-                                      Bukti
-                                    </Button>
-                                  )}
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 px-2.5 text-[11px]"
-                                    onClick={() => {
-                                      setPaymentTargetItem(item);
-                                      setEditingPayment(pay);
-                                      setPaymentDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
-                                </div>
+                                {!pay.is_paid && pay.due_date && (
+                                  <div className="pl-0 sm:pl-7">
+                                    <PaymentReminderButtons
+                                      reminder={{
+                                        paymentId: pay.id,
+                                        label: pay.label,
+                                        vendorTitle: item.title,
+                                        amount: Number(pay.amount) || 0,
+                                        funding: pay.funding,
+                                        dueDate: pay.due_date,
+                                      }}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

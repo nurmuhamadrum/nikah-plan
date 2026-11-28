@@ -242,7 +242,7 @@ export function OnboardingWizard({
   };
 
   return (
-    <div className="relative min-h-screen px-4 py-6 sm:py-10 overflow-x-hidden">
+    <div className="relative min-h-[100dvh] px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:py-10 overflow-x-clip">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-72 -z-10 bg-gradient-to-b from-[#E5EAF8] via-[#EFF2FA] to-transparent"
@@ -263,22 +263,20 @@ export function OnboardingWizard({
                 <div key={s.id} className="flex-1 space-y-1.5">
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-300/80">
                     <motion.div
-                      className={`h-full rounded-full ${
-                        done ? "bg-sage" : active ? "bg-terracotta" : "bg-transparent"
-                      }`}
+                      className={`h-full rounded-full ${done ? "bg-sage" : active ? "bg-terracotta" : "bg-transparent"
+                        }`}
                       initial={false}
                       animate={{ width: done || active ? "100%" : "0%" }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     />
                   </div>
                   <p
-                    className={`text-[10px] sm:text-[11px] font-semibold truncate ${
-                      active
+                    className={`text-[10px] sm:text-[11px] font-semibold truncate ${active
                         ? "text-terracotta-700"
                         : done
                           ? "text-sage-800"
                           : "text-sage-400"
-                    }`}
+                      }`}
                   >
                     {s.id}. {s.title}
                   </p>
@@ -306,632 +304,630 @@ export function OnboardingWizard({
                 exit={{ opacity: 0, x: -14 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               >
-            {/* STEP 1: PROFIL & UNDANG PASANGAN */}
-            {step === 1 && (
-              <div className="space-y-5">
-                <div className="text-center space-y-1">
-                  <Badge variant="softSage" className="mb-1">
-                    Langkah 1 dari 4
-                  </Badge>
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
-                    Profil &amp; Undang Pasangan
-                  </h1>
-                  <p className="text-xs sm:text-sm text-sage-600">
-                    Atur nama panggilan kalian berdua dan undang pasangan agar
-                    bisa mengisi budget bersama secara real-time.
-                  </p>
-                </div>
+                {/* STEP 1: PROFIL & UNDANG PASANGAN */}
+                {step === 1 && (
+                  <div className="space-y-5">
+                    <div className="text-center space-y-1">
+                      <Badge variant="softSage" className="mb-1">
+                        Langkah 1 dari 4
+                      </Badge>
+                      <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
+                        Profil &amp; Undang Pasangan
+                      </h1>
+                      <p className="text-xs sm:text-sm text-sage-600">
+                        Atur nama panggilan kalian berdua dan undang pasangan agar
+                        bisa mengisi budget bersama secara real-time.
+                      </p>
+                    </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="couple-title">Nama Pasangan</Label>
-                    <Input
-                      id="couple-title"
-                      value={coupleTitle}
-                      onChange={(e) => setCoupleTitle(e.target.value)}
-                      placeholder="Contoh: Andi & Rina"
-                    />
-                  </div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="couple-title">Nama Pasangan</Label>
+                        <Input
+                          id="couple-title"
+                          value={coupleTitle}
+                          onChange={(e) => setCoupleTitle(e.target.value)}
+                          placeholder="Contoh: Andi & Rina"
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="wedding-date">
-                      Rencana Tanggal Pernikahan (Opsional)
-                    </Label>
-                    <DatePicker
-                      id="wedding-date"
-                      value={weddingDate}
-                      onChange={setWeddingDate}
-                      placeholder="Pilih rencana tanggal pernikahan..."
-                    />
-                  </div>
-                </div>
-
-                {/* Invite Partner Box */}
-                <div className="rounded-2xl border border-sage/15 bg-cream-50 p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-terracotta-50 text-terracotta">
-                        <HeartHandshake className="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p className="text-xs font-bold text-sage-900">
-                          Undang Pasangan (Gratis)
-                        </p>
-                        <p className="text-[11px] text-sage-600">
-                          {memberCount >= 2
-                            ? "Pasangan sudah terhubung!"
-                            : "Slot pasangan tersedia (1 / 2 anggota)"}
-                        </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="wedding-date">
+                          Rencana Tanggal Pernikahan (Opsional)
+                        </Label>
+                        <DatePicker
+                          id="wedding-date"
+                          value={weddingDate}
+                          onChange={setWeddingDate}
+                          placeholder="Pilih rencana tanggal pernikahan..."
+                        />
                       </div>
                     </div>
-                    <span className="rounded-lg bg-white border border-sage/15 px-2.5 py-1 font-mono text-xs font-bold tracking-wider text-sage-900">
-                      {workspace.invite_code}
-                    </span>
-                  </div>
 
-                  <div className="rounded-xl bg-white border border-sage/10 px-3 py-2 text-xs font-mono text-sage-700 truncate">
-                    {inviteUrl}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={handleCopyInvite}
-                    >
-                      {copiedLink ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-sage" />
-                          Tautan Tersalin!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          Salin Tautan
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      asChild
-                      type="button"
-                      variant="sage"
-                      size="sm"
-                      className="w-full"
-                    >
-                      <a
-                        href={whatsappShareUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        Share via WhatsApp
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full"
-                  disabled={!coupleTitle.trim()}
-                  onClick={() => setStep(2)}
-                >
-                  Lanjut ke Alokasi Budget
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {/* STEP 2: SMART WEDDING BUDGET ALLOCATOR */}
-            {step === 2 && (
-              <div className="space-y-5">
-                <div className="text-center space-y-1">
-                  <Badge variant="softSage" className="mb-1">
-                    Langkah 2 dari 4
-                  </Badge>
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
-                    Atur Budget Pernikahanmu
-                  </h1>
-                  <p className="text-xs sm:text-sm text-sage-600">
-                    Sistem menghitung estimasi alokasi ideal berdasarkan total
-                    bujet &amp; jumlah tamu Anda.
-                  </p>
-                </div>
-
-                {/* Target Budget Card */}
-                <div className="rounded-2xl border border-sage/12 bg-cream-50 p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="budget-input" className="text-xs text-sage-600">
-                      Target Budget Pernikahan
-                    </Label>
-                    <span className="text-xs font-semibold text-terracotta-700">
-                      ~{formatIDR(budgetTarget / Math.max(1, guestEstimate))}/pax
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-sage-700">Rp</span>
-                    <CurrencyInput
-                      id="budget-input"
-                      placeholder="150.000.000"
-                      value={budgetTarget}
-                      onValueChange={(raw) => {
-                        const val = Number(raw);
-                        if (!Number.isNaN(val) && val >= 0) {
-                          setBudgetTarget(val);
-                        }
-                      }}
-                      className="text-lg font-bold text-sage-900 h-11"
-                    />
-                  </div>
-
-                  <Slider
-                    value={[Math.min(500000000, Math.max(30000000, budgetTarget))]}
-                    min={30000000}
-                    max={500000000}
-                    step={5000000}
-                    onValueChange={([v]) => setBudgetTarget(v)}
-                  />
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {BUDGET_PRESETS.map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setBudgetTarget(preset)}
-                        className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                          budgetTarget === preset
-                            ? "bg-sage text-white"
-                            : "bg-white border border-sage/15 text-sage-700 hover:bg-sage-50"
-                        }`}
-                      >
-                        Rp {preset / 1000000} Jt
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Guest Estimate Slider */}
-                <div className="space-y-2.5 px-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-sage-800">
-                      <Users className="h-4 w-4 text-sage" />
-                      Jumlah Tamu (Pax)
-                    </span>
-                    <span className="font-bold text-sage-900">
-                      {formatNumberID(guestEstimate)} pax
-                    </span>
-                  </div>
-                  <Slider
-                    value={[guestEstimate]}
-                    min={50}
-                    max={1500}
-                    step={25}
-                    onValueChange={([v]) => setGuestEstimate(v)}
-                  />
-                </div>
-
-                {/* Sumber Dana Aktif */}
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-sage-700">
-                    Sumber Dana yang Terlibat
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: "JOINT", label: "Tabungan Bersama" },
-                      { id: "GROOM_FAMILY", label: "Pihak Pria" },
-                      { id: "BRIDE_FAMILY", label: "Pihak Wanita" },
-                    ].map((src) => {
-                      const active = activeFunding.includes(src.id);
-                      return (
-                        <button
-                          key={src.id}
-                          type="button"
-                          onClick={() => toggleFunding(src.id)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
-                            active
-                              ? "border-sage bg-sage text-white"
-                              : "border-sage/20 bg-white text-sage-700 hover:bg-sage-50"
-                          }`}
-                        >
-                          {active && <Check className="h-3 w-3" />}
-                          {src.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Donut Chart + Editable Percentages */}
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-1">
-                  <div className="sm:col-span-5 relative mx-auto h-44 w-44">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={allocations}
-                          dataKey="percentage"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={76}
-                          paddingAngle={2}
-                          strokeWidth={0}
-                        >
-                          {allocations.map((entry) => (
-                            <Cell key={entry.name} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-[11px] font-medium text-sage-600">
-                        Estimasi
-                      </span>
-                      <span className="text-sm font-bold text-sage-900">
-                        Alokasi
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold ${
-                          totalPct === 100
-                            ? "text-sage-600"
-                            : "text-terracotta-700"
-                        }`}
-                      >
-                        Total {totalPct}%
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-7 space-y-2">
-                    {allocations.map((item, idx) => (
-                      <div
-                        key={item.name}
-                        className="flex items-center justify-between gap-2 rounded-xl border border-sage/10 bg-cream-50/70 px-3 py-2"
-                      >
+                    {/* Invite Partner Box */}
+                    <div className="rounded-2xl border border-sage/15 bg-cream-50 p-4 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: item.color }}
-                          />
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-terracotta-50 text-terracotta">
+                            <HeartHandshake className="h-4 w-4" />
+                          </span>
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-sage-900 truncate">
-                              {item.name}
+                            <p className="text-xs font-bold text-sage-900">
+                              Undang Pasangan (Gratis)
                             </p>
                             <p className="text-[11px] text-sage-600">
-                              {formatIDR(item.amount)}
+                              {memberCount >= 2
+                                ? "Pasangan sudah terhubung!"
+                                : "Slot pasangan tersedia (1 / 2 anggota)"}
                             </p>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={item.percentage}
-                            onChange={(e) =>
-                              handlePercentageChange(
-                                idx,
-                                Number(e.target.value) || 0
-                              )
-                            }
-                            aria-label={`Persentase ${item.name}`}
-                            className="w-12 rounded-lg border border-sage/20 bg-white px-1.5 py-1 text-right text-xs font-bold text-sage-900"
-                          />
-                          <span className="text-xs text-sage-600">%</span>
-                        </div>
+                        <span className="shrink-0 rounded-lg bg-white border border-sage/15 px-2.5 py-1 font-mono text-xs font-bold tracking-wider text-sage-900">
+                          {workspace.invite_code}
+                        </span>
                       </div>
-                    ))}
-                    {customPercentages && (
-                      <button
-                        type="button"
-                        onClick={() => setCustomPercentages(null)}
-                        className="text-[11px] font-semibold text-terracotta hover:underline"
-                      >
-                        Reset ke rekomendasi pintar
-                      </button>
-                    )}
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="shrink-0"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali
-                  </Button>
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="flex-1"
-                    onClick={() => setStep(3)}
-                  >
-                    Lanjut ke Honeymoon
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+                      <div className="rounded-xl bg-white border border-sage/10 px-3 py-2 text-xs font-mono text-sage-700 truncate">
+                        {inviteUrl}
+                      </div>
 
-            {/* STEP 3: SETUP HONEYMOON */}
-            {step === 3 && (
-              <div className="space-y-5">
-                <div className="text-center space-y-1">
-                  <Badge variant="softTerracotta" className="mb-1">
-                    Langkah 3 dari 4
-                  </Badge>
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
-                    Rencana Honeymoon
-                  </h1>
-                  <p className="text-xs sm:text-sm text-sage-600">
-                    Siapkan dompet perjalanan &amp; kalkulator uang saku harian
-                    bulan madu Anda (dapat diubah kapan saja).
-                  </p>
-                </div>
-
-                {!isCompletePass ? (
-                  <div className="rounded-2xl border border-sage/15 bg-cream-50 p-5 text-center space-y-3">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
-                      <Lock className="h-6 w-6" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={handleCopyInvite}
+                        >
+                          {copiedLink ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-sage" />
+                              Tautan Tersalin!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" />
+                              Salin Tautan
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          asChild
+                          type="button"
+                          variant="sage"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <a
+                            href={whatsappShareUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Share via WhatsApp
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="font-semibold text-sage-900">
-                      Khusus Paket Complete Couple Pass
-                    </h3>
-                    <p className="text-xs text-sage-600 leading-relaxed">
-                      Anda saat ini menggunakan <strong>Wedding Only Pass</strong>.
-                      Anda bisa langsung menyelesaikan setup anggaran pernikahan
-                      terlebih dahulu.
-                    </p>
+
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="w-full"
+                      disabled={!coupleTitle.trim()}
+                      onClick={() => setStep(2)}
+                    >
+                      Lanjut ke Alokasi Budget
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hm-dest">Destinasi Honeymoon</Label>
-                      <div className="relative">
-                        <Plane className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
-                        <Input
-                          id="hm-dest"
-                          placeholder="Contoh: Jepang (Tokyo & Kyoto) / Bali / Swiss"
-                          value={hmDestination}
-                          onChange={(e) => {
-                            setHmDestination(e.target.value);
-                            if (skipHoneymoon && e.target.value.trim()) {
-                              setSkipHoneymoon(false);
+                )}
+
+                {/* STEP 2: SMART WEDDING BUDGET ALLOCATOR */}
+                {step === 2 && (
+                  <div className="space-y-5">
+                    <div className="text-center space-y-1">
+                      <Badge variant="softSage" className="mb-1">
+                        Langkah 2 dari 4
+                      </Badge>
+                      <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
+                        Atur Budget Pernikahanmu
+                      </h1>
+                      <p className="text-xs sm:text-sm text-sage-600">
+                        Sistem menghitung estimasi alokasi ideal berdasarkan total
+                        bujet &amp; jumlah tamu Anda.
+                      </p>
+                    </div>
+
+                    {/* Target Budget Card */}
+                    <div className="rounded-2xl border border-sage/12 bg-cream-50 p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor="budget-input" className="text-xs text-sage-600">
+                          Target Budget Pernikahan
+                        </Label>
+                        <span className="text-xs font-semibold text-terracotta-700">
+                          ~{formatIDR(budgetTarget / Math.max(1, guestEstimate))}/pax
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-sage-700">Rp</span>
+                        <CurrencyInput
+                          id="budget-input"
+                          placeholder="150.000.000"
+                          value={budgetTarget}
+                          onValueChange={(raw) => {
+                            const val = Number(raw);
+                            if (!Number.isNaN(val) && val >= 0) {
+                              setBudgetTarget(val);
                             }
                           }}
-                          className="pl-10"
+                          className="text-lg font-bold text-sage-900 h-11"
                         />
+                      </div>
+
+                      <Slider
+                        value={[Math.min(500000000, Math.max(30000000, budgetTarget))]}
+                        min={30000000}
+                        max={500000000}
+                        step={5000000}
+                        onValueChange={([v]) => setBudgetTarget(v)}
+                      />
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {BUDGET_PRESETS.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setBudgetTarget(preset)}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${budgetTarget === preset
+                                ? "bg-sage text-white"
+                                : "bg-white border border-sage/15 text-sage-700 hover:bg-sage-50"
+                              }`}
+                          >
+                            Rp {preset / 1000000} Jt
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="hm-start">Tanggal Berangkat</Label>
-                        <DatePicker
-                          id="hm-start"
-                          value={hmStartDate}
-                          onChange={setHmStartDate}
-                          placeholder="Pilih tgl berangkat..."
-                        />
+                    {/* Guest Estimate Slider */}
+                    <div className="space-y-2.5 px-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="inline-flex items-center gap-1.5 font-medium text-sage-800">
+                          <Users className="h-4 w-4 text-sage" />
+                          Jumlah Tamu (Pax)
+                        </span>
+                        <span className="font-bold text-sage-900">
+                          {formatNumberID(guestEstimate)} pax
+                        </span>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="hm-end">Tanggal Pulang</Label>
-                        <DatePicker
-                          id="hm-end"
-                          value={hmEndDate}
-                          minDate={hmStartDate || undefined}
-                          onChange={setHmEndDate}
-                          placeholder="Pilih tgl pulang..."
-                        />
-                      </div>
+                      <Slider
+                        value={[guestEstimate]}
+                        min={50}
+                        max={1500}
+                        step={25}
+                        onValueChange={([v]) => setGuestEstimate(v)}
+                      />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Mata Uang Tujuan</Label>
-                        <Select
-                          value={hmCurrency}
-                          onValueChange={handleCurrencyChange}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih mata uang" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {HONEYMOON_CURRENCIES.map((cur) => (
-                              <SelectItem key={cur.code} value={cur.code}>
-                                {cur.code} ({cur.symbol}) — {cur.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="hm-rate">
-                          Kurs ke IDR (1 {hmCurrency})
-                        </Label>
-                        <CurrencyInput
-                          id="hm-rate"
-                          allowDecimal
-                          value={hmExchangeRate}
-                          onValueChange={(raw) =>
-                            setHmExchangeRate(Number(raw) || 1)
-                          }
-                        />
-                      </div>
-                    </div>
-
+                    {/* Sumber Dana Aktif */}
                     <div className="space-y-2">
-                      <Label htmlFor="hm-budget">
-                        Target Dana Honeymoon (IDR)
-                      </Label>
-                      <div className="relative">
-                        <Wallet className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
-                        <CurrencyInput
-                          id="hm-budget"
-                          placeholder="35.000.000"
-                          value={hmBudget}
-                          onValueChange={(raw) =>
-                            setHmBudget(Number(raw) || 0)
-                          }
-                          className="pl-10 font-bold"
-                        />
+                      <p className="text-xs font-semibold text-sage-700">
+                        Sumber Dana yang Terlibat
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { id: "JOINT", label: "Tabungan Bersama" },
+                          { id: "GROOM_FAMILY", label: "Pihak Pria" },
+                          { id: "BRIDE_FAMILY", label: "Pihak Wanita" },
+                        ].map((src) => {
+                          const active = activeFunding.includes(src.id);
+                          return (
+                            <button
+                              key={src.id}
+                              type="button"
+                              onClick={() => toggleFunding(src.id)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-colors ${active
+                                  ? "border-sage bg-sage text-white"
+                                  : "border-sage/20 bg-white text-sage-700 hover:bg-sage-50"
+                                }`}
+                            >
+                              {active && <Check className="h-3 w-3" />}
+                              {src.label}
+                            </button>
+                          );
+                        })}
                       </div>
-                      {tripDays > 0 && hmBudget > 0 && (
-                        <p className="text-xs text-sage-600">
-                          Durasi <strong>{tripDays} hari</strong> &bull; Estimasi
-                          budget rata-rata{" "}
-                          <strong>{formatIDR(hmBudget / tripDays)}/hari</strong>
-                        </p>
-                      )}
+                    </div>
+
+                    {/* Donut Chart + Editable Percentages */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-1">
+                      <div className="sm:col-span-5 relative mx-auto h-44 w-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={allocations}
+                              dataKey="percentage"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={76}
+                              paddingAngle={2}
+                              strokeWidth={0}
+                            >
+                              {allocations.map((entry) => (
+                                <Cell key={entry.name} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                          <span className="text-[11px] font-medium text-sage-600">
+                            Estimasi
+                          </span>
+                          <span className="text-sm font-bold text-sage-900">
+                            Alokasi
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold ${totalPct === 100
+                                ? "text-sage-600"
+                                : "text-terracotta-700"
+                              }`}
+                          >
+                            Total {totalPct}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-7 space-y-2">
+                        {allocations.map((item, idx) => (
+                          <div
+                            key={item.name}
+                            className="flex items-center justify-between gap-2 rounded-xl border border-sage/10 bg-cream-50/70 px-3 py-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-sage-900 truncate">
+                                  {item.name}
+                                </p>
+                                <p className="text-[11px] text-sage-600">
+                                  {formatIDR(item.amount)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={item.percentage}
+                                onChange={(e) =>
+                                  handlePercentageChange(
+                                    idx,
+                                    Number(e.target.value) || 0
+                                  )
+                                }
+                                aria-label={`Persentase ${item.name}`}
+                                className="w-12 rounded-lg border border-sage/20 bg-white px-1.5 py-1 text-right text-xs font-bold text-sage-900"
+                              />
+                              <span className="text-xs text-sage-600">%</span>
+                            </div>
+                          </div>
+                        ))}
+                        {customPercentages && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomPercentages(null)}
+                            className="text-[11px] font-semibold text-terracotta hover:underline"
+                          >
+                            Reset ke rekomendasi pintar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setStep(1)}
+                        className="w-full sm:w-auto shrink-0"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Kembali
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="w-full sm:flex-1 px-5 sm:px-7"
+                        onClick={() => setStep(3)}
+                      >
+                        Lanjut ke Honeymoon
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(2)}
-                    className="w-full sm:w-auto"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali
-                  </Button>
-                  {isCompletePass && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => {
-                        setSkipHoneymoon(true);
-                        setStep(4);
-                      }}
-                      className="w-full sm:w-auto text-sage-600"
-                    >
-                      Lewati dulu
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="w-full sm:flex-1"
-                    onClick={() => {
-                      if (isCompletePass && hmDestination.trim()) {
-                        setSkipHoneymoon(false);
-                      }
-                      setStep(4);
-                    }}
-                  >
-                    Tinjau Ringkasan
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: SELESAI & KONFIRMASI */}
-            {step === 4 && (
-              <div className="space-y-5">
-                <div className="text-center space-y-2">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sage text-white shadow-sm">
-                    <Sparkles className="h-7 w-7" />
-                  </div>
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
-                    Rencana Siap Dibuat!
-                  </h1>
-                  <p className="text-xs sm:text-sm text-sage-600">
-                    Periksa kembali ringkasan awal sebelum masuk ke Dashboard{" "}
-                    <strong>{coupleTitle}</strong>.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-sage/12 bg-cream-50 p-4 space-y-3 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sage-600">Nama Pasangan</span>
-                    <span className="font-bold text-sage-900">{coupleTitle}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sage-600">Tanggal Nikah</span>
-                    <span className="font-semibold text-sage-900">
-                      {weddingDate
-                        ? new Date(weddingDate).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })
-                        : "Belum ditentukan"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sage-600">Target Budget Nikah</span>
-                    <span className="font-bold text-sage-900">
-                      {formatIDR(budgetTarget)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sage-600">Estimasi Tamu</span>
-                    <span className="font-semibold text-sage-900">
-                      {formatNumberID(guestEstimate)} pax
-                    </span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sage-600">Pos Anggaran Otomatis</span>
-                    <span className="font-semibold text-sage-900">
-                      {allocations.length} kategori pernikahan
-                    </span>
-                  </div>
-                  {isCompletePass && !skipHoneymoon && hmDestination.trim() && (
-                    <div className="pt-2 border-t border-sage/10 flex justify-between gap-3">
-                      <span className="text-sage-600">Honeymoon</span>
-                      <span className="font-semibold text-terracotta-700 text-right">
-                        {hmDestination}
-                        {tripDays > 0 ? ` (${tripDays} hari)` : ""} &bull;{" "}
-                        {formatIDR(hmBudget)}
-                      </span>
+                {/* STEP 3: SETUP HONEYMOON */}
+                {step === 3 && (
+                  <div className="space-y-5">
+                    <div className="text-center space-y-1">
+                      <Badge variant="softTerracotta" className="mb-1">
+                        Langkah 3 dari 4
+                      </Badge>
+                      <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
+                        Rencana Honeymoon
+                      </h1>
+                      <p className="text-xs sm:text-sm text-sage-600">
+                        Siapkan dompet perjalanan &amp; kalkulator uang saku harian
+                        bulan madu Anda (dapat diubah kapan saja).
+                      </p>
                     </div>
-                  )}
-                </div>
 
-                <div className="flex items-center gap-3 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(3)}
-                    disabled={submitting}
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Ubah
-                  </Button>
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="flex-1"
-                    onClick={handleFinish}
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Menyiapkan Dashboard...
-                      </>
+                    {!isCompletePass ? (
+                      <div className="rounded-2xl border border-sage/15 bg-cream-50 p-5 text-center space-y-3">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta-50 text-terracotta">
+                          <Lock className="h-6 w-6" />
+                        </div>
+                        <h3 className="font-semibold text-sage-900">
+                          Khusus Paket Complete Couple Pass
+                        </h3>
+                        <p className="text-xs text-sage-600 leading-relaxed">
+                          Anda saat ini menggunakan <strong>Wedding Only Pass</strong>.
+                          Anda bisa langsung menyelesaikan setup anggaran pernikahan
+                          terlebih dahulu.
+                        </p>
+                      </div>
                     ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        Buat Rencana Anggaran
-                      </>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="hm-dest">Destinasi Honeymoon</Label>
+                          <div className="relative">
+                            <Plane className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
+                            <Input
+                              id="hm-dest"
+                              placeholder="Contoh: Jepang (Tokyo & Kyoto) / Bali / Swiss"
+                              value={hmDestination}
+                              onChange={(e) => {
+                                setHmDestination(e.target.value);
+                                if (skipHoneymoon && e.target.value.trim()) {
+                                  setSkipHoneymoon(false);
+                                }
+                              }}
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="hm-start">Tanggal Berangkat</Label>
+                            <DatePicker
+                              id="hm-start"
+                              value={hmStartDate}
+                              onChange={setHmStartDate}
+                              placeholder="Pilih tgl berangkat..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="hm-end">Tanggal Pulang</Label>
+                            <DatePicker
+                              id="hm-end"
+                              value={hmEndDate}
+                              minDate={hmStartDate || undefined}
+                              onChange={setHmEndDate}
+                              placeholder="Pilih tgl pulang..."
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>Mata Uang Tujuan</Label>
+                            <Select
+                              value={hmCurrency}
+                              onValueChange={handleCurrencyChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih mata uang" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {HONEYMOON_CURRENCIES.map((cur) => (
+                                  <SelectItem key={cur.code} value={cur.code}>
+                                    {cur.code} ({cur.symbol}) — {cur.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="hm-rate">
+                              Kurs ke IDR (1 {hmCurrency})
+                            </Label>
+                            <CurrencyInput
+                              id="hm-rate"
+                              allowDecimal
+                              value={hmExchangeRate}
+                              onValueChange={(raw) =>
+                                setHmExchangeRate(Number(raw) || 1)
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="hm-budget">
+                            Target Dana Honeymoon (IDR)
+                          </Label>
+                          <div className="relative">
+                            <Wallet className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sage-500" />
+                            <CurrencyInput
+                              id="hm-budget"
+                              placeholder="35.000.000"
+                              value={hmBudget}
+                              onValueChange={(raw) =>
+                                setHmBudget(Number(raw) || 0)
+                              }
+                              className="pl-10 font-bold"
+                            />
+                          </div>
+                          {tripDays > 0 && hmBudget > 0 && (
+                            <p className="text-xs text-sage-600">
+                              Durasi <strong>{tripDays} hari</strong> &bull; Estimasi
+                              budget rata-rata{" "}
+                              <strong>{formatIDR(hmBudget / tripDays)}/hari</strong>
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                </div>
-              </div>
-            )}
+
+                    <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2.5 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setStep(2)}
+                        className="w-full sm:w-auto shrink-0"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Kembali
+                      </Button>
+                      {isCompletePass && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setSkipHoneymoon(true);
+                            setStep(4);
+                          }}
+                          className="w-full sm:w-auto shrink-0 text-sage-600"
+                        >
+                          Lewati dulu
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="w-full sm:flex-1 px-5 sm:px-7"
+                        onClick={() => {
+                          if (isCompletePass && hmDestination.trim()) {
+                            setSkipHoneymoon(false);
+                          }
+                          setStep(4);
+                        }}
+                      >
+                        Tinjau Ringkasan
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 4: SELESAI & KONFIRMASI */}
+                {step === 4 && (
+                  <div className="space-y-5">
+                    <div className="text-center space-y-2">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sage text-white shadow-sm">
+                        <Sparkles className="h-7 w-7" />
+                      </div>
+                      <h1 className="font-display text-2xl sm:text-3xl font-bold text-sage-900">
+                        Rencana Siap Dibuat!
+                      </h1>
+                      <p className="text-xs sm:text-sm text-sage-600">
+                        Periksa kembali ringkasan awal sebelum masuk ke Dashboard{" "}
+                        <strong>{coupleTitle}</strong>.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-sage/12 bg-cream-50 p-4 space-y-3 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sage-600">Nama Pasangan</span>
+                        <span className="font-bold text-sage-900">{coupleTitle}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sage-600">Tanggal Nikah</span>
+                        <span className="font-semibold text-sage-900">
+                          {weddingDate
+                            ? new Date(weddingDate).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                            : "Belum ditentukan"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sage-600">Target Budget Nikah</span>
+                        <span className="font-bold text-sage-900">
+                          {formatIDR(budgetTarget)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sage-600">Estimasi Tamu</span>
+                        <span className="font-semibold text-sage-900">
+                          {formatNumberID(guestEstimate)} pax
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sage-600">Pos Anggaran Otomatis</span>
+                        <span className="font-semibold text-sage-900">
+                          {allocations.length} kategori pernikahan
+                        </span>
+                      </div>
+                      {isCompletePass && !skipHoneymoon && hmDestination.trim() && (
+                        <div className="pt-2 border-t border-sage/10 flex justify-between gap-3">
+                          <span className="text-sage-600">Honeymoon</span>
+                          <span className="font-semibold text-terracotta-700 text-right">
+                            {hmDestination}
+                            {tripDays > 0 ? ` (${tripDays} hari)` : ""} &bull;{" "}
+                            {formatIDR(hmBudget)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto shrink-0"
+                        onClick={() => setStep(3)}
+                        disabled={submitting}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Ubah
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="w-full sm:flex-1 px-5 sm:px-7"
+                        onClick={handleFinish}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Menyiapkan Dashboard...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Buat Rencana Anggaran
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </CardContent>

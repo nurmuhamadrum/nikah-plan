@@ -50,8 +50,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "NikahPlan",
+    startupImage: [{ url: "/apple-splash" }],
   },
   icons: {
     icon: [
@@ -77,6 +78,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -91,7 +93,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className="min-h-screen bg-canvas text-foreground"
+        className="min-h-[100dvh] bg-canvas text-foreground"
         suppressHydrationWarning
       >
         <BackgroundDecor />

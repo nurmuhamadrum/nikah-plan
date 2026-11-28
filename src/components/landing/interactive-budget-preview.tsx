@@ -235,11 +235,11 @@ export function InteractiveBudgetPreview() {
         </div>
 
         {/* 2-Tab Pill Switcher */}
-        <div className="inline-flex rounded-full bg-[#F4F5F7] p-1 border border-black/[0.05] self-start sm:self-auto">
+        <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full bg-[#F4F5F7] p-1 border border-black/[0.05]">
           <button
             type="button"
             onClick={() => setActiveTab("wedding")}
-            className={`relative rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-colors ${activeTab === "wedding"
+            className={`relative flex items-center justify-center rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${activeTab === "wedding"
               ? "text-white"
               : "text-[#5F6978] hover:text-[#141618]"
               }`}
@@ -259,7 +259,7 @@ export function InteractiveBudgetPreview() {
           <button
             type="button"
             onClick={() => setActiveTab("honeymoon")}
-            className={`relative rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-colors ${activeTab === "honeymoon"
+            className={`relative flex items-center justify-center rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${activeTab === "honeymoon"
               ? "text-white"
               : "text-[#5F6978] hover:text-[#141618]"
               }`}

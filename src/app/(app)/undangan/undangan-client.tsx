@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "motion/react";
 import {
   AlertCircle,
@@ -2231,7 +2232,7 @@ export function UndanganClient({
       )}
 
           {/* Sticky Bottom Save / Publish Bar */}
-          <div className="sticky bottom-20 md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-wrap items-center justify-between gap-2.5">
+          <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-4 z-20 rounded-2xl glass-strong border-sage/15 p-3 shadow-lift flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <label className="inline-flex items-center gap-2 text-xs font-semibold text-sage-900 cursor-pointer px-1">
               <input
                 type="checkbox"
@@ -2242,7 +2243,7 @@ export function UndanganClient({
               Publikasikan ke umum
             </label>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button
                 type="button"
                 variant="outline"
@@ -2265,6 +2266,7 @@ export function UndanganClient({
               <Button
                 type="button"
                 size="sm"
+                className="col-span-2 sm:col-span-1"
                 disabled={saving}
                 onClick={() => handleSave(true)}
               >
@@ -2294,38 +2296,39 @@ export function UndanganClient({
         </aside>
       </div>
 
-      {/* Modal Pratinjau Live untuk Mobile & Tablet (< lg) */}
-      {showMobilePreview && (
-        <div
-          className="fixed inset-0 z-50 lg:hidden flex items-center justify-center bg-black/75 p-2.5 sm:p-4 backdrop-blur-sm"
-          onClick={() => setShowMobilePreview(false)}
-        >
-          <div
-            className="relative w-full max-w-md max-h-[94vh] overflow-y-auto rounded-3xl bg-cream-50 p-3 sm:p-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2.5">
-              <p className="font-display text-base font-semibold text-sage-900">
-                Pratinjau Undangan Live
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowMobilePreview(false)}
-                aria-label="Tutup pratinjau"
-                className="rounded-full border border-sage/15 bg-white p-1.5 text-sage-700 hover:bg-sage-50"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <LivePreviewPanel
-              invitation={draftInvitation}
-              rsvps={rsvps}
-              savedSlug={savedInvitation?.slug}
-              viewportHeightClass="h-[74vh] sm:aspect-[9/19.5] sm:h-auto sm:max-h-[76vh]"
-            />
+      {/* Modal Pratinjau Live untuk Mobile & Tablet (< lg) via Portal agar full-screen edge-to-edge */}
+      <DialogPrimitive.Root
+        open={showMobilePreview}
+        onOpenChange={setShowMobilePreview}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] lg:hidden bg-black/75 backdrop-blur-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <div className="pointer-events-none fixed inset-0 z-[75] lg:hidden flex items-center justify-center px-2.5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
+            <DialogPrimitive.Content
+              aria-describedby={undefined}
+              className="pointer-events-auto relative w-full max-w-md max-h-full overflow-y-auto no-scrollbar rounded-3xl bg-cream-50 p-3 sm:p-4 shadow-2xl outline-none duration-200 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-1"
+            >
+              <div className="flex items-center justify-between pb-2.5">
+                <DialogPrimitive.Title className="font-display text-base font-semibold text-sage-900">
+                  Pratinjau Undangan Live
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Close
+                  aria-label="Tutup pratinjau"
+                  className="rounded-full border border-sage/15 bg-white p-1.5 text-sage-700 hover:bg-sage-50 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </DialogPrimitive.Close>
+              </div>
+              <LivePreviewPanel
+                invitation={draftInvitation}
+                rsvps={rsvps}
+                savedSlug={savedInvitation?.slug}
+                viewportHeightClass="h-[72dvh] sm:aspect-[9/19.5] sm:h-auto sm:max-h-[76dvh]"
+              />
+            </DialogPrimitive.Content>
           </div>
-        </div>
-      )}
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </div>
   );
 }

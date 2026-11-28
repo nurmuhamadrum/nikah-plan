@@ -74,7 +74,7 @@ export function AppShell({
     .join("");
 
   return (
-    <div className="min-h-screen text-foreground flex flex-col md:flex-row">
+    <div className="min-h-[100dvh] overflow-x-clip text-foreground flex flex-col md:flex-row">
       {/* Slim Top Progress Bar saat berpindah menu */}
       {pendingHref && (
         <div
@@ -165,10 +165,10 @@ export function AppShell({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:pl-64 pb-24 md:pb-10">
+      <main className="flex-1 md:pl-64 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-10">
         <div
           className={cn(
-            "mx-auto w-full px-4 pt-5 sm:px-6 sm:pt-7",
+            "mx-auto w-full px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7",
             pathname === "/undangan" ? "max-w-6xl" : "max-w-3xl"
           )}
         >
@@ -180,7 +180,7 @@ export function AppShell({
       {/* Mobile Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/60 bg-white/85 backdrop-blur-xl shadow-soft pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-black/[0.06] bg-white/95 backdrop-blur-xl shadow-soft pb-[env(safe-area-inset-bottom)]"
       >
         <div className="mx-auto grid max-w-md grid-cols-5 h-16 px-1">
           {MOBILE_NAV_ITEMS.map((item) => {

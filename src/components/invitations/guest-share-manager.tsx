@@ -788,9 +788,9 @@ export function GuestShareManager({
           <div className="grid grid-cols-3 gap-1 rounded-full bg-white p-1 border border-black/[0.06]">
             {(
               [
-                { id: "single", label: "Tambah Satuan", icon: UserPlus },
-                { id: "excel", label: "Import Excel", icon: FileSpreadsheet },
-                { id: "paste", label: "Tempel Massal", icon: ClipboardList },
+                { id: "single", label: "Tambah Satuan", shortLabel: "Satuan", icon: UserPlus },
+                { id: "excel", label: "Import Excel", shortLabel: "Excel", icon: FileSpreadsheet },
+                { id: "paste", label: "Tempel Massal", shortLabel: "Massal", icon: ClipboardList },
               ] as const
             ).map((tab) => {
               const Icon = tab.icon;
@@ -800,14 +800,15 @@ export function GuestShareManager({
                   key={tab.id}
                   type="button"
                   onClick={() => setInputMode(tab.id)}
-                  className={`flex items-center justify-center gap-1.5 rounded-full py-2 px-2 text-[11.5px] sm:text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-1 sm:gap-1.5 rounded-full py-2 px-1.5 sm:px-2 text-[11px] sm:text-xs font-semibold transition-all ${
                     active
                       ? "bg-midnight-btn text-white shadow-sm"
                       : "text-[#5F6978] hover:text-[#141618]"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{tab.label}</span>
+                  <span className="sm:hidden truncate">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -1289,12 +1290,12 @@ export function GuestShareManager({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0 pl-7 sm:pl-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 pl-0 sm:pl-0 w-full sm:w-auto pt-1 sm:pt-0">
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2.5 text-[11px]"
+                          className="flex-1 sm:flex-none h-8 px-2.5 text-[11px]"
                           onClick={() =>
                             copyText(
                               guest.id,
@@ -1317,7 +1318,7 @@ export function GuestShareManager({
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2.5 text-[11px]"
+                          className="flex-1 sm:flex-none h-8 px-2.5 text-[11px]"
                           onClick={() =>
                             copyText(
                               guest.id,
@@ -1339,7 +1340,7 @@ export function GuestShareManager({
                         <Button
                           asChild
                           size="sm"
-                          className="h-8 px-3 text-[11px]"
+                          className="flex-1 sm:flex-none h-8 px-3 text-[11px]"
                         >
                           <a
                             href={waHref}
@@ -1356,7 +1357,7 @@ export function GuestShareManager({
                           type="button"
                           onClick={() => removeGuest(guest.id)}
                           aria-label={`Hapus ${guest.name}`}
-                          className="p-1.5 text-[#94A3B8] hover:text-red-600 transition-colors"
+                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#94A3B8] hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

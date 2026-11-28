@@ -551,12 +551,12 @@ export function VendorDialog({
             </div>
           )}
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
             {item && (
               <Button
                 type="button"
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 sm:mr-auto"
+                className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 sm:mr-auto"
                 onClick={handleDelete}
                 disabled={deleting || saving}
               >
@@ -571,6 +571,7 @@ export function VendorDialog({
             <Button
               type="button"
               variant="ghost"
+              className="w-full sm:w-auto"
               onClick={() => onOpenChange(false)}
               disabled={saving || deleting}
             >
@@ -578,6 +579,7 @@ export function VendorDialog({
             </Button>
             <Button
               type="submit"
+              className="w-full sm:w-auto"
               disabled={saving || deleting || !title.trim() || !categoryId}
             >
               {saving ? (
