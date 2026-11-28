@@ -41,8 +41,10 @@ export function getAppUrl(): string {
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000"
-  );
+  const raw =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3000";
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/$/, "");
 }
