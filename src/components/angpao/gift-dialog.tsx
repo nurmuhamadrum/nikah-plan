@@ -6,6 +6,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import type { GiftAllocation, GiftType, WeddingGift } from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { logWorkspaceActivity } from "@/lib/activity-logger";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import {
@@ -131,6 +132,15 @@ export function GiftDialog({
           });
 
       if (!queued) await onSuccess();
+      await logWorkspaceActivity({
+        workspaceId,
+        actionType: "GIFT_ADD",
+        summary: gift
+          ? `memperbarui catatan hadiah dari ${senderName.trim()}`
+          : `mencatat angpao/kado dari ${senderName.trim()}${giftType === "PHYSICAL" ? " (Kado Fisik)" : ` sebesar ${formatIDR(amountNum)}`}`,
+        entityPath: "/angpao",
+        queryClient,
+      });
       if (queued) {
         toast.warning(
           "Catatan angpao disimpan di antrean offline",

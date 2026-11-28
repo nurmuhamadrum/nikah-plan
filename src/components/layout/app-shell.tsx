@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { NikahPlanLogo } from "@/components/brand/logo";
 import { InstallPromptBanner } from "@/components/pwa/install-prompt-banner";
 import { SupportFeedbackDialog } from "@/components/support/support-feedback-dialog";
+import { QuickAddFab } from "@/components/layout/quick-add-fab";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home },
@@ -39,9 +40,15 @@ interface AppShellProps {
   children: React.ReactNode;
   userName?: string;
   avatarUrl?: string | null;
+  workspaceId?: string | null;
 }
 
-export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
+export function AppShell({
+  children,
+  userName,
+  avatarUrl,
+  workspaceId,
+}: AppShellProps) {
   const pathname = usePathname();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -214,6 +221,7 @@ export function AppShell({ children, userName, avatarUrl }: AppShellProps) {
         open={supportOpen}
         onOpenChange={setSupportOpen}
       />
+      <QuickAddFab workspaceId={workspaceId} userName={userName} />
     </div>
   );
 }

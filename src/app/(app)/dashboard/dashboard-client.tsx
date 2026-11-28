@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Calendar,
   ChevronRight,
+  FileText,
   Plus,
 } from "lucide-react";
 import type { WorkspaceBundle } from "@/lib/workspace-data";
@@ -16,6 +17,8 @@ import {
   executeOfflineFirstMutation,
   saveWorkspaceSnapshot,
 } from "@/lib/offline/sync-engine";
+import { logWorkspaceActivity } from "@/lib/activity-logger";
+import { exportFamilyMeetingPDF } from "@/lib/export-reports";
 import { useToast } from "@/components/providers/toast-provider";
 import { useWorkspaceRealtime } from "@/hooks/use-workspace-realtime";
 import { useAppStore } from "@/store/use-app-store";
@@ -29,6 +32,9 @@ import { NikahPlanLogo } from "@/components/brand/logo";
 import { RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { BudgetInsightsCard } from "@/components/dashboard/budget-insights-card";
+import { SavingsTrackerCard } from "@/components/dashboard/savings-tracker-card";
+import { ActivityLogCard } from "@/components/dashboard/activity-log-card";
+import { PaymentReminderButtons } from "@/components/vendors/payment-reminder-menu";
 import { computeWeddingInsights } from "@/lib/budget-insights";
 import { HoneymoonPanel } from "@/components/honeymoon/honeymoon-panel";
 import { Button } from "@/components/ui/button";
@@ -207,6 +213,21 @@ export function DashboardClient({
         payload: { is_paid: true, paid_date: today },
         queryClient,
       });
+      const paidTarget = weddingPayments.find((p) => p.id === paymentId);
+      const paidItem = paidTarget
+        ? weddingItems.find((i) => i.id === paidTarget.item_id)
+        : undefined;
+      if (paidTarget) {
+        await logWorkspaceActivity({
+          workspaceId,
+          actorName: profile.full_name,
+          actionType: "PAYMENT_PAID",
+          summary: `menandai "${paidTarget.label}"${paidItem ? ` (${paidItem.title})` : ""} sebesar ${formatIDR(Number(paidTarget.amount) || 0)} LUNAS`,
+          entityPath: "/vendors",
+          queryClient,
+        });
+      }
+
       if (!queued) {
         await queryClient.invalidateQueries({
           queryKey: ["workspace-data", workspaceId],
@@ -461,58 +482,102 @@ export function DashboardClient({
                 return (
                   <div
                     key={payment.id}
-                    className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 flex items-center justify-between gap-3"
+                    className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 space-y-2.5"
                   >
-                    <Link
-                      href={`/vendors${item ? `?category=${item.category_id}` : ""}`}
-                      className="flex items-start gap-3 min-w-0 flex-1"
-                    >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                        <AlertTriangle className="h-4.5 w-4.5" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-amber-800">
-                          Tagihan Mendesak &bull; {dueLabel}
-                        </p>
-                        <p className="text-sm font-semibold text-sage-900 truncate">
-                          {payment.label}
-                          {item ? ` — ${item.title}` : ""}
-                        </p>
-                        <p className="text-xs text-sage-700">
-                          {formatIDR(Number(payment.amount))} &bull;{" "}
-                          {FUNDING_SOURCE_META[payment.funding].fullLabel}
-                        </p>
-                      </div>
-                    </Link>
+                    <div className="flex items-center justify-between gap-3">
+                      <Link
+                        href={`/vendors${item ? `?category=${item.category_id}` : ""}`}
+                        className="flex items-start gap-3 min-w-0 flex-1"
+                      >
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                          <AlertTriangle className="h-4.5 w-4.5" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-amber-800">
+                            Tagihan Mendesak &bull; {dueLabel}
+                          </p>
+                          <p className="text-sm font-semibold text-sage-900 truncate">
+                            {payment.label}
+                            {item ? ` — ${item.title}` : ""}
+                          </p>
+                          <p className="text-xs text-sage-700">
+                            {formatIDR(Number(payment.amount))} &bull;{" "}
+                            {FUNDING_SOURCE_META[payment.funding].fullLabel}
+                          </p>
+                        </div>
+                      </Link>
 
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="sage"
-                      className="shrink-0 h-8 px-3 text-xs"
-                      disabled={markingId === payment.id}
-                      onClick={() => handleQuickMarkPaid(payment.id)}
-                    >
-                      {markingId === payment.id ? "..." : "Lunas"}
-                    </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="sage"
+                        className="shrink-0 h-8 px-3 text-xs"
+                        disabled={markingId === payment.id}
+                        onClick={() => handleQuickMarkPaid(payment.id)}
+                      >
+                        {markingId === payment.id ? "..." : "Lunas"}
+                      </Button>
+                    </div>
+
+                    {payment.due_date && (
+                      <div className="pl-12">
+                        <PaymentReminderButtons
+                          reminder={{
+                            paymentId: payment.id,
+                            label: payment.label,
+                            vendorTitle: item?.title || "Vendor Pernikahan",
+                            amount: Number(payment.amount) || 0,
+                            funding: payment.funding,
+                            dueDate: payment.due_date,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
 
+          {/* Tabungan Menuju Hari-H & Proyeksi Cashflow */}
+          <SavingsTrackerCard
+            workspace={workspace}
+            savings={bundle.savings ?? []}
+            unpaidWeddingPayments={weddingPayments.filter((p) => !p.is_paid)}
+            remainingObligation={Math.max(0, metrics.totalDeal - metrics.totalPaid)}
+            actorName={profile.full_name}
+            onRefresh={refreshData}
+          />
+
           {/* Daftar Kategori Anggaran */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-bold text-sage-900">
                 Pos Anggaran Pernikahan
               </h2>
-              <Button asChild size="sm" variant="default">
-                <Link href="/vendors?new=1">
-                  <Plus className="h-3.5 w-3.5" />
-                  Tambah Vendor
-                </Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    exportFamilyMeetingPDF(bundle);
+                    toast.success(
+                      "PDF Rapat Keluarga diunduh",
+                      "Ringkasan 1–2 halaman siap dicetak atau dibagikan ke grup keluarga."
+                    );
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  PDF Rapat Keluarga
+                </Button>
+                <Button asChild size="sm" variant="default">
+                  <Link href="/vendors?new=1">
+                    <Plus className="h-3.5 w-3.5" />
+                    Tambah Vendor
+                  </Link>
+                </Button>
+              </div>
             </div>
 
             {categorySummaries.length === 0 ? (
@@ -593,6 +658,9 @@ export function DashboardClient({
               </RevealStagger>
             )}
           </div>
+
+          {/* Riwayat Perubahan Pasangan (Activity Log Realtime) */}
+          <ActivityLogCard activities={bundle.activities ?? []} />
         </div>
       ) : (
         /* ================================================================= */

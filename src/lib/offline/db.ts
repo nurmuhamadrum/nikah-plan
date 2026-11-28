@@ -9,7 +9,8 @@ export type OfflineSyncTable =
   | "budget_items"
   | "item_payments"
   | "wedding_gifts"
-  | "honeymoon_checklists";
+  | "honeymoon_checklists"
+  | "savings_entries";
 
 export type OfflineSyncOperation = "INSERT" | "UPDATE" | "DELETE";
 

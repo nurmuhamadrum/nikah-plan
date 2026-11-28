@@ -110,18 +110,19 @@ function applyMutationToBundle(
 
   const keyMap: Record<
     Exclude<OfflineSyncTable, "workspaces">,
-    keyof Omit<WorkspaceBundle, "workspace">
+    Exclude<keyof WorkspaceBundle, "workspace" | "activities">
   > = {
     budget_categories: "categories",
     budget_items: "items",
     item_payments: "payments",
     wedding_gifts: "gifts",
     honeymoon_checklists: "checklists",
+    savings_entries: "savings",
   };
 
   if (table === "workspaces") return bundle;
   const bundleKey = keyMap[table];
-  const list = [...(bundle[bundleKey] as Array<Record<string, unknown>>)];
+  const list = [...((bundle[bundleKey] ?? []) as Array<Record<string, unknown>>)];
 
   if (operation === "INSERT" && payload) {
     const newRow = {

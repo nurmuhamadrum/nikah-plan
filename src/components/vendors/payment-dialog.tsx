@@ -16,6 +16,7 @@ import {
   executeOfflineFirstMutation,
   queueReceiptUploadOffline,
 } from "@/lib/offline/sync-engine";
+import { logWorkspaceActivity } from "@/lib/activity-logger";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import {
@@ -259,6 +260,15 @@ export function PaymentDialog({
       }
 
       if (!queued) await onSuccess();
+      await logWorkspaceActivity({
+        workspaceId,
+        actionType: isPaid ? "PAYMENT_PAID" : "PAYMENT_ADD",
+        summary: payment
+          ? `memperbarui termin "${label.trim()}" — ${item.title} (${formatIDR(amountNum)})`
+          : `menambahkan termin "${label.trim()}" — ${item.title} (${formatIDR(amountNum)})`,
+        entityPath: "/vendors",
+        queryClient,
+      });
       if (queued) {
         toast.warning(
           "Termin disimpan di antrean offline",

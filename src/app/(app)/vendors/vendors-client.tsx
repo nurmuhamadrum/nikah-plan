@@ -41,8 +41,10 @@ import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { CategoryDialog } from "@/components/vendors/category-dialog";
 import { VendorDialog } from "@/components/vendors/vendor-dialog";
 import { PaymentDialog } from "@/components/vendors/payment-dialog";
+import { PaymentReminderButtons } from "@/components/vendors/payment-reminder-menu";
 import { ReceiptPreviewDialog } from "@/components/vendors/receipt-preview-dialog";
 import { TemplatePickerDialog } from "@/components/vendors/template-picker-dialog";
+import { logWorkspaceActivity } from "@/lib/activity-logger";
 import { getBudgetHealthStatus } from "@/lib/budget-insights";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -244,6 +246,15 @@ export function VendorsClient({
           `"${payment.label}" akan disinkronkan saat online.`
         );
       }
+      await logWorkspaceActivity({
+        workspaceId,
+        actionType: "PAYMENT_PAID",
+        summary: nextPaid
+          ? `menandai termin "${payment.label}" (${formatIDR(Number(payment.amount) || 0)}) LUNAS`
+          : `membatalkan status lunas termin "${payment.label}"`,
+        entityPath: "/vendors",
+        queryClient,
+      });
     } catch (err) {
       toast.error(
         "Gagal memperbarui status termin",
@@ -540,6 +551,16 @@ export function VendorsClient({
                               Booked
                             </Badge>
                           )}
+                          {!item.is_booked &&
+                            Array.isArray(item.candidates) &&
+                            item.candidates.length > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] border-[#4F6BF6]/30 bg-[#EEF2FF] text-[#4F6BF6]"
+                              >
+                                {item.candidates.length} Kandidat
+                              </Badge>
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-sage-600">
                           <span>{cat?.name || "Kategori"}</span>
@@ -754,6 +775,20 @@ export function VendorsClient({
                                         </span>
                                       )}
                                     </div>
+                                    {!pay.is_paid && pay.due_date && (
+                                      <div className="pt-1">
+                                        <PaymentReminderButtons
+                                          reminder={{
+                                            paymentId: pay.id,
+                                            label: pay.label,
+                                            vendorTitle: item.title,
+                                            amount: Number(pay.amount) || 0,
+                                            funding: pay.funding,
+                                            dueDate: pay.due_date,
+                                          }}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
 

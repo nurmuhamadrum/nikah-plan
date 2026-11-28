@@ -43,6 +43,7 @@ import {
 import {
   exportBudgetToExcel,
   exportBudgetToPDF,
+  exportFamilyMeetingPDF,
 } from "@/lib/export-reports";
 import { SyncStatusBadge } from "@/components/dashboard/sync-status-badge";
 import { PushNotificationCard } from "@/components/settings/push-notification-card";
@@ -112,7 +113,9 @@ export function SettingsClient({
   const [rateSavedFeedback, setRateSavedFeedback] = useState<string | null>(null);
 
   // Export & Sync states
-  const [exportingType, setExportingType] = useState<"pdf" | "xlsx" | null>(null);
+  const [exportingType, setExportingType] = useState<
+    "pdf" | "family-pdf" | "xlsx" | null
+  >(null);
   const [exportFeedback, setExportFeedback] = useState<string | null>(null);
   const [syncingNow, setSyncingNow] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -202,6 +205,25 @@ export function SettingsClient({
     } catch {
       setExportFeedback("Gagal membuat file PDF.");
       toast.error("Gagal membuat file PDF");
+    } finally {
+      setExportingType(null);
+    }
+  };
+
+  const handleExportFamilyPDF = () => {
+    setExportingType("family-pdf");
+    setExportFeedback(null);
+    try {
+      exportFamilyMeetingPDF(bundle);
+      const msg =
+        "Ringkasan 1–2 halaman 'Siap Rapat Keluarga' (.pdf) berhasil diunduh.";
+      setExportFeedback(msg);
+      toast.success("PDF Rapat Keluarga diunduh", msg);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Gagal membuat PDF rapat keluarga.";
+      setExportFeedback(msg);
+      toast.error("Gagal export PDF", msg);
     } finally {
       setExportingType(null);
     }
@@ -395,10 +417,23 @@ export function SettingsClient({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <Button
               type="button"
-              variant="sage"
+              className="w-full"
+              disabled={exportingType !== null}
+              onClick={handleExportFamilyPDF}
+            >
+              {exportingType === "family-pdf" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              PDF Rapat Keluarga
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               className="w-full"
               disabled={exportingType !== null}
               onClick={handleExportPDF}
@@ -408,11 +443,11 @@ export function SettingsClient({
               ) : (
                 <FileText className="h-4 w-4" />
               )}
-              Unduh Laporan PDF
+              PDF Lengkap
             </Button>
             <Button
               type="button"
-              variant="default"
+              variant="outline"
               className="w-full"
               disabled={exportingType !== null}
               onClick={handleExportExcel}
@@ -422,7 +457,7 @@ export function SettingsClient({
               ) : (
                 <FileSpreadsheet className="h-4 w-4" />
               )}
-              Unduh Excel (.xlsx)
+              Excel (.xlsx)
             </Button>
           </div>
           {exportFeedback && (

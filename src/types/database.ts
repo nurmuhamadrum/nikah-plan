@@ -111,6 +111,8 @@ export type Workspace = {
   honeymoon_currency: string;
   honeymoon_exchange_rate: number;
   honeymoon_budget_target: number;
+  monthly_saving_groom?: number;
+  monthly_saving_bride?: number;
   plan: PlanType;
   invite_code: string;
   onboarding_completed: boolean;
@@ -137,6 +139,39 @@ export type BudgetCategory = {
   created_at: string;
 };
 
+export type SavingsContributor = "GROOM" | "BRIDE" | "JOINT";
+
+export type VendorCandidate = {
+  id: string;
+  name: string;
+  price: number;
+  bonus?: string;
+  contact?: string;
+  notes?: string;
+};
+
+export type SavingsEntry = {
+  id: string;
+  workspace_id: string;
+  entry_month: string;
+  contributor: SavingsContributor;
+  amount: number;
+  notes: string | null;
+  saved_date: string;
+  created_at: string;
+};
+
+export type WorkspaceActivity = {
+  id: string;
+  workspace_id: string;
+  actor_id: string | null;
+  actor_name: string;
+  action_type: string;
+  summary: string;
+  entity_path: string | null;
+  created_at: string;
+};
+
 export type BudgetItem = {
   id: string;
   workspace_id: string;
@@ -150,6 +185,7 @@ export type BudgetItem = {
   currency: string;
   foreign_amount: number | null;
   is_booked: boolean;
+  candidates?: VendorCandidate[];
   updated_at: string;
   created_at: string;
 };
@@ -442,6 +478,20 @@ export type Database = {
         Insert: Partial<SupportMessageRow> &
           Pick<SupportMessageRow, "ticket_id" | "sender_role" | "message">;
         Update: Partial<SupportMessageRow>;
+        Relationships: [];
+      };
+      savings_entries: {
+        Row: SavingsEntry;
+        Insert: Partial<SavingsEntry> &
+          Pick<SavingsEntry, "workspace_id" | "entry_month" | "amount">;
+        Update: Partial<SavingsEntry>;
+        Relationships: [];
+      };
+      workspace_activities: {
+        Row: WorkspaceActivity;
+        Insert: Partial<WorkspaceActivity> &
+          Pick<WorkspaceActivity, "workspace_id" | "actor_name" | "summary">;
+        Update: Partial<WorkspaceActivity>;
         Relationships: [];
       };
     };

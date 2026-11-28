@@ -23,7 +23,11 @@ export default async function AuthenticatedAppLayout({
   }
 
   return (
-    <AppShell userName={profile.full_name} avatarUrl={profile.avatar_url}>
+    <AppShell
+      userName={profile.full_name}
+      avatarUrl={profile.avatar_url}
+      workspaceId={profile.active_workspace_id}
+    >
       {children}
     </AppShell>
   );

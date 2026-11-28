@@ -172,6 +172,8 @@ async function runDiagnostics() {
     { name: "customer_feedbacks", desc: "Masukan, saran, bug & ulasan rating pengguna" },
     { name: "support_tickets", desc: "Tiket bantuan Customer Service" },
     { name: "support_messages", desc: "Percakapan 2 arah tiket Customer Service" },
+    { name: "savings_entries", desc: "Catatan setoran tabungan bulanan menuju hari H" },
+    { name: "workspace_activities", desc: "Riwayat aktivitas kolaborasi pasangan" },
   ];
 
   let missingTables = 0;
@@ -202,7 +204,7 @@ async function runDiagnostics() {
     console.log(`${colors.cyan}  supabase/combined_migrations.sql${colors.reset}\n`);
   }
 
-  // Step 5b: Verify Migration 007 columns (music_preset, music_url) on wedding_invitations
+  // Step 5b: Verify Migration 007 & 008 columns
   try {
     const { error: musicColErr } = await adminClient
       .from("wedding_invitations")
@@ -211,14 +213,32 @@ async function runDiagnostics() {
     if (musicColErr) {
       fail(
         "Kolom Migrasi 007 (music_preset, music_url) belum ada di public.wedding_invitations",
-        "Jalankan supabase/migrations/007_invitation_music.sql di Supabase SQL Editor."
+        "Jalankan supabase/migrations/20261127000007_invitation_ambient_music.sql di Supabase SQL Editor."
       );
       hasErrors = true;
     } else {
       pass("Kolom Migrasi 007 (music_preset, music_url) pada wedding_invitations aktif");
     }
+
+    const { error: candColErr } = await adminClient
+      .from("budget_items")
+      .select("candidates")
+      .limit(1);
+    const { error: savingColErr } = await adminClient
+      .from("workspaces")
+      .select("monthly_saving_groom, monthly_saving_bride")
+      .limit(1);
+    if (candColErr || savingColErr) {
+      fail(
+        "Kolom Migrasi 008 (budget_items.candidates / workspaces.monthly_saving_*) belum ada",
+        "Jalankan supabase/migrations/20261128000008_savings_candidates_activities.sql di Supabase SQL Editor."
+      );
+      hasErrors = true;
+    } else {
+      pass("Kolom Migrasi 008 (candidates & target tabungan bulanan) aktif");
+    }
   } catch (err) {
-    warn(`Pengecekan kolom Migrasi 007 gagal: ${err.message}`);
+    warn(`Pengecekan kolom Migrasi 007/008 gagal: ${err.message}`);
   }
 
   // Step 6: Supabase Storage Buckets Check

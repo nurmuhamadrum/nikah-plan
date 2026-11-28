@@ -83,6 +83,26 @@ export function useWorkspaceRealtime(workspaceId: string | null | undefined) {
         },
         invalidate
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "savings_entries",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        invalidate
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "workspace_activities",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        invalidate
+      )
       .subscribe();
 
     return () => {

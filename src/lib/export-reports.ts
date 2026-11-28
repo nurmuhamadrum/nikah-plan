@@ -370,6 +370,275 @@ export function exportBudgetToPDF(bundle: WorkspaceBundle) {
 }
 
 /**
+ * Export Ringkasan Eksekutif "Siap Rapat Keluarga" (1–2 halaman A4 rapi).
+ * Memisahkan porsi dana Keluarga Pria, Keluarga Wanita, Tabungan Bersama,
+ * dan Dana Angpao, plus ringkasan pos utama & 5 jadwal jatuh tempo terdekat.
+ */
+export function exportFamilyMeetingPDF(bundle: WorkspaceBundle) {
+  const { workspace, categories, items, payments } = bundle;
+  const stats = computeReportSummary(bundle);
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const PRIMARY: [number, number, number] = [24, 28, 46]; // #181C2E
+  const ACCENT: [number, number, number] = [79, 107, 246]; // #4F6BF6
+  const GOLD: [number, number, number] = [224, 159, 62]; // #E09F3E
+  const SOFT_BG: [number, number, number] = [244, 245, 247]; // #F4F5F7
+
+  // 1. Header Banner Eksekutif
+  doc.setFillColor(...PRIMARY);
+  doc.rect(0, 0, 210, 36, "F");
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 35, 210, 1.2, "F");
+
+  doc.setTextColor(224, 159, 62);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.text("RINGKASAN ANGGARAN SIAP RAPAT KELUARGA", 14, 11);
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.text(`Pernikahan ${workspace.couple_title}`, 14, 20);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(220, 224, 236);
+  doc.text(
+    `${workspace.wedding_date ? `Tanggal Acara: ${workspace.wedding_date}   |   ` : ""}Estimasi Tamu: ${workspace.guest_estimate} pax   |   Dicetak: ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`,
+    14,
+    29
+  );
+
+  // 2. 4 Kartu KPI Besar
+  const remainingObligation = Math.max(0, stats.totalDeal - stats.totalPaid);
+  const kpis = [
+    { label: "Target Anggaran", value: formatIDR(stats.targetWedding) },
+    { label: "Total Deal / Estimasi", value: formatIDR(stats.totalDeal) },
+    { label: "Sudah Dibayar", value: formatIDR(stats.totalPaid) },
+    { label: "Sisa Kewajiban", value: formatIDR(remainingObligation) },
+  ];
+
+  const cardW = 43.5;
+  const cardGap = 2.6;
+  kpis.forEach((kpi, idx) => {
+    const x = 14 + idx * (cardW + cardGap);
+    doc.setFillColor(...SOFT_BG);
+    doc.roundedRect(x, 42, cardW, 18, 2.5, 2.5, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(95, 105, 120);
+    doc.text(kpi.label, x + 3, 48.5);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(20, 22, 24);
+    doc.text(kpi.value, x + 3, 55.5);
+  });
+
+  // 3. Pembagian Porsi Dana Keluarga (Terpisah: Bersama, Pria, Wanita, Angpao)
+  const weddingItemIds = new Set(stats.weddingItems.map((i) => i.id));
+  const weddingPayments = payments.filter((p) => weddingItemIds.has(p.item_id));
+
+  const fundingBreakdown: Record<
+    FundingSource,
+    { paid: number; unpaid: number; total: number }
+  > = {
+    JOINT: { paid: 0, unpaid: 0, total: 0 },
+    GROOM_FAMILY: { paid: 0, unpaid: 0, total: 0 },
+    BRIDE_FAMILY: { paid: 0, unpaid: 0, total: 0 },
+    ANGPAO: { paid: 0, unpaid: 0, total: 0 },
+  };
+
+  for (const p of weddingPayments) {
+    const amt = Number(p.amount) || 0;
+    if (p.is_paid) fundingBreakdown[p.funding].paid += amt;
+    else fundingBreakdown[p.funding].unpaid += amt;
+    fundingBreakdown[p.funding].total += amt;
+  }
+
+  const grandCommitted = Object.values(fundingBreakdown).reduce(
+    (s, f) => s + f.total,
+    0
+  );
+
+  doc.setTextColor(...PRIMARY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.text("1. Pembagian Porsi Dana Keluarga & Tabungan Bersama", 14, 69);
+
+  // Stacked visual bar
+  const barX = 14;
+  const barY = 72;
+  const barW = 182;
+  const barH = 4.5;
+  doc.setFillColor(229, 233, 240);
+  doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, "F");
+
+  if (grandCommitted > 0) {
+    const barSources: Array<{
+      key: FundingSource;
+      rgb: [number, number, number];
+    }> = [
+      { key: "JOINT", rgb: PRIMARY },
+      { key: "GROOM_FAMILY", rgb: ACCENT },
+      { key: "BRIDE_FAMILY", rgb: GOLD },
+      { key: "ANGPAO", rgb: [129, 140, 248] },
+    ];
+    let cursorX = barX;
+    for (const s of barSources) {
+      const segW = (fundingBreakdown[s.key].total / grandCommitted) * barW;
+      if (segW > 0.5) {
+        doc.setFillColor(...s.rgb);
+        doc.rect(cursorX, barY, segW, barH, "F");
+        cursorX += segW;
+      }
+    }
+  }
+
+  const fundingRows = (
+    ["JOINT", "GROOM_FAMILY", "BRIDE_FAMILY", "ANGPAO"] as FundingSource[]
+  ).map((key) => {
+    const row = fundingBreakdown[key];
+    const pct =
+      grandCommitted > 0 ? Math.round((row.total / grandCommitted) * 100) : 0;
+    return [
+      FUNDING_SOURCE_META[key].fullLabel,
+      `${pct}%`,
+      formatIDR(row.paid),
+      formatIDR(row.unpaid),
+      formatIDR(row.total),
+    ];
+  });
+
+  autoTable(doc, {
+    startY: 79,
+    head: [
+      [
+        "Sumber Dana",
+        "Porsi",
+        "Sudah Dibayar",
+        "Akan Dibayar",
+        "Total Komitmen",
+      ],
+    ],
+    body: fundingRows,
+    theme: "grid",
+    headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 8.5 },
+    bodyStyles: { fontSize: 8.5, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
+    margin: { left: 14, right: 14 },
+  });
+
+  // 4. Ringkasan Pos Anggaran Utama per Kategori
+  let y =
+    ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+      ?.finalY ?? 120) + 9;
+
+  doc.setTextColor(...PRIMARY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.text("2. Ringkasan Pos Anggaran Pernikahan", 14, y);
+
+  const weddingCategories = categories.filter((c) => c.phase === "WEDDING");
+  const catSummaryRows = weddingCategories.map((cat) => {
+    const catItems = stats.weddingItems.filter((i) => i.category_id === cat.id);
+    const catItemIds = new Set(catItems.map((i) => i.id));
+    const catDeal = catItems.reduce(
+      (s, i) => s + (Number(i.deal_cost) || Number(i.estimated_cost) || 0),
+      0
+    );
+    const catPaid = weddingPayments
+      .filter((p) => catItemIds.has(p.item_id) && p.is_paid)
+      .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    return [
+      cat.name,
+      `${catItems.length} pos`,
+      formatIDR(Number(cat.allocated_amount) || 0),
+      formatIDR(catDeal),
+      formatIDR(catPaid),
+      formatIDR(Math.max(0, catDeal - catPaid)),
+    ];
+  });
+
+  autoTable(doc, {
+    startY: y + 3,
+    head: [
+      [
+        "Kategori Pos",
+        "Jumlah",
+        "Target",
+        "Deal / Estimasi",
+        "Terbayar",
+        "Sisa",
+      ],
+    ],
+    body:
+      catSummaryRows.length > 0
+        ? catSummaryRows
+        : [["-", "0 pos", "Rp0", "Rp0", "Rp0", "Rp0"]],
+    theme: "grid",
+    headStyles: { fillColor: ACCENT, textColor: [255, 255, 255], fontSize: 8 },
+    bodyStyles: { fontSize: 8, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
+    margin: { left: 14, right: 14 },
+  });
+
+  // 5. 5 Jadwal Jatuh Tempo Terdekat
+  y =
+    ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+      ?.finalY ?? 185) + 9;
+  if (y > 235) {
+    doc.addPage();
+    y = 18;
+  }
+
+  const itemTitleMap = new Map(items.map((i) => [i.id, i.title]));
+  const upcomingPayments = weddingPayments
+    .filter((p) => !p.is_paid && p.due_date)
+    .sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""))
+    .slice(0, 5);
+
+  doc.setTextColor(...PRIMARY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.text("3. Jadwal Pembayaran Jatuh Tempo Terdekat", 14, y);
+
+  autoTable(doc, {
+    startY: y + 3,
+    head: [["Jatuh Tempo", "Vendor / Pos", "Termin", "Sumber Dana", "Nominal"]],
+    body:
+      upcomingPayments.length > 0
+        ? upcomingPayments.map((p) => [
+            p.due_date || "-",
+            itemTitleMap.get(p.item_id) || "-",
+            p.label,
+            FUNDING_SOURCE_META[p.funding].fullLabel,
+            formatIDR(Number(p.amount) || 0),
+          ])
+        : [["-", "Tidak ada jadwal tagihan jatuh tempo terdekat", "-", "-", "-"]],
+    theme: "grid",
+    headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 8 },
+    bodyStyles: { fontSize: 8, textColor: [20, 22, 24] },
+    alternateRowStyles: { fillColor: SOFT_BG },
+    margin: { left: 14, right: 14 },
+  });
+
+  // 6. Kotak Catatan Kesepakatan Rapat Keluarga
+  const notesY =
+    ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+      ?.finalY ?? 240) + 8;
+  if (notesY < 268) {
+    doc.setDrawColor(210, 214, 224);
+    doc.roundedRect(14, notesY, 182, 20, 2.5, 2.5, "S");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(95, 105, 120);
+    doc.text("Catatan & Kesepakatan Rapat Keluarga:", 18, notesY + 6);
+  }
+
+  const filename = `NikahPlan-Rapat-Keluarga-${slugifyCouple(workspace.couple_title)}-${getTodayStamp()}.pdf`;
+  doc.save(filename);
+}
+
+/**
  * Export laporan lengkap ke workbook Excel (.xlsx) 4 sheet (100% client-side).
  */
 export function exportBudgetToExcel(bundle: WorkspaceBundle) {

@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
-import type { BudgetCategory, BudgetItem } from "@/types/database";
+import {
+  CheckCircle2,
+  Loader2,
+  Plus,
+  Scale,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import type {
+  BudgetCategory,
+  BudgetItem,
+  VendorCandidate,
+} from "@/types/database";
 import { formatIDR } from "@/lib/utils";
 import { executeOfflineFirstMutation } from "@/lib/offline/sync-engine";
+import { logWorkspaceActivity } from "@/lib/activity-logger";
 import { useToast } from "@/components/providers/toast-provider";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import {
@@ -38,6 +50,13 @@ interface VendorDialogProps {
   onSuccess: () => Promise<void>;
 }
 
+function createCandidateId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `cand-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export function VendorDialog({
   open,
   onOpenChange,
@@ -51,6 +70,7 @@ export function VendorDialog({
   const toast = useToast();
   const confirm = useConfirm();
 
+  const [activeTab, setActiveTab] = useState<"detail" | "candidates">("detail");
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("0");
@@ -59,6 +79,13 @@ export function VendorDialog({
   const [notes, setNotes] = useState("");
   const [isBooked, setIsBooked] = useState(false);
 
+  // Vendor comparison candidates
+  const [candidates, setCandidates] = useState<VendorCandidate[]>([]);
+  const [candName, setCandName] = useState("");
+  const [candPrice, setCandPrice] = useState("0");
+  const [candBonus, setCandBonus] = useState("");
+  const [candContact, setCandContact] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -66,6 +93,11 @@ export function VendorDialog({
   useEffect(() => {
     if (open) {
       setErrorMsg(null);
+      setActiveTab("detail");
+      setCandName("");
+      setCandPrice("0");
+      setCandBonus("");
+      setCandContact("");
       if (item) {
         setCategoryId(item.category_id);
         setTitle(item.title);
@@ -74,6 +106,7 @@ export function VendorDialog({
         setVendorContact(item.vendor_contact || "");
         setNotes(item.notes || "");
         setIsBooked(item.is_booked);
+        setCandidates(Array.isArray(item.candidates) ? item.candidates : []);
       } else {
         setCategoryId(defaultCategoryId || categories[0]?.id || "");
         setTitle("");
@@ -82,9 +115,53 @@ export function VendorDialog({
         setVendorContact("");
         setNotes("");
         setIsBooked(false);
+        setCandidates([]);
       }
     }
   }, [open, item, defaultCategoryId, categories]);
+
+  const lowestCandidateId = useMemo(() => {
+    const priced = candidates.filter((c) => Number(c.price) > 0);
+    if (priced.length < 2) return null;
+    return priced.reduce((min, cur) =>
+      Number(cur.price) < Number(min.price) ? cur : min
+    ).id;
+  }, [candidates]);
+
+  const handleAddCandidate = () => {
+    if (!candName.trim()) return;
+    const next: VendorCandidate = {
+      id: createCandidateId(),
+      name: candName.trim(),
+      price: Math.max(0, Number(candPrice) || 0),
+      bonus: candBonus.trim() || undefined,
+      contact: candContact.trim() || undefined,
+    };
+    setCandidates((prev) => [...prev, next]);
+    setCandName("");
+    setCandPrice("0");
+    setCandBonus("");
+    setCandContact("");
+    toast.success("Kandidat ditambahkan", `${next.name} masuk daftar banding.`);
+  };
+
+  const handleSelectCandidateAsDeal = (cand: VendorCandidate) => {
+    setDealCost(String(Number(cand.price) || 0));
+    if (cand.contact) setVendorContact(cand.contact);
+    const dealNote = [
+      `Vendor terpilih: ${cand.name}`,
+      cand.bonus ? `Bonus/Paket: ${cand.bonus}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    setNotes((prev) => (prev.trim() ? `${dealNote}\n${prev.trim()}` : dealNote));
+    setIsBooked(true);
+    setActiveTab("detail");
+    toast.success(
+      `${cand.name} dipilih jadi Deal!`,
+      `Harga ${formatIDR(Number(cand.price) || 0)} & detail otomatis diisi. Klik Simpan Vendor untuk menyimpan.`
+    );
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +188,7 @@ export function VendorDialog({
         vendor_contact: vendorContact.trim() || null,
         notes: notes.trim() || null,
         is_booked: isBooked,
+        candidates,
       };
 
       const { queued } = item
@@ -137,6 +215,17 @@ export function VendorDialog({
           });
 
       if (!queued) await onSuccess();
+
+      await logWorkspaceActivity({
+        workspaceId,
+        actionType: item ? "VENDOR_UPDATE" : "VENDOR_ADD",
+        summary: item
+          ? `mengubah pos "${title.trim()}" (${dealNum > 0 ? `Deal ${formatIDR(dealNum)}` : `Estimasi ${formatIDR(estNum)}`})`
+          : `menambahkan vendor "${title.trim()}" (${dealNum > 0 ? `Deal ${formatIDR(dealNum)}` : `Estimasi ${formatIDR(estNum)}`})`,
+        entityPath: "/vendors",
+        queryClient,
+      });
+
       if (queued) {
         toast.warning(
           "Vendor disimpan di antrean offline",
@@ -203,113 +292,271 @@ export function VendorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {item ? "Edit Item Vendor" : "Tambah Vendor / Item Baru"}
           </DialogTitle>
           <DialogDescription>
-            Bandingkan estimasi awal dengan harga deal final dari vendor.
+            Catat estimasi, bandingkan kandidat vendor, lalu tetapkan harga deal
+            final.
           </DialogDescription>
         </DialogHeader>
 
+        {/* Tab Switcher: Detail Pos vs Kandidat Vendor */}
+        <div className="grid grid-cols-2 gap-1 rounded-full bg-[#F4F5F7] p-1 border border-black/[0.06]">
+          <button
+            type="button"
+            onClick={() => setActiveTab("detail")}
+            className={`rounded-full py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === "detail"
+                ? "bg-midnight-btn text-white shadow-sm"
+                : "text-[#5F6978] hover:text-[#141618]"
+            }`}
+          >
+            Detail Pos &amp; Deal
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("candidates")}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === "candidates"
+                ? "bg-midnight-btn text-white shadow-sm"
+                : "text-[#5F6978] hover:text-[#141618]"
+            }`}
+          >
+            <Scale className="h-3.5 w-3.5" />
+            Kandidat Vendor ({candidates.length})
+          </button>
+        </div>
+
         <form onSubmit={handleSave} className="space-y-4">
           {errorMsg && (
-            <p className="rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2 text-xs text-terracotta-800">
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
               {errorMsg}
             </p>
           )}
 
-          <div className="space-y-2">
-            <Label>Kategori</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih kategori anggaran" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {activeTab === "detail" ? (
+            <>
+              <div className="space-y-2">
+                <Label>Kategori</Label>
+                <Select value={categoryId} onValueChange={setCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori anggaran" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="vendor-title">Nama Vendor / Item Pengeluaran</Label>
-            <Input
-              id="vendor-title"
-              required
-              placeholder="Contoh: Katering Puspa 300 Pax / Dekorasi Pelaminan"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="vendor-title">
+                  Nama Vendor / Item Pengeluaran
+                </Label>
+                <Input
+                  id="vendor-title"
+                  required
+                  placeholder="Contoh: Katering Puspa 300 Pax / Dekorasi Pelaminan"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="est-cost">Estimasi Awal (IDR)</Label>
-              <CurrencyInput
-                id="est-cost"
-                placeholder="0"
-                value={estimatedCost}
-                onValueChange={setEstimatedCost}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="est-cost">Estimasi Awal (IDR)</Label>
+                  <CurrencyInput
+                    id="est-cost"
+                    placeholder="0"
+                    value={estimatedCost}
+                    onValueChange={setEstimatedCost}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deal-cost">Harga Deal Vendor (IDR)</Label>
+                  <CurrencyInput
+                    id="deal-cost"
+                    placeholder="0"
+                    value={dealCost}
+                    onValueChange={setDealCost}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendor-contact">
+                  Kontak WhatsApp / PIC Vendor (Opsional)
+                </Label>
+                <Input
+                  id="vendor-contact"
+                  placeholder="Contoh: 081234567890 (Mba Rani)"
+                  value={vendorContact}
+                  onChange={(e) => setVendorContact(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendor-notes">Catatan / Paket (Opsional)</Label>
+                <textarea
+                  id="vendor-notes"
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Bonus stall, jam loading, syarat pelunasan..."
+                  className="w-full rounded-xl border border-sage/20 bg-white px-3.5 py-2.5 text-sm text-sage-900 placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/40"
+                />
+              </div>
+
+              <label className="flex items-center gap-2.5 rounded-xl border border-sage/15 bg-cream-50 px-3.5 py-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isBooked}
+                  onChange={(e) => setIsBooked(e.target.checked)}
+                  className="h-4 w-4 rounded accent-sage"
+                />
+                <span className="text-sm font-medium text-sage-900">
+                  Vendor sudah fix / booked
+                </span>
+              </label>
+            </>
+          ) : (
+            /* TAB KANDIDAT VENDOR PEMBANDING */
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-black/[0.06] bg-[#F4F5F7] p-3.5 space-y-2.5">
+                <p className="text-xs font-bold text-[#141618]">
+                  Tambah Kandidat untuk Dibandingkan
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input
+                    value={candName}
+                    onChange={(e) => setCandName(e.target.value)}
+                    placeholder="Nama Vendor (cth: Katering A)"
+                    className="bg-white h-9 text-xs"
+                  />
+                  <CurrencyInput
+                    value={candPrice}
+                    onValueChange={setCandPrice}
+                    placeholder="Harga penawaran"
+                    className="bg-white h-9 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input
+                    value={candBonus}
+                    onChange={(e) => setCandBonus(e.target.value)}
+                    placeholder="Bonus / Keunggulan (cth: Free 2 stall)"
+                    className="bg-white h-9 text-xs"
+                  />
+                  <Input
+                    value={candContact}
+                    onChange={(e) => setCandContact(e.target.value)}
+                    placeholder="No. WA / Instagram (Opsional)"
+                    className="bg-white h-9 text-xs"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!candName.trim()}
+                    onClick={handleAddCandidate}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Tambah Kandidat
+                  </Button>
+                </div>
+              </div>
+
+              {candidates.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-black/10 py-6 text-center text-xs text-[#5F6978]">
+                  Belum ada kandidat pembanding. Tambahkan 2–3 vendor untuk
+                  membandingkan harga &amp; bonus sebelum deal!
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {candidates.map((cand) => {
+                    const isCheapest = lowestCandidateId === cand.id;
+                    return (
+                      <div
+                        key={cand.id}
+                        className={`rounded-2xl border p-3.5 space-y-2 ${
+                          isCheapest
+                            ? "border-emerald-200 bg-emerald-50/40"
+                            : "border-black/[0.08] bg-white"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className="text-xs font-bold text-[#141618]">
+                                {cand.name}
+                              </p>
+                              {isCheapest && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  Termurah
+                                </span>
+                              )}
+                            </div>
+                            <p className="font-display text-sm font-bold text-[#4F6BF6] tabular-nums mt-0.5">
+                              {formatIDR(Number(cand.price) || 0)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCandidates((prev) =>
+                                prev.filter((c) => c.id !== cand.id)
+                              )
+                            }
+                            aria-label={`Hapus kandidat ${cand.name}`}
+                            className="p-1 text-[#94A3B8] hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
+                        {(cand.bonus || cand.contact) && (
+                          <div className="text-[11px] text-[#5F6978] space-y-0.5">
+                            {cand.bonus && <p>Keunggulan: {cand.bonus}</p>}
+                            {cand.contact && <p>Kontak: {cand.contact}</p>}
+                          </div>
+                        )}
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-8 text-xs"
+                          onClick={() => handleSelectCandidateAsDeal(cand)}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Pilih Jadi Deal
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-[11px] text-[#5F6978]">
+                Catatan: Klik <strong>Simpan Vendor</strong> di bawah untuk
+                menyimpan daftar kandidat Anda ke workspace.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="deal-cost">Harga Deal Vendor (IDR)</Label>
-              <CurrencyInput
-                id="deal-cost"
-                placeholder="0"
-                value={dealCost}
-                onValueChange={setDealCost}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="vendor-contact">
-              Kontak WhatsApp / PIC Vendor (Opsional)
-            </Label>
-            <Input
-              id="vendor-contact"
-              placeholder="Contoh: 081234567890 (Mba Rani)"
-              value={vendorContact}
-              onChange={(e) => setVendorContact(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="vendor-notes">Catatan / Paket (Opsional)</Label>
-            <textarea
-              id="vendor-notes"
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Bonus stall, jam loading, syarat pelunasan..."
-              className="w-full rounded-xl border border-sage/20 bg-white px-3.5 py-2.5 text-sm text-sage-900 placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/40"
-            />
-          </div>
-
-          <label className="flex items-center gap-2.5 rounded-xl border border-sage/15 bg-cream-50 px-3.5 py-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isBooked}
-              onChange={(e) => setIsBooked(e.target.checked)}
-              className="h-4 w-4 rounded accent-sage"
-            />
-            <span className="text-sm font-medium text-sage-900">
-              Vendor sudah fix / booked
-            </span>
-          </label>
+          )}
 
           <DialogFooter className="gap-2">
             {item && (
               <Button
                 type="button"
                 variant="outline"
-                className="text-terracotta-700 border-terracotta/30 hover:bg-terracotta-50 sm:mr-auto"
+                className="text-red-600 border-red-200 hover:bg-red-50 sm:mr-auto"
                 onClick={handleDelete}
                 disabled={deleting || saving}
               >
