@@ -153,11 +153,18 @@ export async function updateSessionAndGuard(request: NextRequest) {
   // 4. Jika user sudah login & akses /login (tanpa param next ke /join), arahkan sesuai status bayar
   if (pathname === "/login" && user) {
     const nextParam = request.nextUrl.searchParams.get("next");
-    if (nextParam && nextParam.startsWith("/")) {
-      const nextUrl = request.nextUrl.clone();
-      nextUrl.pathname = nextParam;
-      nextUrl.search = "";
-      return NextResponse.redirect(nextUrl);
+    if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
+      try {
+        const parsedNext = new URL(nextParam, request.nextUrl.origin);
+        if (parsedNext.origin === request.nextUrl.origin) {
+          const nextUrl = request.nextUrl.clone();
+          nextUrl.pathname = parsedNext.pathname;
+          nextUrl.search = parsedNext.search;
+          return NextResponse.redirect(nextUrl);
+        }
+      } catch {
+        // fallback ke redirect default jika nextParam tidak valid
+      }
     }
 
     const { data: profile } = await supabase

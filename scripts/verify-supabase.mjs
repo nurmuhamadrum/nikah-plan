@@ -202,6 +202,25 @@ async function runDiagnostics() {
     console.log(`${colors.cyan}  supabase/combined_migrations.sql${colors.reset}\n`);
   }
 
+  // Step 5b: Verify Migration 007 columns (music_preset, music_url) on wedding_invitations
+  try {
+    const { error: musicColErr } = await adminClient
+      .from("wedding_invitations")
+      .select("music_preset, music_url")
+      .limit(1);
+    if (musicColErr) {
+      fail(
+        "Kolom Migrasi 007 (music_preset, music_url) belum ada di public.wedding_invitations",
+        "Jalankan supabase/migrations/007_invitation_music.sql di Supabase SQL Editor."
+      );
+      hasErrors = true;
+    } else {
+      pass("Kolom Migrasi 007 (music_preset, music_url) pada wedding_invitations aktif");
+    }
+  } catch (err) {
+    warn(`Pengecekan kolom Migrasi 007 gagal: ${err.message}`);
+  }
+
   // Step 6: Supabase Storage Buckets Check
   console.log(`\n${colors.bold}6. Memeriksa Supabase Storage (Bucket Bukti Bayar & Undangan):${colors.reset}`);
   try {

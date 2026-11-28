@@ -384,8 +384,8 @@ export function LoginClient({
 
           <CardContent className="space-y-5">
             {errorMsg && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-terracotta/30 bg-terracotta-50 p-3.5 text-sm text-terracotta-800">
-                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-terracotta" />
+              <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-800">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
                 <span>{errorMsg}</span>
               </div>
             )}

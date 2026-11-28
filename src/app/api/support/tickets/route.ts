@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDynamicSiteContents } from "@/lib/dynamic-config";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type {
   SupportMessageRow,
   SupportTicketRow,
@@ -138,6 +139,17 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const { allowed, retryAfterSec } = checkRateLimit(`support:${ip}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: `Terlalu banyak permintaan tiket bantuan. Coba lagi dalam ${retryAfterSec} detik.`,
+        },
+        { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = createTicketSchema.safeParse(body);
     if (!parsed.success) {

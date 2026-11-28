@@ -1272,8 +1272,8 @@ export function UndanganClient({
 
                           {/* Peringatan Link YouTube / Spotify */}
                           {audioUrlInspection.status === "unsupported" && (
-                            <div className="flex items-start gap-2 rounded-xl border border-terracotta/30 bg-terracotta-50 px-3 py-2.5 text-[11.5px] text-terracotta-800">
-                              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-terracotta" />
+                            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11.5px] text-red-800">
+                              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
                               <span className="leading-snug">
                                 {audioUrlInspection.message}
                               </span>

@@ -536,8 +536,8 @@ export function CheckoutClient({
                 </div>
 
                 {errorMsg && (
-                  <div className="flex items-start gap-2 rounded-xl border border-terracotta/30 bg-terracotta-50 p-3 text-xs text-terracotta-800">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-terracotta mt-0.5" />
+                  <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
                     <span>{errorMsg}</span>
                   </div>
                 )}

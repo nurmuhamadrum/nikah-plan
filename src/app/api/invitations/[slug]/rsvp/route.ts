@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const rsvpSchema = z.object({
   guest_name: z
@@ -27,6 +28,17 @@ export async function POST(
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
+    const { allowed, retryAfterSec } = checkRateLimit(`rsvp:${ip}`, 8, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: `Terlalu banyak kiriman RSVP dalam waktu singkat. Coba lagi dalam ${retryAfterSec} detik.`,
+        },
+        { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+      );
+    }
+
     const { slug } = await context.params;
     const body = await request.json();
     const parsed = rsvpSchema.safeParse(body);

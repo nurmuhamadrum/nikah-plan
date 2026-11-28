@@ -461,17 +461,17 @@ export function DashboardClient({
                 return (
                   <div
                     key={payment.id}
-                    className="rounded-2xl border border-terracotta/30 bg-[#FDF3EE] p-4 flex items-center justify-between gap-3"
+                    className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 flex items-center justify-between gap-3"
                   >
                     <Link
                       href={`/vendors${item ? `?category=${item.category_id}` : ""}`}
                       className="flex items-start gap-3 min-w-0 flex-1"
                     >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-terracotta/15 text-terracotta-700">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                         <AlertTriangle className="h-4.5 w-4.5" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-terracotta-800">
+                        <p className="text-xs font-bold text-amber-800">
                           Tagihan Mendesak &bull; {dueLabel}
                         </p>
                         <p className="text-sm font-semibold text-sage-900 truncate">

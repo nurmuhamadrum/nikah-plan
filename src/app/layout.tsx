@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Allura, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { BackgroundDecor } from "@/components/brand/background-decor";
+import { getAppUrl } from "@/lib/utils";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,12 +26,29 @@ const allura = Allura({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getAppUrl()),
   title: {
     default: "NikahPlan — Wedding & Honeymoon Budget Planner",
     template: "%s | NikahPlan",
   },
   description:
-    "Atur anggaran pernikahan, termin DP vendor, pembagian sumber dana keluarga, angpao, hingga dompet bulan madu bersama pasangan dalam satu aplikasi PWA offline-first.",
+    "Atur anggaran pernikahan, termin DP vendor, pembagian sumber dana keluarga, angpao, undangan online, hingga dompet bulan madu bersama pasangan dalam satu aplikasi PWA offline-first.",
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "NikahPlan",
+    title: "NikahPlan — Wedding & Honeymoon Budget Planner",
+    description:
+      "Atur anggaran pernikahan, termin DP vendor, undangan online 8 tema + musik ambient, angpao, hingga dompet bulan madu bersama pasangan.",
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "NikahPlan" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "NikahPlan — Wedding & Honeymoon Budget Planner",
+    description:
+      "Perencana anggaran pernikahan, undangan digital, dan dompet bulan madu untuk pasangan Indonesia.",
+    images: ["/icons/icon-512.png"],
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

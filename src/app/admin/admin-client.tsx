@@ -682,7 +682,7 @@ export function AdminClient({
             className={`rounded-2xl border px-4 py-3 text-sm font-medium shadow-sm ${
               toast.type === "success"
                 ? "border-sage/25 bg-sage-50 text-sage-900"
-                : "border-terracotta/30 bg-terracotta-50 text-terracotta-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
           >
             {toast.text}
@@ -1800,7 +1800,7 @@ export function AdminClient({
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-terracotta-700 hover:bg-terracotta-50"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => handleDeleteTicket(selectedTicket)}
                             title="Hapus tiket"
                           >
@@ -2080,7 +2080,7 @@ export function AdminClient({
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-terracotta-700 hover:bg-terracotta-50"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => handleDeleteFeedback(fb)}
                             title="Hapus masukan"
                           >

@@ -166,25 +166,25 @@ export const FUNDING_SOURCE_META = {
   JOINT: {
     label: "Bersama",
     fullLabel: "Tabungan Bersama",
-    color: "#3D5245",
+    color: "#181C2E",
     badgeClass: "bg-sage-50 text-sage-800 border-sage/20",
   },
   GROOM_FAMILY: {
     label: "Pria",
     fullLabel: "Pihak Pria",
-    color: "#C87D55",
+    color: "#4F6BF6",
     badgeClass: "bg-terracotta-50 text-terracotta-800 border-terracotta/25",
   },
   BRIDE_FAMILY: {
     label: "Wanita",
     fullLabel: "Pihak Wanita",
-    color: "#D4A359",
+    color: "#E09F3E",
     badgeClass: "bg-amberwarm-light text-sage-900 border-amberwarm/40",
   },
   ANGPAO: {
     label: "Angpao",
     fullLabel: "Dana Angpao",
-    color: "#729682",
+    color: "#818CF8",
     badgeClass: "bg-sage-100 text-sage-800 border-sage/25",
   },
 } as const;

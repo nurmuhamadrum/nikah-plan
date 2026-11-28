@@ -345,7 +345,7 @@ export function SettingsClient({
                 variant="ghost"
                 size="sm"
                 type="submit"
-                className="text-terracotta-700"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Keluar Akun
@@ -550,7 +550,7 @@ export function SettingsClient({
               type="button"
               variant="ghost"
               size="sm"
-              className="text-terracotta-700"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleClearLocalCache}
             >
               <Trash2 className="h-3.5 w-3.5" />

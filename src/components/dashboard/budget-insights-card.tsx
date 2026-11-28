@@ -282,19 +282,19 @@ export function BudgetInsightsCard({ insights }: BudgetInsightsCardProps) {
                       }
                       contentStyle={{
                         borderRadius: "12px",
-                        border: "1px solid rgba(61,82,69,0.12)",
+                        border: "1px solid rgba(20,22,24,0.1)",
                         fontSize: "12px",
                       }}
                     />
                     <Bar
                       dataKey="Target"
-                      fill="#C5D6CC"
+                      fill="#C7D2FE"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={24}
                     />
                     <Bar
                       dataKey="Realisasi"
-                      fill="#C87D55"
+                      fill="#4F6BF6"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={24}
                     />

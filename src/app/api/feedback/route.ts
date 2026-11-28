@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { CustomerFeedbackRow } from "@/types/database";
 
 const createFeedbackSchema = z.object({
@@ -82,6 +83,17 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const { allowed, retryAfterSec } = checkRateLimit(`feedback:${ip}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: `Terlalu banyak kiriman masukan dalam waktu singkat. Coba lagi dalam ${retryAfterSec} detik.`,
+        },
+        { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = createFeedbackSchema.safeParse(body);
     if (!parsed.success) {

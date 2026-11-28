@@ -414,7 +414,7 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
                   cy="22"
                   r={ringRadius}
                   fill="none"
-                  stroke="#E5E0D5"
+                  stroke="#E5E9F0"
                   strokeWidth="4.5"
                 />
                 <circle
@@ -422,7 +422,7 @@ export function HoneymoonPanel({ bundle, onRefresh }: HoneymoonPanelProps) {
                   cy="22"
                   r={ringRadius}
                   fill="none"
-                  stroke="#3D5245"
+                  stroke="#4F6BF6"
                   strokeWidth="4.5"
                   strokeLinecap="round"
                   strokeDasharray={ringCircumference}
